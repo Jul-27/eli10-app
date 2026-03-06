@@ -1,133 +1,141 @@
 <!DOCTYPE html>
 <html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ELI10 — Einfach erklärt</title>
-    <style>
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ELI10 — Einfach erklärt</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4ff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+    h1 { font-size: 2rem; color: #2563eb; margin-bottom: 8px; }
+    .subtitle { color: #6b7280; margin-bottom: 30px; text-align: center; }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 1rem;
+      margin-bottom: 10px;
+      outline: none;
+    }
+    input:focus { border-color: #2563eb; }
+    textarea {
+      width: 100%;
+      height: 150px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 1rem;
+      resize: vertical;
+      outline: none;
+    }
+    textarea:focus { border-color: #2563eb; }
+    button {
+      margin-top: 14px;
+      width: 100%;
+      padding: 14px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #93c5fd; cursor: not-allowed; }
+    .secondary-btn {
+      background: white;
+      color: #2563eb;
+      border: 2px solid #2563eb;
+      margin-top: 8px;
+    }
+    .secondary-btn:hover { background: #f0f4ff; }
+    .result-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      display: none;
+    }
+    .result-card h2 { color: #2563eb; margin-bottom: 12px; }
+    .result-text { color: #374151; line-height: 1.7; white-space: pre-wrap; }
+    .loading { text-align: center; color: #6b7280; font-style: italic; }
+    .disclaimer {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      text-align: center;
+      margin-top: 20px;
+      max-width: 600px;
+    }
+    .user-info {
+      text-align: right;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 10px;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    .user-info span { color: #2563eb; font-weight: bold; }
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #dc2626;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-left: 10px;
+      padding: 0;
+      width: auto;
+      margin-top: 0;
+    }
+    .error { color: #dc2626; font-size: 0.9rem; margin-top: 8px; }
+    .success { color: #059669; font-size: 0.9rem; margin-top: 8px; }
+  </style>
+</head>
+<body>
 
-      body {
-        font-family: Arial, sans-serif;
-        background: #f0f4ff;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 30px 20px;
-      }
+  <h1>🧒 ELI10</h1>
+  <p class="subtitle">Füge einen komplexen Text ein — wir erklären ihn einfach.</p>
 
-      h1 {
-        font-size: 2rem;
-        color: #2563eb;
-        margin-bottom: 8px;
-      }
+  <!-- Auth Screen -->
+  <div class="card" id="authCard">
+    <h2 style="color:#2563eb; margin-bottom:16px;" id="authTitle">Anmelden</h2>
+    <input type="email" id="emailInput" placeholder="E-Mail Adresse" />
+    <input type="password" id="passwordInput" placeholder="Passwort" />
+    <div id="authMessage"></div>
+    <button onclick="login()">🔐 Anmelden</button>
+    <button class="secondary-btn" onclick="register()">✨ Neu registrieren</button>
+  </div>
 
-      .subtitle {
-        color: #6b7280;
-        margin-bottom: 30px;
-        text-align: center;
-      }
-
-      .card {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        width: 100%;
-        max-width: 600px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        margin-bottom: 20px;
-      }
-
-      textarea {
-        width: 100%;
-        height: 150px;
-        border: 2px solid #e5e7eb;
-        border-radius: 10px;
-        padding: 14px;
-        font-size: 1rem;
-        resize: vertical;
-        outline: none;
-        transition: border 0.2s;
-      }
-
-      textarea:focus {
-        border-color: #2563eb;
-      }
-
-      button {
-        margin-top: 14px;
-        width: 100%;
-        padding: 14px;
-        background: #2563eb;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-
-      button:hover {
-        background: #1d4ed8;
-      }
-      button:disabled {
-        background: #93c5fd;
-        cursor: not-allowed;
-      }
-
-      .result-card {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        width: 100%;
-        max-width: 600px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        display: none;
-      }
-
-      .result-card h2 {
-        color: #2563eb;
-        margin-bottom: 12px;
-      }
-
-      .result-text {
-        color: #374151;
-        line-height: 1.7;
-        white-space: pre-wrap;
-      }
-
-      .loading {
-        text-align: center;
-        color: #6b7280;
-        font-style: italic;
-      }
-
-      .disclaimer {
-        font-size: 0.75rem;
-        color: #9ca3af;
-        text-align: center;
-        margin-top: 20px;
-        max-width: 600px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>🧒 ELI10</h1>
-    <p class="subtitle">
-      Füge einen komplexen Text ein — wir erklären ihn einfach.
-    </p>
+  <!-- App Screen (nach Login) -->
+  <div id="appScreen" style="display:none; width:100%; display:none; flex-direction:column; align-items:center;">
+    <div class="user-info">
+      Eingeloggt als <span id="userEmail"></span>
+      <button class="logout-btn" onclick="logout()">Abmelden</button>
+    </div>
 
     <div class="card">
-      <textarea
-        id="inputText"
-        placeholder="Füge hier deinen Text ein... z.B. einen Vertragsabschnitt, einen Arztbrief oder einen Behördenbrief."
-      ></textarea>
+      <textarea id="inputText" placeholder="Füge hier deinen Text ein... z.B. einen Vertragsabschnitt, einen Arztbrief oder einen Behördenbrief."></textarea>
       <button id="explainBtn" onclick="erklaeren()">✨ Jetzt erklären</button>
     </div>
 
@@ -135,48 +143,103 @@
       <h2>📖 Erklärung</h2>
       <div class="result-text" id="resultText"></div>
     </div>
+  </div>
 
-    <p class="disclaimer">
-      ⚠️ ELI10 ist kein Ersatz für rechtliche, medizinische oder steuerliche
-      Beratung.
-    </p>
+  <p class="disclaimer">⚠️ ELI10 ist kein Ersatz für rechtliche, medizinische oder steuerliche Beratung.</p>
 
-    <script>
-      async function erklaeren() {
-        const text = document.getElementById('inputText').value.trim();
+  <script>
+    // Supabase initialisieren
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
+      'https://srmpdeqpwikjdbwjudqs.supabase.co',
+      'sb_publishable_bVb-24sFpnG6sPxDvmwqfw_F4_F9Mcw'
+    );
 
-        if (!text) {
-          alert('Bitte füge zuerst einen Text ein.');
-          return;
-        }
-
-        const btn = document.getElementById('explainBtn');
-        const resultCard = document.getElementById('resultCard');
-        const resultText = document.getElementById('resultText');
-
-        btn.disabled = true;
-        btn.textContent = '⏳ Wird analysiert...';
-        resultCard.style.display = 'block';
-        resultText.innerHTML =
-          '<span class="loading">KI analysiert deinen Text...</span>';
-
-        try {
-          const response = await fetch('/explain', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text }),
-          });
-
-          const data = await response.json();
-          resultText.textContent = data.explanation;
-        } catch (error) {
-          resultText.textContent =
-            'Fehler beim Abrufen der Erklärung. Bitte versuche es erneut.';
-        }
-
-        btn.disabled = false;
-        btn.textContent = '✨ Jetzt erklären';
+    // Beim Laden prüfen ob Nutzer eingeloggt ist
+    window.addEventListener('load', async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        zeigeApp(session.user.email);
       }
-    </script>
-  </body>
+    });
+
+    async function login() {
+      const email = document.getElementById('emailInput').value;
+      const password = document.getElementById('passwordInput').value;
+      const msg = document.getElementById('authMessage');
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        msg.className = 'error';
+        msg.textContent = 'Fehler: ' + error.message;
+      } else {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        zeigeApp(session.user.email);
+      }
+    }
+
+    async function register() {
+      const email = document.getElementById('emailInput').value;
+      const password = document.getElementById('passwordInput').value;
+      const msg = document.getElementById('authMessage');
+
+      if (password.length < 6) {
+        msg.className = 'error';
+        msg.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
+        return;
+      }
+
+      const { error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) {
+        msg.className = 'error';
+        msg.textContent = 'Fehler: ' + error.message;
+      } else {
+        msg.className = 'success';
+        msg.textContent = '✅ Registrierung erfolgreich! Bitte bestätige deine E-Mail.';
+      }
+    }
+
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      document.getElementById('appScreen').style.display = 'none';
+      document.getElementById('authCard').style.display = 'block';
+    }
+
+    function zeigeApp(email) {
+      document.getElementById('authCard').style.display = 'none';
+      document.getElementById('appScreen').style.display = 'flex';
+      document.getElementById('userEmail').textContent = email;
+    }
+
+    async function erklaeren() {
+      const text = document.getElementById('inputText').value.trim();
+      if (!text) { alert('Bitte füge zuerst einen Text ein.'); return; }
+
+      const btn = document.getElementById('explainBtn');
+      const resultCard = document.getElementById('resultCard');
+      const resultText = document.getElementById('resultText');
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Wird analysiert...';
+      resultCard.style.display = 'block';
+      resultText.innerHTML = '<span class="loading">KI analysiert deinen Text...</span>';
+
+      try {
+        const response = await fetch('/explain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await response.json();
+        resultText.textContent = data.explanation;
+      } catch (error) {
+        resultText.textContent = 'Fehler. Bitte versuche es erneut.';
+      }
+
+      btn.disabled = false;
+      btn.textContent = '✨ Jetzt erklären';
+    }
+  </script>
+
+</body>
 </html>
