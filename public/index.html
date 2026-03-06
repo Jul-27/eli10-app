@@ -150,118 +150,103 @@
 
   <p class="disclaimer">⚠️ ELI10 ist kein Ersatz für rechtliche, medizinische oder steuerliche Beratung.</p>
 
-  <script>
-    // Supabase initialisieren
-    const { createClient } = supabase;
-    const supabaseClient = createClient(
-      'https://srmpdeqpwikjdbwjudqs.supabase.co',
-      'sb_publishable_bVb-24sFpnG6sPxDvmwqfw_F4_F9Mcw'
-    );
+<script>
 
-    // Beim Laden prüfen ob Nutzer eingeloggt ist
-    window.addEventListener('load', async () => {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        zeigeApp(session.user.email);
-      }
-    });
-
-    async function login() {
-      const email = document.getElementById('emailInput').value;
-      const password = document.getElementById('passwordInput').value;
-      const msg = document.getElementById('authMessage');
-
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        msg.className = 'error';
-        msg.textContent = 'Fehler: ' + error.message;
-      } else {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        zeigeApp(session.user.email);
-      }
-    }
-
-    async function register() {
-  const email = document.getElementById('emailInput').value;
-  const password = document.getElementById('passwordInput').value;
-  const msg = document.getElementById('authMessage');
-
-  if (password.length < 6) {
-    msg.className = 'error';
-    msg.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
-    return;
-  }
-
-  const { data, error } = await supabaseClient.auth.signUp({ email, password });
+  const { createClient } = supabase;
+  const supabaseClient = createClient(
+    'https://srmpdeqpwikjdbwjudqs.supabase.co',
+    'sb_publishable_bVb-24sFpnG6sPxDvmwqfw_F4_F9Mcw'
+  );
   
-  if (error) {
-    msg.className = 'error';
-    msg.textContent = 'Fehler: ' + error.message;
-  } else {
-    zeigeApp(email);
-  }
-}
-      if (error) {
-        msg.className = 'error';
-        msg.textContent = 'Fehler: ' + error.message;
-      } else {
-        msg.className = 'success';
-        msg.textContent = '✅ Registrierung erfolgreich! Bitte bestätige deine E-Mail.';
-      }
-    }
-
-    async function logout() {
-      await supabaseClient.auth.signOut();
-      document.getElementById('appScreen').style.display = 'none';
-      document.getElementById('authCard').style.display = 'block';
-    }
-
-    function zeigeApp(email) {
-      document.getElementById('authCard').style.display = 'none';
-      document.getElementById('appScreen').style.display = 'flex';
-      document.getElementById('userEmail').textContent = email;
-    }
-
-    async function erklaeren() {
-  const text = document.getElementById('inputText').value.trim();
-  if (!text) { alert('Bitte füge zuerst einen Text ein.'); return; }
-
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const user_id = session?.user?.id;
-
-  const btn = document.getElementById('explainBtn');
-  const resultCard = document.getElementById('resultCard');
-  const resultText = document.getElementById('resultText');
-
-  btn.disabled = true;
-  btn.textContent = '⏳ Wird analysiert...';
-  resultCard.style.display = 'block';
-  resultText.innerHTML = '<span class="loading">KI analysiert deinen Text...</span>';
-
-  try {
-    const response = await fetch('/explain', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, user_id })
-    });
-    const data = await response.json();
-
-    if (data.error === 'limit_reached') {
-      resultText.innerHTML = `
-        <span style="color:#dc2626; font-weight:bold;">⚠️ Tageslimit erreicht!</span><br><br>
-        ${data.message}
-      `;
+  window.addEventListener('load', async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) { zeigeApp(session.user.email); }
+  });
+  
+  async function login() {
+    const email = document.getElementById('emailInput').value;
+    const password = document.getElementById('passwordInput').value;
+    const msg = document.getElementById('authMessage');
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      msg.className = 'error';
+      msg.textContent = 'Fehler: ' + error.message;
     } else {
-      resultText.textContent = data.explanation;
-      document.getElementById('remainingCount').textContent = data.remaining;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      zeigeApp(session.user.email);
     }
-  } catch (error) {
-    resultText.textContent = 'Fehler. Bitte versuche es erneut.';
   }
-
-  btn.disabled = false;
-  btn.textContent = '✨ Jetzt erklären';
-}
+  
+  async function register() {
+    const email = document.getElementById('emailInput').value;
+    const password = document.getElementById('passwordInput').value;
+    const msg = document.getElementById('authMessage');
+    if (password.length < 6) {
+      msg.className = 'error';
+      msg.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
+      return;
+    }
+    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+    if (error) {
+      msg.className = 'error';
+      msg.textContent = 'Fehler: ' + error.message;
+    } else {
+      zeigeApp(email);
+    }
+  }
+  
+  async function logout() {
+    await supabaseClient.auth.signOut();
+    document.getElementById('appScreen').style.display = 'none';
+    document.getElementById('authCard').style.display = 'block';
+  }
+  
+  function zeigeApp(email) {
+    document.getElementById('authCard').style.display = 'none';
+    document.getElementById('appScreen').style.display = 'flex';
+    document.getElementById('userEmail').textContent = email;
+  }
+  
+  async function erklaeren() {
+    const text = document.getElementById('inputText').value.trim();
+    if (!text) { alert('Bitte füge zuerst einen Text ein.'); return; }
+  
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const user_id = session?.user?.id;
+  
+    const btn = document.getElementById('explainBtn');
+    const resultCard = document.getElementById('resultCard');
+    const resultText = document.getElementById('resultText');
+  
+    btn.disabled = true;
+    btn.textContent = '⏳ Wird analysiert...';
+    resultCard.style.display = 'block';
+    resultText.innerHTML = '<span class="loading">KI analysiert deinen Text...</span>';
+  
+    try {
+      const response = await fetch('/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, user_id })
+      });
+      const data = await response.json();
+  
+      if (data.error === 'limit_reached') {
+        resultText.innerHTML = `
+          <span style="color:#dc2626; font-weight:bold;">⚠️ Tageslimit erreicht!</span><br><br>
+          ${data.message}
+        `;
+      } else {
+        resultText.textContent = data.explanation;
+        document.getElementById('remainingCount').textContent = data.remaining;
+      }
+    } catch (error) {
+      resultText.textContent = 'Fehler. Bitte versuche es erneut.';
+    }
+  
+    btn.disabled = false;
+    btn.textContent = '✨ Jetzt erklären';
+  }
   </script>
 
 </body>
