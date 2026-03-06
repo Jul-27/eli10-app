@@ -1,12 +1,18 @@
 const express = require('express');
 const Groq = require('groq-sdk');
+const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 app.use(express.json());
-app.use(express.static('public'));
+
+app.get('/', (req, res) => {
+  const htmlPath = path.join(__dirname, 'public', 'index.html');
+  res.send(fs.readFileSync(htmlPath, 'utf8'));
+});
 
 app.post('/explain', async (req, res) => {
   const { text } = req.body;
@@ -52,3 +58,5 @@ Deine Regeln:
 app.listen(3000, () => {
   console.log('ELI10 läuft auf Port 3000');
 });
+
+module.exports = app;
