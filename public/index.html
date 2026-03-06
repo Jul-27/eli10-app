@@ -132,6 +132,9 @@
     <div class="user-info">
       Eingeloggt als <span id="userEmail"></span>
       <button class="logout-btn" onclick="logout()">Abmelden</button>
+      <div style="font-size:0.85rem; color:#6b7280; margin-top:4px;">
+        Verbleibende Erklärungen heute: <span id="remainingCount" style="color:#2563eb; font-weight:bold;">5</span>
+      </div>
     </div>
 
     <div class="card">
@@ -220,33 +223,45 @@
     }
 
     async function erklaeren() {
-      const text = document.getElementById('inputText').value.trim();
-      if (!text) { alert('Bitte füge zuerst einen Text ein.'); return; }
+  const text = document.getElementById('inputText').value.trim();
+  if (!text) { alert('Bitte füge zuerst einen Text ein.'); return; }
 
-      const btn = document.getElementById('explainBtn');
-      const resultCard = document.getElementById('resultCard');
-      const resultText = document.getElementById('resultText');
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const user_id = session?.user?.id;
 
-      btn.disabled = true;
-      btn.textContent = '⏳ Wird analysiert...';
-      resultCard.style.display = 'block';
-      resultText.innerHTML = '<span class="loading">KI analysiert deinen Text...</span>';
+  const btn = document.getElementById('explainBtn');
+  const resultCard = document.getElementById('resultCard');
+  const resultText = document.getElementById('resultText');
 
-      try {
-        const response = await fetch('/explain', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
-        });
-        const data = await response.json();
-        resultText.textContent = data.explanation;
-      } catch (error) {
-        resultText.textContent = 'Fehler. Bitte versuche es erneut.';
-      }
+  btn.disabled = true;
+  btn.textContent = '⏳ Wird analysiert...';
+  resultCard.style.display = 'block';
+  resultText.innerHTML = '<span class="loading">KI analysiert deinen Text...</span>';
 
-      btn.disabled = false;
-      btn.textContent = '✨ Jetzt erklären';
+  try {
+    const response = await fetch('/explain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, user_id })
+    });
+    const data = await response.json();
+
+    if (data.error === 'limit_reached') {
+      resultText.innerHTML = `
+        <span style="color:#dc2626; font-weight:bold;">⚠️ Tageslimit erreicht!</span><br><br>
+        ${data.message}
+      `;
+    } else {
+      resultText.textContent = data.explanation;
+      document.getElementById('remainingCount').textContent = data.remaining;
     }
+  } catch (error) {
+    resultText.textContent = 'Fehler. Bitte versuche es erneut.';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✨ Jetzt erklären';
+}
   </script>
 
 </body>
