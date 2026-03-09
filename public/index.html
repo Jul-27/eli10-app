@@ -234,7 +234,10 @@
       if (data.error === 'limit_reached') {
         resultText.innerHTML = `
           <span style="color:#dc2626; font-weight:bold;">⚠️ Tageslimit erreicht!</span><br><br>
-          ${data.message}
+          ${data.message}<br><br>
+<button onclick="upgrade()" style="background:#059669; color:white; border:none; padding:12px 24px; border-radius:10px; font-size:1rem; cursor:pointer; font-weight:bold;">
+  ⭐ Jetzt Premium werden — 9.99€/Monat
+</button>
         `;
       } else {
         resultText.textContent = data.explanation;
@@ -247,6 +250,24 @@
     btn.disabled = false;
     btn.textContent = '✨ Jetzt erklären';
   }
+
+  async function upgrade() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const user_id = session?.user?.id;
+  const email = session?.user?.email;
+
+  const response = await fetch('/create-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id, email })
+  });
+
+  const data = await response.json();
+  if (data.url) {
+    window.location.href = data.url;
+  }
+}
+
   </script>
 
 </body>

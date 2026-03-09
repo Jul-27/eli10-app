@@ -1,6 +1,7 @@
 const express = require('express');
 const Groq = require('groq-sdk');
 const { createClient } = require('@supabase/supabase-js');
+const Stripe = require('stripe');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -11,11 +12,43 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SECRET_KEY
 );
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 app.use(express.json());
 
 app.get('/', (req, res) => {
   const htmlPath = path.join(__dirname, 'public', 'index.html');
+  res.send(fs.readFileSync(htmlPath, 'utf8'));
+});
+
+// Checkout Session erstellen
+app.post('/create-checkout', async (req, res) => {
+  const { user_id, email } = req.body;
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      customer_email: email,
+      line_items: [{
+        price: process.env.STRIPE_PRICE_ID,
+        quantity: 1,
+      }],
+      success_url: `${process.env.APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.APP_URL}/`,
+      metadata: { user_id }
+    });
+
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('Stripe Fehler:', error.message);
+    res.status(500).json({ error: 'Checkout konnte nicht erstellt werden.' });
+  }
+});
+
+// Nach erfolgreichem Kauf
+app.get('/success', async (req, res) => {
+  const htmlPath = path.join(__dirname, 'public', 'success.html');
   res.send(fs.readFileSync(htmlPath, 'utf8'));
 });
 
@@ -26,24 +59,47 @@ app.post('/explain', async (req, res) => {
     return res.status(400).json({ error: 'Kein Text angegeben' });
   }
 
-  // Nutzungslimit prüfen
   const today = new Date().toISOString().split('T')[0];
   const FREE_LIMIT = 5;
 
-  const { data: usageData } = await supabase
-    .from('usage')
-    .select('count')
-    .eq('user_id', user_id)
-    .eq('date', today)
+  // Prüfen ob Premium
+  const { data: userData } = await supabase
+    .from('users')
+    .select('plan')
+    .eq('id', user_id)
     .single();
 
-  const currentCount = usageData?.count || 0;
+  const isPremium = userData?.plan === 'premium';
 
-  if (currentCount >= FREE_LIMIT) {
-    return res.status(429).json({ 
-      error: 'limit_reached',
-      message: 'Du hast dein tägliches Limit von 5 Erklärungen erreicht. Upgrade auf Premium für unlimitierte Nutzung!'
-    });
+  if (!isPremium) {
+    const { data: usageData } = await supabase
+      .from('usage')
+      .select('count')
+      .eq('user_id', user_id)
+      .eq('date', today)
+      .single();
+
+    const currentCount = usageData?.count || 0;
+
+    if (currentCount >= FREE_LIMIT) {
+      return res.status(429).json({
+        error: 'limit_reached',
+        message: 'Du hast dein tägliches Limit von 5 Erklärungen erreicht. Upgrade auf Premium für unlimitierte Nutzung!'
+      });
+    }
+
+    // Nutzung speichern
+    if (usageData) {
+      await supabase
+        .from('usage')
+        .update({ count: currentCount + 1 })
+        .eq('user_id', user_id)
+        .eq('date', today);
+    } else {
+      await supabase
+        .from('usage')
+        .insert({ user_id, date: today, count: 1 });
+    }
   }
 
   try {
@@ -73,23 +129,16 @@ Deine Regeln:
 
     const explanation = completion.choices[0].message.content;
 
-    // Nutzung speichern
-    if (usageData) {
-      await supabase
-        .from('usage')
-        .update({ count: currentCount + 1 })
-        .eq('user_id', user_id)
-        .eq('date', today);
-    } else {
-      await supabase
-        .from('usage')
-        .insert({ user_id, date: today, count: 1 });
-    }
+    const { data: usageData } = await supabase
+      .from('usage')
+      .select('count')
+      .eq('user_id', user_id)
+      .eq('date', today)
+      .single();
 
-    res.json({ 
-      explanation,
-      remaining: FREE_LIMIT - currentCount - 1
-    });
+    const remaining = isPremium ? 999 : FREE_LIMIT - (usageData?.count || 0);
+
+    res.json({ explanation, remaining });
 
   } catch (error) {
     console.error('Groq Fehler:', error.message);
