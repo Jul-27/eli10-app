@@ -7,8 +7,8 @@ const multer = require('multer');
 const pdfParse = require('pdf-parse');
 
 const upload = multer({ 
-  dest: 'uploads/',
-  limits: { fileSize: 10 * 1024 * 1024 } // Max 10MB
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 const fs = require('fs');
 require('dotenv').config();
@@ -88,15 +88,9 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
 
     // PDF verarbeiten
     if (req.file.mimetype === 'application/pdf') {
-      const dataBuffer = fs.readFileSync(req.file.path);
-      const pdfData = await pdfParse(dataBuffer);
+      const pdfData = await pdfParse(req.file.buffer);
       text = pdfData.text;
-    } else {
-      return res.status(400).json({ error: 'Nur PDF wird momentan unterstützt' });
     }
-
-    // Datei nach Verarbeitung löschen
-    fs.unlinkSync(req.file.path);
 
     if (!text || text.trim().length < 10) {
       return res.status(400).json({ error: 'Kein Text im Dokument gefunden' });
@@ -134,9 +128,6 @@ Deine Regeln:
 
   } catch (error) {
     console.error('Upload Fehler:', error.message);
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     res.status(500).json({ error: 'Dokument konnte nicht verarbeitet werden.' });
   }
 });
