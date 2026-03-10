@@ -112,10 +112,13 @@ app.post('/explain', async (req, res) => {
   const FREE_LIMIT = 5;
 
   // Prüfen ob Premium
-  const { data: userData } = await supabase
+  const { data: sessionData } = await supabase.auth.admin.getUserById(user_id);
+const userEmail = sessionData?.user?.email;
+
+const { data: userData } = await supabase
     .from('users')
     .select('plan')
-    .eq('id', user_id)
+    .eq('email', userEmail)
     .single();
 
   const isPremium = userData?.plan === 'premium';
