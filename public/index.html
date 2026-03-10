@@ -209,11 +209,24 @@
     document.getElementById('authCard').style.display = 'block';
   }
   
-  function zeigeApp(email) {
-    document.getElementById('authCard').style.display = 'none';
-    document.getElementById('appScreen').style.display = 'flex';
-    document.getElementById('userEmail').textContent = email;
-  }
+  async function zeigeApp(email) {
+  document.getElementById('authCard').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'flex';
+  document.getElementById('userEmail').textContent = email;
+
+  // Premium-Status prüfen und Zähler aktualisieren
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const user_id = session?.user?.id;
+
+  const response = await fetch('/check-status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id })
+  });
+
+  const data = await response.json();
+  document.getElementById('remainingCount').textContent = data.remaining;
+}
   
   async function erklaeren() {
     const text = document.getElementById('inputText').value.trim();

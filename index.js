@@ -134,6 +134,38 @@ Deine Regeln:
   }
 });
 
+// Status prüfen
+app.post('/check-status', async (req, res) => {
+  const { user_id } = req.body;
+  const today = new Date().toISOString().split('T')[0];
+  const FREE_LIMIT = 5;
+
+  const { data: sessionData } = await supabase.auth.admin.getUserById(user_id);
+  const userEmail = sessionData?.user?.email;
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('plan')
+    .eq('email', userEmail)
+    .single();
+
+  const isPremium = userData?.plan === 'premium';
+
+  if (isPremium) {
+    return res.json({ remaining: 999, isPremium: true });
+  }
+
+  const { data: usageData } = await supabase
+    .from('usage')
+    .select('count')
+    .eq('user_id', user_id)
+    .eq('date', today)
+    .single();
+
+  const remaining = FREE_LIMIT - (usageData?.count || 0);
+  res.json({ remaining, isPremium: false });
+});
+
 // Checkout Session erstellen
 app.post('/create-checkout', async (req, res) => {
   const { user_id, email } = req.body;
