@@ -97,7 +97,9 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
     }
 
     // Text auf 8000 Zeichen begrenzen
-    const truncatedText = text.substring(0, 8000);
+    // Doppelte Leerzeilen entfernen und Text kürzen
+    const cleanText = text.replace(/\s+/g, ' ').trim();
+    const truncatedText = cleanText.substring(0, 4000);
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
@@ -118,7 +120,7 @@ Deine Regeln:
         },
         {
           role: 'user',
-          content: `Bitte erkläre mir dieses Dokument einfach:\n\n${truncatedText}`
+          content: `Bitte erkläre mir dieses Dokument einfach und fasse es kurz zusammen. Maximal 300 Wörter:\n\n${truncatedText}`
         }
       ]
     });
