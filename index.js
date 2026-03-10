@@ -3,6 +3,13 @@ const Groq = require('groq-sdk');
 const { createClient } = require('@supabase/supabase-js');
 const Stripe = require('stripe');
 const path = require('path');
+const multer = require('multer');
+const pdfParse = require('pdf-parse');
+
+const upload = multer({ 
+  dest: 'uploads/',
+  limits: { fileSize: 10 * 1024 * 1024 } // Max 10MB
+});
 const fs = require('fs');
 require('dotenv').config();
 
@@ -68,6 +75,70 @@ app.post('/webhook', async (req, res) => {
   }
 
   res.json({ received: true });
+});
+
+// Dokument hochladen und analysieren
+app.post('/upload-document', upload.single('document'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Kein Dokument hochgeladen' });
+  }
+
+  try {
+    let text = '';
+
+    // PDF verarbeiten
+    if (req.file.mimetype === 'application/pdf') {
+      const dataBuffer = fs.readFileSync(req.file.path);
+      const pdfData = await pdfParse(dataBuffer);
+      text = pdfData.text;
+    } else {
+      return res.status(400).json({ error: 'Nur PDF wird momentan unterstützt' });
+    }
+
+    // Datei nach Verarbeitung löschen
+    fs.unlinkSync(req.file.path);
+
+    if (!text || text.trim().length < 10) {
+      return res.status(400).json({ error: 'Kein Text im Dokument gefunden' });
+    }
+
+    // Text auf 8000 Zeichen begrenzen
+    const truncatedText = text.substring(0, 8000);
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.3,
+      messages: [
+        {
+          role: 'system',
+          content: `Du bist ELI10, ein freundlicher Assistent der komplexe 
+Texte so einfach erklärt, dass ein 10-jähriges Kind sie versteht.
+
+Deine Regeln:
+- Benutze kurze, einfache Sätze
+- Erkläre Fachbegriffe sofort wenn du sie verwendest
+- Nutze gerne Alltagsbeispiele
+- Strukturiere die Erklärung klar mit Absätzen
+- Weise auf wichtige Risiken oder Fristen hin
+- Am Ende: eine kurze Zusammenfassung in 1-2 Sätzen`
+        },
+        {
+          role: 'user',
+          content: `Bitte erkläre mir dieses Dokument einfach:\n\n${truncatedText}`
+        }
+      ]
+    });
+
+    const explanation = completion.choices[0].message.content;
+    res.json({ explanation });
+
+  } catch (error) {
+    console.error('Upload Fehler:', error.message);
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ error: 'Dokument konnte nicht verarbeitet werden.' });
+  }
 });
 
 // Checkout Session erstellen
