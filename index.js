@@ -14,11 +14,60 @@ const supabase = createClient(
 );
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// Webhook braucht raw body — muss VOR express.json() stehen
+app.use('/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
   const htmlPath = path.join(__dirname, 'public', 'index.html');
   res.send(fs.readFileSync(htmlPath, 'utf8'));
+});
+
+// Stripe Webhook
+app.post('/webhook', async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error('Webhook Fehler:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Subscription erstellt — Premium aktivieren
+  if (event.type === 'customer.subscription.created') {
+    const subscription = event.data.object;
+    const customerId = subscription.customer;
+
+    const customer = await stripe.customers.retrieve(customerId);
+    const email = customer.email;
+
+    await supabase
+      .from('users')
+      .upsert({ id: customerId, email, plan: 'premium' });
+
+    console.log(`Premium aktiviert für: ${email}`);
+  }
+
+  // Subscription gekündigt — zurück zu Free
+  if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object;
+    const customerId = subscription.customer;
+
+    await supabase
+      .from('users')
+      .update({ plan: 'free' })
+      .eq('id', customerId);
+
+    console.log(`Premium deaktiviert für customer: ${customerId}`);
+  }
+
+  res.json({ received: true });
 });
 
 // Checkout Session erstellen
@@ -88,7 +137,6 @@ app.post('/explain', async (req, res) => {
       });
     }
 
-    // Nutzung speichern
     if (usageData) {
       await supabase
         .from('usage')
