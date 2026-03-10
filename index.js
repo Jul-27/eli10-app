@@ -4,7 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 const Stripe = require('stripe');
 const path = require('path');
 const multer = require('multer');
-const pdfParse = require('pdf-parse');
+const pdfParse = require('pdf-parse/lib/pdf-parse.js');
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
