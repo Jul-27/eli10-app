@@ -5,7 +5,7 @@ const Stripe = require('stripe');
 const path = require('path');
 const multer = require('multer');
 const pdfParse = require('pdf-parse/lib/pdf-parse.js');
-const Tesseract = require('tesseract.js');
+const axios = require('axios');
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -174,12 +174,21 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
   }
 
   try {
-    // OCR — Text aus Bild erkennen
-    const { data: { text } } = await Tesseract.recognize(
-      req.file.buffer,
-      'deu+eng',
-      { logger: () => {} }
+    // Bild zu Base64 konvertieren
+    const base64Image = req.file.buffer.toString('base64');
+
+    // Google Vision API aufrufen
+    const visionResponse = await axios.post(
+      `https://vision.googleapis.com/v1/images:annotate?key=${process.env.GOOGLE_VISION_API_KEY}`,
+      {
+        requests: [{
+          image: { content: base64Image },
+          features: [{ type: 'DOCUMENT_TEXT_DETECTION', maxResults: 1 }]
+        }]
+      }
     );
+
+    const text = visionResponse.data.responses[0]?.fullTextAnnotation?.text;
 
     if (!text || text.trim().length < 10) {
       return res.status(400).json({ error: 'Kein Text im Bild gefunden. Bitte ein klareres Foto machen.' });
