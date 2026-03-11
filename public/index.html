@@ -1118,7 +1118,8 @@ lucide.createIcons();
       }
 
       document.getElementById('explainBtn').disabled = false;
-      document.getElementById('explainBtn').textContent = '✨ Jetzt erklären';
+      document.getElementById('explainBtn').innerHTML = '<i data-lucide="wand-2" style="width:18px;height:18px;"></i> Jetzt erklären';
+      lucide.createIcons();
     }
 
     async function dokumentHochladen() {

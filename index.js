@@ -136,36 +136,42 @@ Deine Regeln:
   }
 });
 
-// Status prüfen
 app.post('/check-status', async (req, res) => {
   const { user_id } = req.body;
   const today = new Date().toISOString().split('T')[0];
   const FREE_LIMIT = 5;
 
-  const { data: sessionData } = await supabase.auth.admin.getUserById(user_id);
-  const userEmail = sessionData?.user?.email;
+  try {
+    const { data: sessionData } = await supabase.auth.admin.getUserById(user_id);
+    const userEmail = sessionData?.user?.email;
 
-  const { data: userData } = await supabase
-    .from('users')
-    .select('plan, created_at')
-    .eq('email', userEmail)
-    .single();
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('plan, created_at')
+      .eq('email', userEmail)
+      .single();
 
-  const isPremium = userData?.plan === 'premium';
+    // Kein Eintrag gefunden = Free User
+    const isPremium = !error && userData?.plan === 'premium';
 
-  if (isPremium) {
-    return res.json({ remaining: 999, isPremium: true, premiumSince: userData.created_at });
+    if (isPremium) {
+      return res.json({ remaining: 999, isPremium: true, premiumSince: userData.created_at });
+    }
+
+    const { data: usageData } = await supabase
+      .from('usage')
+      .select('count')
+      .eq('user_id', user_id)
+      .eq('date', today)
+      .single();
+
+    const remaining = FREE_LIMIT - (usageData?.count || 0);
+    res.json({ remaining, isPremium: false, premiumSince: null });
+
+  } catch (err) {
+    console.error('check-status Fehler:', err.message);
+    res.json({ remaining: 5, isPremium: false, premiumSince: null });
   }
-
-  const { data: usageData } = await supabase
-    .from('usage')
-    .select('count')
-    .eq('user_id', user_id)
-    .eq('date', today)
-    .single();
-
-  const remaining = FREE_LIMIT - (usageData?.count || 0);
-  res.json({ remaining, isPremium: false, premiumSince: null });
 });
 
 // Foto analysieren (OCR)
