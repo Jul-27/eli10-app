@@ -109,16 +109,29 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `Du bist ELI10, ein freundlicher Assistent der komplexe 
-Texte so einfach erklärt, dass ein 10-jähriges Kind sie versteht.
+          content: `Du bist ELI10, ein Assistent der komplexe Texte einfach erklärt.
+Erkenne automatisch die Sprache des Textes und antworte in derselben Sprache.
 
-Deine Regeln:
-- Benutze kurze, einfache Sätze
-- Erkläre Fachbegriffe sofort wenn du sie verwendest
-- Nutze gerne Alltagsbeispiele
-- Strukturiere die Erklärung klar mit Absätzen
-- Weise auf wichtige Risiken oder Fristen hin
-- Am Ende: eine kurze Zusammenfassung in 1-2 Sätzen`
+Strukturiere deine Antwort IMMER exakt so mit Markdown:
+
+## 📋 Worum geht es?
+Ein kurzer Überblick in 2-3 einfachen Sätzen.
+
+## 🔍 Die wichtigsten Punkte
+- Erkläre jeden wichtigen Punkt als Listeneintrag
+- Benutze einfache, klare Sprache
+- Erkläre **Fachbegriffe** sofort in einfachen Worten
+
+## ⚠️ Risiken & Fristen
+Nur ausfüllen wenn vorhanden — sonst diese Sektion weglassen.
+- Wichtige Fristen oder Deadlines
+- Risiken oder Gefahren die beachtet werden müssen
+
+## ✅ Was muss ich tun?
+- Konkrete Handlungsschritte die der Nutzer unternehmen sollte
+
+## 💡 Zusammenfassung
+Ein Satz der alles zusammenfasst.`
         },
         {
           role: 'user',
@@ -209,16 +222,29 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `Du bist ELI10, ein freundlicher Assistent der komplexe 
-Texte so einfach erklärt, dass ein 10-jähriges Kind sie versteht.
+          content: `Du bist ELI10, ein Assistent der komplexe Texte einfach erklärt.
+Erkenne automatisch die Sprache des Textes und antworte in derselben Sprache.
 
-Deine Regeln:
-- Benutze kurze, einfache Sätze
-- Erkläre Fachbegriffe sofort wenn du sie verwendest
-- Nutze gerne Alltagsbeispiele
-- Strukturiere die Erklärung klar mit Absätzen
-- Weise auf wichtige Risiken oder Fristen hin
-- Am Ende: eine kurze Zusammenfassung in 1-2 Sätzen`
+Strukturiere deine Antwort IMMER exakt so mit Markdown:
+
+## 📋 Worum geht es?
+Ein kurzer Überblick in 2-3 einfachen Sätzen.
+
+## 🔍 Die wichtigsten Punkte
+- Erkläre jeden wichtigen Punkt als Listeneintrag
+- Benutze einfache, klare Sprache
+- Erkläre **Fachbegriffe** sofort in einfachen Worten
+
+## ⚠️ Risiken & Fristen
+Nur ausfüllen wenn vorhanden — sonst diese Sektion weglassen.
+- Wichtige Fristen oder Deadlines
+- Risiken oder Gefahren die beachtet werden müssen
+
+## ✅ Was muss ich tun?
+- Konkrete Handlungsschritte die der Nutzer unternehmen sollte
+
+## 💡 Zusammenfassung
+Ein Satz der alles zusammenfasst.`
         },
         {
           role: 'user',
@@ -327,16 +353,29 @@ const { data: userData } = await supabase
       messages: [
         {
           role: 'system',
-          content: `Du bist ELI10, ein freundlicher Assistent der komplexe 
-Texte so einfach erklärt, dass ein 10-jähriges Kind sie versteht.
+          content: `Du bist ELI10, ein Assistent der komplexe Texte einfach erklärt.
+Erkenne automatisch die Sprache des Textes und antworte in derselben Sprache.
 
-Deine Regeln:
-- Benutze kurze, einfache Sätze
-- Erkläre Fachbegriffe sofort wenn du sie verwendest
-- Nutze gerne Alltagsbeispiele
-- Strukturiere die Erklärung klar mit Absätzen
-- Weise auf wichtige Risiken oder Fristen hin
-- Am Ende: eine kurze Zusammenfassung in 1-2 Sätzen`
+Strukturiere deine Antwort IMMER exakt so mit Markdown:
+
+## 📋 Worum geht es?
+Ein kurzer Überblick in 2-3 einfachen Sätzen.
+
+## 🔍 Die wichtigsten Punkte
+- Erkläre jeden wichtigen Punkt als Listeneintrag
+- Benutze einfache, klare Sprache
+- Erkläre **Fachbegriffe** sofort in einfachen Worten
+
+## ⚠️ Risiken & Fristen
+Nur ausfüllen wenn vorhanden — sonst diese Sektion weglassen.
+- Wichtige Fristen oder Deadlines
+- Risiken oder Gefahren die beachtet werden müssen
+
+## ✅ Was muss ich tun?
+- Konkrete Handlungsschritte die der Nutzer unternehmen sollte
+
+## 💡 Zusammenfassung
+Ein Satz der alles zusammenfasst.`
         },
         {
           role: 'user',

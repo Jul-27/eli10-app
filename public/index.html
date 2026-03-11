@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -723,6 +724,66 @@ body {
       background: #DCFCE7;
       color: var(--success);
     }
+
+    /* ── MARKDOWN RENDERING ── */
+.result-text h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #F1F5F9;
+  margin: 20px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #2C2C2E;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.result-text h2:first-child {
+  margin-top: 0;
+}
+
+.result-text ul {
+  padding-left: 0;
+  list-style: none;
+  margin: 8px 0;
+}
+
+.result-text ul li {
+  padding: 6px 0 6px 20px;
+  position: relative;
+  color: #AEAEB2;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  border-bottom: 1px solid #2C2C2E;
+}
+
+.result-text ul li:last-child {
+  border-bottom: none;
+}
+
+.result-text ul li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 14px;
+  width: 6px;
+  height: 6px;
+  background: #3B82F6;
+  border-radius: 50%;
+}
+
+.result-text strong {
+  color: #F1F5F9;
+  font-weight: 600;
+}
+
+.result-text p {
+  color: #AEAEB2;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin: 8px 0;
+}
+
   </style>
 </head>
 <body>
@@ -1177,7 +1238,7 @@ lucide.createIcons();
 
     function zeigeResult(text) {
       document.getElementById('resultCard').style.display = 'block';
-      document.getElementById('resultText').textContent = text;
+      document.getElementById('resultText').innerHTML = marked.parse(text);
       document.getElementById('explainBtn').disabled = false;
       document.getElementById('explainBtn').innerHTML = '<i data-lucide="wand-2" style="width:18px;height:18px;"></i> Jetzt erklären';
       lucide.createIcons();
