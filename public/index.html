@@ -789,14 +789,14 @@ body {
 
       <!-- HOME TAB -->
       <div class="tab-panel active" id="tab-home">
-        <h1 class="section-title">Hallo! 👋</h1>
+        <h1 class="section-title">Hallo! <i data-lucide="hand-metal" style="width:22px;height:22px;display:inline;vertical-align:middle;color:#3B82F6;"></i></h1>
         <p class="section-subtitle">Was soll ich dir heute erklären?</p>
 
         <!-- Limit Banner -->
         <div class="limit-banner" id="limitBanner">
-          <h3>⚠️ Tageslimit erreicht</h3>
+          <h3><i data-lucide="alert-triangle" style="width:15px;height:15px;display:inline;vertical-align:middle;margin-right:6px;color:#FBBF24;"></i>Tageslimit erreicht</h3>
           <p>Du hast deine 5 kostenlosen Erklärungen für heute aufgebraucht.</p>
-          <button class="btn-upgrade-banner" onclick="switchTab('premium')">⭐ Jetzt upgraden</button>
+          <button class="btn-upgrade-banner" onclick="switchTab('premium')"><i data-lucide="zap" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:6px;"></i>Jetzt upgraden</button>
         </div>
 
         <div class="input-card">
@@ -843,7 +843,7 @@ body {
           <h2>ELI10 Premium</h2>
           <p>Unbegrenzte Erklärungen, alle Features, keine Limits.</p>
           <div class="premium-price">9.99€ <span>/ Monat</span></div>
-          <button class="btn-premium" onclick="upgrade()">⭐ Jetzt upgraden</button>
+          <button class="btn-premium" onclick="upgrade()"><i data-lucide="zap" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px;"></i>Jetzt upgraden</button>
         </div>
 
         <div class="premium-features">
@@ -878,7 +878,7 @@ body {
         <div class="profile-header">
           <div class="profile-avatar"><i data-lucide="user" style="width:28px;height:28px;color:#3B82F6;"></i></div>
           <div class="profile-email" id="profileEmail"></div>
-          <div class="profile-plan" id="profilePlan">Free Plan</div>
+          <div class="profile-plan" id="profilePlan"><i data-lucide="circle" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px;"></i>Free Plan</div>
         </div>
 
         <div class="settings-card">
@@ -936,7 +936,7 @@ body {
 
     </div>
 
-    <div class="disclaimer">⚠️ ELI10 ersetzt keine professionelle Beratung.</div>
+    <div class="disclaimer"><i data-lucide="alert-triangle" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px;color:#FBBF24;"></i>ELI10 ersetzt keine professionelle Beratung.</div>
   </div>
 
   <script>
@@ -1146,7 +1146,7 @@ body {
       historyList.innerHTML = data.history.map(item => `
         <div class="history-item" onclick="toggleHistory(this)">
           <div class="history-date">${new Date(item.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-          <div class="history-preview">📝 ${item.input_text.substring(0, 80)}${item.input_text.length > 80 ? '...' : ''}</div>
+          <div class="history-preview"><i data-lucide="file-text" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;color:#3B82F6;"></i>${item.input_text.substring(0, 80)}
           <div class="history-toggle">▼ Erklärung anzeigen</div>
           <div class="history-explanation">${item.explanation}</div>
         </div>
