@@ -1144,13 +1144,13 @@ body {
         return;
       }
       historyList.innerHTML = data.history.map(item => `
-        <div class="history-item" onclick="toggleHistory(this)">
-          <div class="history-date">${new Date(item.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-          <div class="history-preview"><i data-lucide="file-text" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;color:#3B82F6;"></i>${item.input_text.substring(0, 80)}
-          <div class="history-toggle">▼ Erklärung anzeigen</div>
-          <div class="history-explanation">${item.explanation}</div>
-        </div>
-      `).join('');
+    <div class="history-item" onclick="toggleHistory(this)" style="background:#1C1C1E; border-radius:12px; padding:16px 20px; border:1.5px solid #2C2C2E; margin-bottom:12px; cursor:pointer;">
+      <div class="history-date">${new Date(item.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+      <div class="history-preview"><i data-lucide="file-text" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;color:#3B82F6;"></i>${item.input_text.substring(0, 80)}${item.input_text.length > 80 ? '...' : ''}</div>
+      <div class="history-toggle" style="font-size:0.8rem;color:#3B82F6;margin-top:6px;">▼ Erklärung anzeigen</div>
+      <div class="history-explanation" style="display:none;font-size:0.85rem;color:#9CA3AF;line-height:1.7;margin-top:12px;padding-top:12px;border-top:1px solid #2C2C2E;white-space:pre-wrap;">${item.explanation}</div>
+    </div>
+  `).join('');
     }
 
     function toggleHistory(el) {
