@@ -160,6 +160,13 @@
     </div>
   </div>
 
+  <div id="historySection" style="display:none; width:100%; max-width:600px; margin-bottom:20px;">
+    <div style="background:white; border-radius:16px; padding:24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+      <h2 style="color:#2563eb; margin-bottom:16px;">🕐 Mein Verlauf</h2>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
   <p class="disclaimer">⚠️ ELI10 ist kein Ersatz für rechtliche, medizinische oder steuerliche Beratung.</p>
 
 <script>
@@ -230,6 +237,9 @@
 
   const data = await response.json();
   document.getElementById('remainingCount').textContent = data.remaining;
+
+  document.getElementById('historySection').style.display = 'block';
+  ladVerlauf();
 }
   
   async function erklaeren() {
@@ -359,6 +369,48 @@ async function fotoAnalysieren() {
   }
 
   imageInput.value = '';
+}
+
+async function ladVerlauf() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const user_id = session?.user?.id;
+
+  const response = await fetch(`/history/${user_id}`);
+  const data = await response.json();
+
+  const historyList = document.getElementById('historyList');
+
+  if (!data.history || data.history.length === 0) {
+    historyList.innerHTML = '<p style="color:#9ca3af;">Noch keine Erklärungen vorhanden.</p>';
+    return;
+  }
+
+  historyList.innerHTML = data.history.map(item => `
+    <div style="border:1px solid #e5e7eb; border-radius:10px; padding:14px; margin-bottom:12px; cursor:pointer;" onclick="zeigeHistoryItem(this)">
+      <div style="font-size:0.8rem; color:#9ca3af; margin-bottom:6px;">
+        ${new Date(item.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}
+      </div>
+      <div style="color:#374151; font-size:0.9rem; font-weight:bold; margin-bottom:8px;">
+        📝 ${item.input_text.substring(0, 80)}${item.input_text.length > 80 ? '...' : ''}
+      </div>
+      <div class="history-explanation" style="display:none; color:#6b7280; font-size:0.9rem; margin-top:8px; line-height:1.6;">
+        ${item.explanation}
+      </div>
+      <div style="color:#2563eb; font-size:0.8rem; margin-top:4px;">▼ Erklärung anzeigen</div>
+    </div>
+  `).join('');
+}
+
+function zeigeHistoryItem(el) {
+  const explanation = el.querySelector('.history-explanation');
+  const arrow = el.querySelector('div:last-child');
+  if (explanation.style.display === 'none') {
+    explanation.style.display = 'block';
+    arrow.textContent = '▲ Erklärung verbergen';
+  } else {
+    explanation.style.display = 'none';
+    arrow.textContent = '▼ Erklärung anzeigen';
+  }
 }
 
 </script>

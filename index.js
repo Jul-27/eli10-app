@@ -350,12 +350,40 @@ Deine Regeln:
 
     const remaining = isPremium ? 999 : FREE_LIMIT - (usageData?.count || 0);
 
+// Erklärung in History speichern
+await supabase
+  .from('history')
+  .insert({
+    user_id,
+    input_text: text.substring(0, 500),
+    explanation: explanation.substring(0, 2000),
+    created_at: new Date().toISOString()
+  });
+
     res.json({ explanation, remaining });
 
   } catch (error) {
     console.error('Groq Fehler:', error.message);
     res.status(500).json({ error: 'KI konnte den Text nicht verarbeiten.' });
   }
+});
+
+// Verlauf abrufen
+app.get('/history/:user_id', async (req, res) => {
+  const { user_id } = req.params;
+
+  const { data, error } = await supabase
+    .from('history')
+    .select('*')
+    .eq('user_id', user_id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) {
+    return res.status(500).json({ error: 'Verlauf konnte nicht geladen werden.' });
+  }
+
+  res.json({ history: data });
 });
 
 app.listen(3000, () => {
