@@ -661,13 +661,13 @@ body {
     .feature-check {
       width: 24px;
       height: 24px;
-      background: #DCFCE7;
+      background: #064E3B;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
       flex-shrink: 0;
+      color: #34D399;
     }
 
     /* ── ÜBER TAB ── */
@@ -839,6 +839,32 @@ body {
 
       <!-- PREMIUM TAB -->
       <div class="tab-panel" id="tab-premium">
+
+        <!-- Wird nur für Premium-User angezeigt -->
+<div id="premiumActiveBox" style="display:none; background:#1C1C1E; border:1.5px solid #2C2C2E; border-radius:16px; padding:28px 24px; margin-bottom:20px; text-align:center;">
+  <i data-lucide="shield-check" style="width:40px;height:40px;color:#34D399;margin-bottom:12px;"></i>
+  <h2 style="font-size:1.4rem;font-weight:700;color:#F1F5F9;margin-bottom:6px;">Premium aktiv</h2>
+  <p style="color:#6B7280;font-size:0.9rem;margin-bottom:20px;">Du genießt unbegrenzten Zugang zu allen Features.</p>
+  <div style="background:#111111;border-radius:12px;padding:16px;text-align:left;">
+    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #2C2C2E;">
+      <span style="color:#6B7280;font-size:0.9rem;">Status</span>
+      <span style="color:#34D399;font-weight:600;font-size:0.9rem;"><i data-lucide="check-circle" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>Aktiv</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #2C2C2E;">
+      <span style="color:#6B7280;font-size:0.9rem;">Plan</span>
+      <span style="color:#F1F5F9;font-weight:600;font-size:0.9rem;">ELI10 Premium</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #2C2C2E;">
+      <span style="color:#6B7280;font-size:0.9rem;">Preis</span>
+      <span style="color:#F1F5F9;font-weight:600;font-size:0.9rem;">9.99€ / Monat</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0;">
+      <span style="color:#6B7280;font-size:0.9rem;">Aktiv seit</span>
+      <span style="color:#F1F5F9;font-weight:600;font-size:0.9rem;" id="premiumSinceDate">—</span>
+    </div>
+  </div>
+</div>
+
         <div class="premium-hero">
           <h2>ELI10 Premium</h2>
           <p>Unbegrenzte Erklärungen, alle Features, keine Limits.</p>
@@ -848,24 +874,20 @@ body {
 
         <div class="premium-features">
           <div class="premium-feature-item">
-            <div class="feature-check">✓</div>
+            <div class="feature-check"><i data-lucide="check" style="width:14px;height:14px;"></i></div>
             Unbegrenzte Erklärungen täglich
           </div>
           <div class="premium-feature-item">
-            <div class="feature-check">✓</div>
-            PDF Dokumente hochladen
+            <div class="feature-check"><i data-lucide="check" style="width:14px;height:14px;"></i></div>            PDF Dokumente hochladen
           </div>
           <div class="premium-feature-item">
-            <div class="feature-check">✓</div>
-            Fotos von Dokumenten analysieren
+            <div class="feature-check"><i data-lucide="check" style="width:14px;height:14px;"></i></div>            Fotos von Dokumenten analysieren
           </div>
           <div class="premium-feature-item">
-            <div class="feature-check">✓</div>
-            Vollständiger Verlauf
+            <div class="feature-check"><i data-lucide="check" style="width:14px;height:14px;"></i></div>            Vollständiger Verlauf
           </div>
           <div class="premium-feature-item">
-            <div class="feature-check">✓</div>
-            Prioritäts-Support
+            <div class="feature-check"><i data-lucide="check" style="width:14px;height:14px;"></i></div>            Prioritäts-Support
           </div>
         </div>
       </div>
@@ -1023,11 +1045,26 @@ body {
       aktualisiereZaehler(data.remaining, data.isPremium);
 
       if (data.isPremium) {
-        document.getElementById('profilePlan').innerHTML = '<i data-lucide="zap" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px;"></i>Premium';
-        document.getElementById('profilePlan').style.color = '#34D399';
-      }
+  // Profil
+  document.getElementById('profilePlan').innerHTML = '<i data-lucide="zap" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px;"></i>Premium';
+  document.getElementById('profilePlan').style.color = '#34D399';
 
-      lucide.createIcons();
+  // Premium Tab — Info Box anzeigen, Upgrade Box verstecken
+  document.getElementById('premiumActiveBox').style.display = 'block';
+  document.querySelector('.premium-hero').style.display = 'none';
+  document.querySelector('.premium-features').style.display = 'none';
+
+  // Datum setzen
+  if (data.premiumSince) {
+    const date = new Date(data.premiumSince).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+    document.getElementById('premiumSinceDate').textContent = date;
+  }
+
+  // Profil — "Premium upgraden" Button verstecken
+  document.querySelector('.settings-item[onclick="switchTab(\'premium\')"]').style.display = 'none';
+}
+
+lucide.createIcons();
     }
 
     function aktualisiereZaehler(remaining, isPremium) {

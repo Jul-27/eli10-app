@@ -147,14 +147,14 @@ app.post('/check-status', async (req, res) => {
 
   const { data: userData } = await supabase
     .from('users')
-    .select('plan')
+    .select('plan, created_at')
     .eq('email', userEmail)
     .single();
 
   const isPremium = userData?.plan === 'premium';
 
   if (isPremium) {
-    return res.json({ remaining: 999, isPremium: true });
+    return res.json({ remaining: 999, isPremium: true, premiumSince: userData.created_at });
   }
 
   const { data: usageData } = await supabase
@@ -165,7 +165,7 @@ app.post('/check-status', async (req, res) => {
     .single();
 
   const remaining = FREE_LIMIT - (usageData?.count || 0);
-  res.json({ remaining, isPremium: false });
+  res.json({ remaining, isPremium: false, premiumSince: null });
 });
 
 // Foto analysieren (OCR)
