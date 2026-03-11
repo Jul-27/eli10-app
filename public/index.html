@@ -1022,9 +1022,10 @@ body {
     }
 
     // Session Check
-    window.addEventListener('load', async () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      lucide.createIcons();
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) zeigeApp(session.user.email);
+    if (session) zeigeApp(session.user.email);
     });
 
     async function zeigeApp(email) {
@@ -1222,9 +1223,6 @@ lucide.createIcons();
       const data = await response.json();
       if (data.url) window.location.href = data.url;
     }
-
-    window.addEventListener('load', () => lucide.createIcons());
-    document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
 
   </script>
 
