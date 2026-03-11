@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ELI10 — Einfach erklärt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,7 +35,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: linear-gradient(160deg, #0D0D0D 0%, #1A1A1A 50%, #111111 100%);
   min-height: 100vh;
   color: var(--primary);
@@ -721,7 +724,7 @@ body {
 
   <!-- AUTH SCREEN -->
   <div id="authScreen">
-    <div class="auth-logo">🧒</div>
+    <div class="auth-logo"><i data-lucide="sparkles" style="width:48px;height:48px;color:#3B82F6;"></i></div>
     <h1 class="auth-title">ELI10</h1>
     <p class="auth-subtitle">Komplexe Dokumente einfach erklärt</p>
 
@@ -752,11 +755,11 @@ body {
     <div class="app-header">
       <div class="header-top">
         <div class="header-logo">
-          🧒 ELI10
+          <i data-lucide="sparkles" style="width:20px;height:20px;color:#3B82F6;"></i> ELI10
         </div>
         <div>
           <span class="remaining-badge" id="remainingBadge">
-            ⚡ <span id="remainingCount">5</span> heute
+            <i data-lucide="zap" style="width:12px;height:12px;"></i> <span id="remainingCount">5</span> heute
           </span>
         </div>
       </div>
@@ -764,19 +767,19 @@ body {
       <!-- TAB BAR -->
       <div class="tab-bar">
         <button class="tab-item active" onclick="switchTab('home')">
-          <span class="tab-icon">✨</span>Erklären
+          <span class="tab-icon"><i data-lucide="wand-2" style="width:16px;height:16px;"></i></span>Erklären
         </button>
         <button class="tab-item" onclick="switchTab('history')">
-          <span class="tab-icon">🕐</span>Verlauf
+          <span class="tab-icon"><i data-lucide="clock" style="width:16px;height:16px;"></i></span>Verlauf
         </button>
         <button class="tab-item" onclick="switchTab('premium')">
-          <span class="tab-icon">⭐</span>Premium
+          <span class="tab-icon"><i data-lucide="zap" style="width:16px;height:16px;"></i></span>Premium
         </button>
         <button class="tab-item" onclick="switchTab('profile')">
-          <span class="tab-icon">👤</span>Profil
+          <span class="tab-icon"><i data-lucide="user" style="width:16px;height:16px;"></i></span>Profil
         </button>
         <button class="tab-item" onclick="switchTab('about')">
-          <span class="tab-icon">ℹ️</span>Über
+          <span class="tab-icon"><i data-lucide="info" style="width:16px;height:16px;"></i></span>Über
         </button>
       </div>
     </div>
@@ -802,10 +805,10 @@ body {
 
           <div class="upload-buttons">
             <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
-              📎 PDF hochladen
+              <i data-lucide="file-text" style="width:15px;height:15px;display:inline;vertical-align:middle;margin-right:6px;"></i>PDF hochladen
             </button>
             <button class="btn-upload" onclick="document.getElementById('imageInput').click()">
-              📷 Foto machen
+              <i data-lucide="camera" style="width:15px;height:15px;display:inline;vertical-align:middle;margin-right:6px;"></i>Foto machen
             </button>
           </div>
 
@@ -814,13 +817,13 @@ body {
           <textarea id="inputText" class="text-area" placeholder="Füge hier einen Vertragsabschnitt, Arztbrief, Behördenbrief oder anderen komplexen Text ein..."></textarea>
 
           <button class="btn-explain" id="explainBtn" onclick="erklaeren()">
-            ✨ Jetzt erklären
+            <i data-lucide="wand-2" style="width:18px;height:18px;"></i> Jetzt erklären
           </button>
         </div>
 
         <div class="result-card" id="resultCard">
           <div class="result-header">
-            <span>📖</span>
+            <i data-lucide="book-open" style="width:18px;height:18px;color:#3B82F6;"></i>
             <h2>Erklärung</h2>
           </div>
           <div class="result-text" id="resultText"></div>
@@ -873,7 +876,7 @@ body {
         <p class="section-subtitle">Dein Account</p>
 
         <div class="profile-header">
-          <div class="profile-avatar">👤</div>
+          <div class="profile-avatar"><i data-lucide="user" style="width:28px;height:28px;color:#3B82F6;"></i></div>
           <div class="profile-email" id="profileEmail"></div>
           <div class="profile-plan" id="profilePlan">Free Plan</div>
         </div>
@@ -881,21 +884,21 @@ body {
         <div class="settings-card">
           <div class="settings-item" onclick="switchTab('premium')">
             <div class="settings-item-left">
-              <div class="settings-icon">⭐</div>
+              <div class="settings-icon"><i data-lucide="zap" style="width:16px;height:16px;color:#3B82F6;"></i></div>
               <span class="settings-label">Premium upgraden</span>
             </div>
             <span class="settings-arrow">›</span>
           </div>
           <div class="settings-item" onclick="switchTab('history')">
             <div class="settings-item-left">
-              <div class="settings-icon">🕐</div>
+              <div class="settings-icon"><i data-lucide="clock" style="width:16px;height:16px;color:#3B82F6;"></i></div>
               <span class="settings-label">Mein Verlauf</span>
             </div>
             <span class="settings-arrow">›</span>
           </div>
           <div class="settings-item" onclick="switchTab('about')">
             <div class="settings-item-left">
-              <div class="settings-icon">ℹ️</div>
+              <div class="settings-icon"><i data-lucide="info" style="width:16px;height:16px;color:#3B82F6;"></i></div>
               <span class="settings-label">Über ELI10</span>
             </div>
             <span class="settings-arrow">›</span>
@@ -911,22 +914,22 @@ body {
         <p class="section-subtitle">Was steckt dahinter?</p>
 
         <div class="about-card">
-          <h3>🧒 Was ist ELI10?</h3>
+          <h3><i data-lucide="sparkles" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px;color:#3B82F6;"></i>Was ist ELI10?</h3>
           <p>ELI10 steht für "Explain Like I'm 10" — erkläre es mir wie einem 10-jährigen Kind. Wir nutzen modernste KI um komplexe Dokumente in einfache, verständliche Sprache zu übersetzen.</p>
         </div>
 
         <div class="about-card">
-          <h3>📄 Was kann ich erklären lassen?</h3>
+          <h3><i data-lucide="file-text" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px;color:#3B82F6;"></i>Was kann ich erklären lassen?</h3>
           <p>Verträge, Mietverträge, Versicherungen, medizinische Befunde, Steuerdokumente, Behördenbriefe, wissenschaftliche Artikel und vieles mehr.</p>
         </div>
 
         <div class="about-card">
-          <h3>🔒 Datenschutz</h3>
+          <h3><i data-lucide="shield" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px;color:#3B82F6;"></i>Datenschutz</h3>
           <p>Deine Dokumente werden nur zur Analyse verwendet und nicht dauerhaft gespeichert. Wir nehmen Datenschutz sehr ernst.</p>
         </div>
 
         <div class="about-card">
-          <h3>⚠️ Wichtiger Hinweis</h3>
+          <h3><i data-lucide="alert-triangle" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px;color:#FBBF24;"></i>Wichtiger Hinweis</h3>
           <p>ELI10 ist kein Ersatz für rechtliche, medizinische oder steuerliche Beratung. Bei wichtigen Entscheidungen konsultiere immer einen qualifizierten Experten.</p>
         </div>
       </div>
@@ -1023,6 +1026,8 @@ body {
         document.getElementById('profilePlan').textContent = '⭐ Premium';
         document.getElementById('profilePlan').style.color = '#059669';
       }
+
+      lucide.createIcons();
     }
 
     function aktualisiereZaehler(remaining, isPremium) {
@@ -1168,6 +1173,10 @@ body {
       const data = await response.json();
       if (data.url) window.location.href = data.url;
     }
+
+    window.addEventListener('load', () => lucide.createIcons());
+    document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+
   </script>
 
 </body>
