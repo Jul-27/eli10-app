@@ -6,6 +6,7 @@ const path = require('path');
 const multer = require('multer');
 const pdfParse = require('pdf-parse/lib/pdf-parse.js');
 const axios = require('axios');
+const FormData = require('form-data');
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
