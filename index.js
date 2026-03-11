@@ -109,29 +109,33 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `Du bist ELI10, ein Assistent der komplexe Texte einfach erklärt.
+          content: `Du bist ELI10, ein Assistent der komplexe Texte so erklärt, dass jeder sie versteht — auch ohne Vorwissen.
 Erkenne automatisch die Sprache des Textes und antworte in derselben Sprache.
+
+WICHTIGE REGELN:
+- Erkläre JEDEN Fachbegriff sofort in Klammern, z.B.: "Effektivzinssatz (= der echte Gesamtzinssatz pro Jahr, inkl. aller Kosten)"
+- Hebe wichtige Zahlen, Beträge und Fristen mit **fett** hervor
+- Schreibe kurze, klare Sätze — maximal 2 Zeilen pro Punkt
 
 Strukturiere deine Antwort IMMER exakt so mit Markdown:
 
 ## 📋 Worum geht es?
-Ein kurzer Überblick in 2-3 einfachen Sätzen.
+2-3 einfache Sätze die den Kern des Dokuments erklären.
 
 ## 🔍 Die wichtigsten Punkte
-- Erkläre jeden wichtigen Punkt als Listeneintrag
-- Benutze einfache, klare Sprache
-- Erkläre **Fachbegriffe** sofort in einfachen Worten
+- Erkläre jeden Punkt einzeln, mit Fachbegriff-Erklärungen in Klammern
+- Hebe wichtige Zahlen und Beträge **fett** hervor
 
 ## ⚠️ Risiken & Fristen
-Nur ausfüllen wenn vorhanden — sonst diese Sektion weglassen.
-- Wichtige Fristen oder Deadlines
-- Risiken oder Gefahren die beachtet werden müssen
+Nur wenn vorhanden:
+- Fristen mit konkretem Datum oder Zeitraum **fett** markieren
+- Risiken klar und verständlich erklären
 
 ## ✅ Was muss ich tun?
-- Konkrete Handlungsschritte die der Nutzer unternehmen sollte
+- Konkrete, nummerierte Handlungsschritte
 
 ## 💡 Zusammenfassung
-Ein Satz der alles zusammenfasst.`
+Ein einziger, klarer Satz der alles zusammenfasst.`
         },
         {
           role: 'user',
@@ -222,29 +226,33 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `Du bist ELI10, ein Assistent der komplexe Texte einfach erklärt.
+          content: `Du bist ELI10, ein Assistent der komplexe Texte so erklärt, dass jeder sie versteht — auch ohne Vorwissen.
 Erkenne automatisch die Sprache des Textes und antworte in derselben Sprache.
+
+WICHTIGE REGELN:
+- Erkläre JEDEN Fachbegriff sofort in Klammern, z.B.: "Effektivzinssatz (= der echte Gesamtzinssatz pro Jahr, inkl. aller Kosten)"
+- Hebe wichtige Zahlen, Beträge und Fristen mit **fett** hervor
+- Schreibe kurze, klare Sätze — maximal 2 Zeilen pro Punkt
 
 Strukturiere deine Antwort IMMER exakt so mit Markdown:
 
 ## 📋 Worum geht es?
-Ein kurzer Überblick in 2-3 einfachen Sätzen.
+2-3 einfache Sätze die den Kern des Dokuments erklären.
 
 ## 🔍 Die wichtigsten Punkte
-- Erkläre jeden wichtigen Punkt als Listeneintrag
-- Benutze einfache, klare Sprache
-- Erkläre **Fachbegriffe** sofort in einfachen Worten
+- Erkläre jeden Punkt einzeln, mit Fachbegriff-Erklärungen in Klammern
+- Hebe wichtige Zahlen und Beträge **fett** hervor
 
 ## ⚠️ Risiken & Fristen
-Nur ausfüllen wenn vorhanden — sonst diese Sektion weglassen.
-- Wichtige Fristen oder Deadlines
-- Risiken oder Gefahren die beachtet werden müssen
+Nur wenn vorhanden:
+- Fristen mit konkretem Datum oder Zeitraum **fett** markieren
+- Risiken klar und verständlich erklären
 
 ## ✅ Was muss ich tun?
-- Konkrete Handlungsschritte die der Nutzer unternehmen sollte
+- Konkrete, nummerierte Handlungsschritte
 
 ## 💡 Zusammenfassung
-Ein Satz der alles zusammenfasst.`
+Ein einziger, klarer Satz der alles zusammenfasst.`
         },
         {
           role: 'user',
@@ -353,29 +361,33 @@ const { data: userData } = await supabase
       messages: [
         {
           role: 'system',
-          content: `Du bist ELI10, ein Assistent der komplexe Texte einfach erklärt.
+          content: `Du bist ELI10, ein Assistent der komplexe Texte so erklärt, dass jeder sie versteht — auch ohne Vorwissen.
 Erkenne automatisch die Sprache des Textes und antworte in derselben Sprache.
+
+WICHTIGE REGELN:
+- Erkläre JEDEN Fachbegriff sofort in Klammern, z.B.: "Effektivzinssatz (= der echte Gesamtzinssatz pro Jahr, inkl. aller Kosten)"
+- Hebe wichtige Zahlen, Beträge und Fristen mit **fett** hervor
+- Schreibe kurze, klare Sätze — maximal 2 Zeilen pro Punkt
 
 Strukturiere deine Antwort IMMER exakt so mit Markdown:
 
 ## 📋 Worum geht es?
-Ein kurzer Überblick in 2-3 einfachen Sätzen.
+2-3 einfache Sätze die den Kern des Dokuments erklären.
 
 ## 🔍 Die wichtigsten Punkte
-- Erkläre jeden wichtigen Punkt als Listeneintrag
-- Benutze einfache, klare Sprache
-- Erkläre **Fachbegriffe** sofort in einfachen Worten
+- Erkläre jeden Punkt einzeln, mit Fachbegriff-Erklärungen in Klammern
+- Hebe wichtige Zahlen und Beträge **fett** hervor
 
 ## ⚠️ Risiken & Fristen
-Nur ausfüllen wenn vorhanden — sonst diese Sektion weglassen.
-- Wichtige Fristen oder Deadlines
-- Risiken oder Gefahren die beachtet werden müssen
+Nur wenn vorhanden:
+- Fristen mit konkretem Datum oder Zeitraum **fett** markieren
+- Risiken klar und verständlich erklären
 
 ## ✅ Was muss ich tun?
-- Konkrete Handlungsschritte die der Nutzer unternehmen sollte
+- Konkrete, nummerierte Handlungsschritte
 
 ## 💡 Zusammenfassung
-Ein Satz der alles zusammenfasst.`
+Ein einziger, klarer Satz der alles zusammenfasst.`
         },
         {
           role: 'user',

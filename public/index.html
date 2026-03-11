@@ -725,17 +725,19 @@ body {
       color: var(--success);
     }
 
-    /* ── MARKDOWN RENDERING ── */
+/* ── MARKDOWN RENDERING ── */
 .result-text h2 {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #F1F5F9;
-  margin: 20px 0 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #2C2C2E;
+  margin: 24px 0 10px;
+  padding: 10px 14px;
+  background: #2C2C2E;
+  border-radius: 8px;
+  border-left: 3px solid #3B82F6;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .result-text h2:first-child {
@@ -745,15 +747,15 @@ body {
 .result-text ul {
   padding-left: 0;
   list-style: none;
-  margin: 8px 0;
+  margin: 6px 0 12px;
 }
 
 .result-text ul li {
-  padding: 6px 0 6px 20px;
+  padding: 8px 12px 8px 28px;
   position: relative;
-  color: #AEAEB2;
-  font-size: 0.9rem;
-  line-height: 1.6;
+  color: #D1D1D6;
+  font-size: 0.875rem;
+  line-height: 1.65;
   border-bottom: 1px solid #2C2C2E;
 }
 
@@ -764,8 +766,8 @@ body {
 .result-text ul li::before {
   content: '';
   position: absolute;
-  left: 4px;
-  top: 14px;
+  left: 10px;
+  top: 16px;
   width: 6px;
   height: 6px;
   background: #3B82F6;
@@ -773,15 +775,24 @@ body {
 }
 
 .result-text strong {
-  color: #F1F5F9;
-  font-weight: 600;
+  color: #FBBF24;
+  font-weight: 700;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
 .result-text p {
-  color: #AEAEB2;
-  font-size: 0.9rem;
+  color: #D1D1D6;
+  font-size: 0.875rem;
   line-height: 1.7;
-  margin: 8px 0;
+  margin: 6px 0 14px;
+  padding: 0 4px;
+}
+
+/* Risiken-Sektion orange hervorheben */
+.result-text h2:has(+ ul li) {
+  border-left-color: #3B82F6;
 }
 
   </style>
