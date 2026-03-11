@@ -5,6 +5,7 @@ const Stripe = require('stripe');
 const path = require('path');
 const multer = require('multer');
 const pdfParse = require('pdf-parse/lib/pdf-parse.js');
+const Tesseract = require('tesseract.js');
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -164,6 +165,60 @@ app.post('/check-status', async (req, res) => {
 
   const remaining = FREE_LIMIT - (usageData?.count || 0);
   res.json({ remaining, isPremium: false });
+});
+
+// Foto analysieren (OCR)
+app.post('/analyze-image', upload.single('image'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Kein Bild hochgeladen' });
+  }
+
+  try {
+    // OCR — Text aus Bild erkennen
+    const { data: { text } } = await Tesseract.recognize(
+      req.file.buffer,
+      'deu+eng',
+      { logger: () => {} }
+    );
+
+    if (!text || text.trim().length < 10) {
+      return res.status(400).json({ error: 'Kein Text im Bild gefunden. Bitte ein klareres Foto machen.' });
+    }
+
+    const cleanText = text.replace(/\s+/g, ' ').trim();
+    const truncatedText = cleanText.substring(0, 4000);
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.3,
+      messages: [
+        {
+          role: 'system',
+          content: `Du bist ELI10, ein freundlicher Assistent der komplexe 
+Texte so einfach erklärt, dass ein 10-jähriges Kind sie versteht.
+
+Deine Regeln:
+- Benutze kurze, einfache Sätze
+- Erkläre Fachbegriffe sofort wenn du sie verwendest
+- Nutze gerne Alltagsbeispiele
+- Strukturiere die Erklärung klar mit Absätzen
+- Weise auf wichtige Risiken oder Fristen hin
+- Am Ende: eine kurze Zusammenfassung in 1-2 Sätzen`
+        },
+        {
+          role: 'user',
+          content: `Bitte erkläre mir diesen Text aus einem Foto einfach und fasse ihn kurz zusammen. Maximal 300 Wörter:\n\n${truncatedText}`
+        }
+      ]
+    });
+
+    const explanation = completion.choices[0].message.content;
+    res.json({ explanation });
+
+  } catch (error) {
+    console.error('OCR Fehler:', error.message);
+    res.status(500).json({ error: 'Bild konnte nicht verarbeitet werden.' });
+  }
 });
 
 // Checkout Session erstellen

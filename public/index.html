@@ -145,7 +145,11 @@
           📎 PDF hochladen und erklären
         </button>
       </div>
-      <div style="text-align:center; color:#9ca3af; margin-bottom:12px; font-size:0.9rem;">— oder Text direkt eingeben —</div>
+      <input type="file" id="imageInput" accept="image/*" capture="environment" style="display:none" onchange="fotoAnalysieren()">
+<button onclick="document.getElementById('imageInput').click()" style="background:#059669; color:white; border:none; padding:12px 20px; border-radius:10px; font-size:0.95rem; cursor:pointer; font-weight:bold; width:100%; margin-bottom:12px;">
+  📷 Foto machen und erklären
+</button>
+<div style="text-align:center; color:#9ca3af; margin-bottom:12px; font-size:0.9rem;">— oder Text direkt eingeben —</div>
       <textarea id="inputText" placeholder="Füge hier deinen Text ein... z.B. einen Vertragsabschnitt, einen Arztbrief oder einen Behördenbrief."></textarea>
       <button id="explainBtn" onclick="erklaeren()">✨ Jetzt erklären</button>
     </div>
@@ -321,6 +325,40 @@ async function dokumentHochladen() {
   }
 
   fileInput.value = '';
+}
+
+async function fotoAnalysieren() {
+  const imageInput = document.getElementById('imageInput');
+  const file = imageInput.files[0];
+  if (!file) return;
+
+  const resultCard = document.getElementById('resultCard');
+  const resultText = document.getElementById('resultText');
+
+  resultCard.style.display = 'block';
+  resultText.innerHTML = '<span class="loading">📷 Foto wird analysiert... Das kann 10-20 Sekunden dauern.</span>';
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  try {
+    const response = await fetch('/analyze-image', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      resultText.textContent = 'Fehler: ' + data.error;
+    } else {
+      resultText.textContent = data.explanation;
+    }
+  } catch (error) {
+    resultText.textContent = 'Fehler beim Analysieren. Bitte versuche es erneut.';
+  }
+
+  imageInput.value = '';
 }
 
 </script>
