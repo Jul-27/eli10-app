@@ -7,413 +7,1158 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #0A0A0A;
+      --accent: #2563EB;
+      --accent-light: #EFF6FF;
+      --success: #059669;
+      --warning: #D97706;
+      --danger: #DC2626;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-400: #9CA3AF;
+      --gray-600: #4B5563;
+      --gray-800: #1F2937;
+      --white: #FFFFFF;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #f0f4ff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray-50);
+      min-height: 100vh;
+      color: var(--primary);
+    }
+
+    /* ── AUTH ── */
+    #authScreen {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px 20px;
-    }
-    h1 { font-size: 2rem; color: #2563eb; margin-bottom: 8px; }
-    .subtitle { color: #6b7280; margin-bottom: 30px; text-align: center; }
-    .card {
-      background: white;
-      border-radius: 16px;
+      justify-content: center;
       padding: 24px;
-      width: 100%;
-      max-width: 600px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      margin-bottom: 20px;
+      background: var(--white);
     }
-    input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      font-size: 1rem;
-      margin-bottom: 10px;
-      outline: none;
+
+    .auth-logo {
+      font-size: 3rem;
+      margin-bottom: 8px;
     }
-    input:focus { border-color: #2563eb; }
-    textarea {
-      width: 100%;
-      height: 150px;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 14px;
-      font-size: 1rem;
-      resize: vertical;
-      outline: none;
+
+    .auth-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
     }
-    textarea:focus { border-color: #2563eb; }
-    button {
-      margin-top: 14px;
+
+    .auth-subtitle {
+      color: var(--gray-400);
+      margin-bottom: 40px;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    .auth-card {
       width: 100%;
-      padding: 14px;
-      background: #2563eb;
-      color: white;
+      max-width: 400px;
+    }
+
+    .auth-tabs {
+      display: flex;
+      background: var(--gray-100);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
       border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: bold;
+      background: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 500;
       cursor: pointer;
+      color: var(--gray-400);
+      transition: all 0.2s;
     }
-    button:hover { background: #1d4ed8; }
-    button:disabled { background: #93c5fd; cursor: not-allowed; }
-    .secondary-btn {
-      background: white;
-      color: #2563eb;
-      border: 2px solid #2563eb;
+
+    .auth-tab.active {
+      background: var(--white);
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      margin-bottom: 6px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+      background: var(--white);
+    }
+
+    .input-field:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
       margin-top: 8px;
     }
-    .secondary-btn:hover { background: #f0f4ff; }
-    .result-card {
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
+
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .auth-message {
+      font-size: 0.85rem;
+      margin-top: 12px;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    .auth-message.error { color: var(--danger); }
+    .auth-message.success { color: var(--success); }
+
+    /* ── APP SHELL ── */
+    #appScreen { display: none; flex-direction: column; min-height: 100vh; }
+
+    /* ── HEADER ── */
+    .app-header {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 16px 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .header-badge {
+      background: var(--accent);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .header-badge.free {
+      background: var(--gray-200);
+      color: var(--gray-600);
+    }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tab-item {
+      flex: 1;
+      padding: 10px 8px;
+      border: none;
+      background: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gray-400);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab-item.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-item .tab-icon { font-size: 1rem; display: block; margin-bottom: 2px; }
+
+    /* ── CONTENT ── */
+    .app-content {
+      flex: 1;
+      padding: 24px 20px;
+      max-width: 640px;
       width: 100%;
-      max-width: 600px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin: 0 auto;
+    }
+
+    /* ── TAB PANELS ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── HOME TAB ── */
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .section-subtitle {
+      color: var(--gray-400);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+
+    .input-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+      border: 1.5px solid var(--gray-200);
+    }
+
+    .upload-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .btn-upload {
+      padding: 12px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      background: var(--white);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--gray-800);
+      text-align: center;
+    }
+
+    .btn-upload:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gray-200);
+    }
+
+    .divider span {
+      font-size: 0.8rem;
+      color: var(--gray-400);
+      white-space: nowrap;
+    }
+
+    .text-area {
+      width: 100%;
+      height: 140px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      font-size: 0.95rem;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+      color: var(--gray-800);
+      transition: border 0.2s;
+    }
+
+    .text-area:focus { border-color: var(--accent); }
+
+    .btn-explain {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-explain:hover { opacity: 0.9; }
+    .btn-explain:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── RESULT CARD ── */
+    .result-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1.5px solid var(--gray-200);
+      display: none;
+      margin-bottom: 16px;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .result-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .result-text {
+      color: var(--gray-600);
+      line-height: 1.8;
+      font-size: 0.95rem;
+      white-space: pre-wrap;
+    }
+
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 0;
+      gap: 12px;
+    }
+
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      color: var(--gray-400);
+      font-size: 0.9rem;
+    }
+
+    /* ── LIMIT BANNER ── */
+    .limit-banner {
+      background: #FFF7ED;
+      border: 1.5px solid #FED7AA;
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 16px;
       display: none;
     }
-    .result-card h2 { color: #2563eb; margin-bottom: 12px; }
-    .result-text { color: #374151; line-height: 1.7; white-space: pre-wrap; }
-    .loading { text-align: center; color: #6b7280; font-style: italic; }
-    .disclaimer {
-      font-size: 0.75rem;
-      color: #9ca3af;
-      text-align: center;
-      margin-top: 20px;
-      max-width: 600px;
+
+    .limit-banner h3 {
+      color: var(--warning);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 4px;
     }
-    .user-info {
-      text-align: right;
-      width: 100%;
-      max-width: 600px;
-      margin-bottom: 10px;
-      color: #6b7280;
-      font-size: 0.9rem;
+
+    .limit-banner p {
+      color: var(--gray-600);
+      font-size: 0.85rem;
+      margin-bottom: 12px;
     }
-    .user-info span { color: #2563eb; font-weight: bold; }
-    .logout-btn {
-      background: none;
+
+    .btn-upgrade-banner {
+      padding: 10px 20px;
+      background: var(--warning);
+      color: white;
       border: none;
-      color: #dc2626;
-      cursor: pointer;
+      border-radius: var(--radius-md);
       font-size: 0.9rem;
-      margin-left: 10px;
-      padding: 0;
-      width: auto;
-      margin-top: 0;
+      font-weight: 600;
+      cursor: pointer;
     }
-    .error { color: #dc2626; font-size: 0.9rem; margin-top: 8px; }
-    .success { color: #059669; font-size: 0.9rem; margin-top: 8px; }
+
+    /* ── VERLAUF TAB ── */
+    .history-item {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1.5px solid var(--gray-200);
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .history-item:hover { border-color: var(--accent); }
+
+    .history-date {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      margin-bottom: 6px;
+    }
+
+    .history-preview {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .history-explanation {
+      display: none;
+      font-size: 0.85rem;
+      color: var(--gray-600);
+      line-height: 1.7;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--gray-200);
+      white-space: pre-wrap;
+    }
+
+    .history-toggle {
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 6px;
+    }
+
+    /* ── PROFIL TAB ── */
+    .profile-header {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1.5px solid var(--gray-200);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .profile-avatar {
+      width: 64px;
+      height: 64px;
+      background: var(--accent-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin: 0 auto 12px;
+    }
+
+    .profile-email {
+      font-size: 0.9rem;
+      color: var(--gray-600);
+      margin-bottom: 4px;
+    }
+
+    .profile-plan {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .settings-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1.5px solid var(--gray-200);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .settings-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .settings-item:last-child { border-bottom: none; }
+    .settings-item:hover { background: var(--gray-50); }
+
+    .settings-item-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .settings-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--gray-100);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .settings-label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--primary);
+    }
+
+    .settings-arrow { color: var(--gray-400); font-size: 0.8rem; }
+
+    .btn-logout {
+      width: 100%;
+      padding: 14px;
+      background: var(--white);
+      color: var(--danger);
+      border: 1.5px solid #FCA5A5;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover { background: #FEF2F2; }
+
+    /* ── PREMIUM TAB ── */
+    .premium-hero {
+      background: linear-gradient(135deg, #1E40AF, #2563EB);
+      border-radius: var(--radius-xl);
+      padding: 32px 24px;
+      text-align: center;
+      color: white;
+      margin-bottom: 20px;
+    }
+
+    .premium-hero h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .premium-hero p {
+      opacity: 0.85;
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    .premium-price {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .premium-price span {
+      font-size: 1rem;
+      font-weight: 400;
+      opacity: 0.75;
+    }
+
+    .btn-premium {
+      width: 100%;
+      padding: 14px;
+      background: white;
+      color: var(--accent);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-premium:hover { opacity: 0.9; }
+
+    .premium-features {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1.5px solid var(--gray-200);
+    }
+
+    .premium-feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 0.9rem;
+      color: var(--gray-800);
+    }
+
+    .premium-feature-item:last-child { border-bottom: none; }
+
+    .feature-check {
+      width: 24px;
+      height: 24px;
+      background: #DCFCE7;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    /* ── ÜBER TAB ── */
+    .about-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1.5px solid var(--gray-200);
+      margin-bottom: 16px;
+    }
+
+    .about-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+
+    .about-card p {
+      font-size: 0.9rem;
+      color: var(--gray-600);
+      line-height: 1.7;
+    }
+
+    /* ── DISCLAIMER ── */
+    .disclaimer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      padding: 16px 20px;
+    }
+
+    /* ── REMAINING BADGE ── */
+    .remaining-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--gray-100);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      color: var(--gray-600);
+      font-weight: 500;
+    }
+
+    .remaining-badge.premium {
+      background: #DCFCE7;
+      color: var(--success);
+    }
   </style>
 </head>
 <body>
 
-  <h1>🧒 ELI10</h1>
-  <p class="subtitle">Füge einen komplexen Text ein — wir erklären ihn einfach.</p>
+  <!-- AUTH SCREEN -->
+  <div id="authScreen">
+    <div class="auth-logo">🧒</div>
+    <h1 class="auth-title">ELI10</h1>
+    <p class="auth-subtitle">Komplexe Dokumente einfach erklärt</p>
 
-  <!-- Auth Screen -->
-  <div class="card" id="authCard">
-    <h2 style="color:#2563eb; margin-bottom:16px;" id="authTitle">Anmelden</h2>
-    <input type="email" id="emailInput" placeholder="E-Mail Adresse" />
-    <input type="password" id="passwordInput" placeholder="Passwort" />
-    <div id="authMessage"></div>
-    <button onclick="login()">🔐 Anmelden</button>
-    <button class="secondary-btn" onclick="register()">✨ Neu registrieren</button>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Anmelden</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Registrieren</button>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">E-Mail</label>
+        <input type="email" id="emailInput" class="input-field" placeholder="deine@email.com" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">Passwort</label>
+        <input type="password" id="passwordInput" class="input-field" placeholder="••••••••" />
+      </div>
+
+      <div id="authMessage" class="auth-message"></div>
+      <button class="btn-primary" id="authBtn" onclick="handleAuth()">Anmelden</button>
+    </div>
   </div>
 
-  <!-- App Screen (nach Login) -->
-  <div id="appScreen" style="display:none; width:100%; display:none; flex-direction:column; align-items:center;">
-    <div class="user-info">
-      Eingeloggt als <span id="userEmail"></span>
-      <button class="logout-btn" onclick="logout()">Abmelden</button>
-      <div style="font-size:0.85rem; color:#6b7280; margin-top:4px;">
-        Verbleibende Erklärungen heute: <span id="remainingCount" style="color:#2563eb; font-weight:bold;">5</span>
-      </div>
-    </div>
+  <!-- APP SCREEN -->
+  <div id="appScreen">
 
-    <div class="card">
-      <div style="margin-bottom:16px;">
-        <p style="color:#374151; font-weight:bold; margin-bottom:8px;">📄 Dokument hochladen:</p>
-        <input type="file" id="fileInput" accept=".pdf" style="display:none" onchange="dokumentHochladen()">
-        <button onclick="document.getElementById('fileInput').click()" style="background:#7c3aed; color:white; border:none; padding:12px 20px; border-radius:10px; font-size:0.95rem; cursor:pointer; font-weight:bold; width:100%;">
-          📎 PDF hochladen und erklären
+    <!-- HEADER -->
+    <div class="app-header">
+      <div class="header-top">
+        <div class="header-logo">
+          🧒 ELI10
+        </div>
+        <div>
+          <span class="remaining-badge" id="remainingBadge">
+            ⚡ <span id="remainingCount">5</span> heute
+          </span>
+        </div>
+      </div>
+
+      <!-- TAB BAR -->
+      <div class="tab-bar">
+        <button class="tab-item active" onclick="switchTab('home')">
+          <span class="tab-icon">✨</span>Erklären
+        </button>
+        <button class="tab-item" onclick="switchTab('history')">
+          <span class="tab-icon">🕐</span>Verlauf
+        </button>
+        <button class="tab-item" onclick="switchTab('premium')">
+          <span class="tab-icon">⭐</span>Premium
+        </button>
+        <button class="tab-item" onclick="switchTab('profile')">
+          <span class="tab-icon">👤</span>Profil
+        </button>
+        <button class="tab-item" onclick="switchTab('about')">
+          <span class="tab-icon">ℹ️</span>Über
         </button>
       </div>
-      <input type="file" id="imageInput" accept="image/*" capture="environment" style="display:none" onchange="fotoAnalysieren()">
-<button onclick="document.getElementById('imageInput').click()" style="background:#059669; color:white; border:none; padding:12px 20px; border-radius:10px; font-size:0.95rem; cursor:pointer; font-weight:bold; width:100%; margin-bottom:12px;">
-  📷 Foto machen und erklären
-</button>
-<div style="text-align:center; color:#9ca3af; margin-bottom:12px; font-size:0.9rem;">— oder Text direkt eingeben —</div>
-      <textarea id="inputText" placeholder="Füge hier deinen Text ein... z.B. einen Vertragsabschnitt, einen Arztbrief oder einen Behördenbrief."></textarea>
-      <button id="explainBtn" onclick="erklaeren()">✨ Jetzt erklären</button>
     </div>
 
-    <div class="result-card" id="resultCard">
-      <h2>📖 Erklärung</h2>
-      <div class="result-text" id="resultText"></div>
+    <!-- CONTENT -->
+    <div class="app-content">
+
+      <!-- HOME TAB -->
+      <div class="tab-panel active" id="tab-home">
+        <h1 class="section-title">Hallo! 👋</h1>
+        <p class="section-subtitle">Was soll ich dir heute erklären?</p>
+
+        <!-- Limit Banner -->
+        <div class="limit-banner" id="limitBanner">
+          <h3>⚠️ Tageslimit erreicht</h3>
+          <p>Du hast deine 5 kostenlosen Erklärungen für heute aufgebraucht.</p>
+          <button class="btn-upgrade-banner" onclick="switchTab('premium')">⭐ Jetzt upgraden</button>
+        </div>
+
+        <div class="input-card">
+          <input type="file" id="fileInput" accept=".pdf" style="display:none" onchange="dokumentHochladen()">
+          <input type="file" id="imageInput" accept="image/*" capture="environment" style="display:none" onchange="fotoAnalysieren()">
+
+          <div class="upload-buttons">
+            <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+              📎 PDF hochladen
+            </button>
+            <button class="btn-upload" onclick="document.getElementById('imageInput').click()">
+              📷 Foto machen
+            </button>
+          </div>
+
+          <div class="divider"><span>oder Text eingeben</span></div>
+
+          <textarea id="inputText" class="text-area" placeholder="Füge hier einen Vertragsabschnitt, Arztbrief, Behördenbrief oder anderen komplexen Text ein..."></textarea>
+
+          <button class="btn-explain" id="explainBtn" onclick="erklaeren()">
+            ✨ Jetzt erklären
+          </button>
+        </div>
+
+        <div class="result-card" id="resultCard">
+          <div class="result-header">
+            <span>📖</span>
+            <h2>Erklärung</h2>
+          </div>
+          <div class="result-text" id="resultText"></div>
+        </div>
+      </div>
+
+      <!-- VERLAUF TAB -->
+      <div class="tab-panel" id="tab-history">
+        <h1 class="section-title">Verlauf</h1>
+        <p class="section-subtitle">Deine letzten Erklärungen</p>
+        <div id="historyList"></div>
+      </div>
+
+      <!-- PREMIUM TAB -->
+      <div class="tab-panel" id="tab-premium">
+        <div class="premium-hero">
+          <h2>ELI10 Premium</h2>
+          <p>Unbegrenzte Erklärungen, alle Features, keine Limits.</p>
+          <div class="premium-price">9.99€ <span>/ Monat</span></div>
+          <button class="btn-premium" onclick="upgrade()">⭐ Jetzt upgraden</button>
+        </div>
+
+        <div class="premium-features">
+          <div class="premium-feature-item">
+            <div class="feature-check">✓</div>
+            Unbegrenzte Erklärungen täglich
+          </div>
+          <div class="premium-feature-item">
+            <div class="feature-check">✓</div>
+            PDF Dokumente hochladen
+          </div>
+          <div class="premium-feature-item">
+            <div class="feature-check">✓</div>
+            Fotos von Dokumenten analysieren
+          </div>
+          <div class="premium-feature-item">
+            <div class="feature-check">✓</div>
+            Vollständiger Verlauf
+          </div>
+          <div class="premium-feature-item">
+            <div class="feature-check">✓</div>
+            Prioritäts-Support
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFIL TAB -->
+      <div class="tab-panel" id="tab-profile">
+        <h1 class="section-title">Profil</h1>
+        <p class="section-subtitle">Dein Account</p>
+
+        <div class="profile-header">
+          <div class="profile-avatar">👤</div>
+          <div class="profile-email" id="profileEmail"></div>
+          <div class="profile-plan" id="profilePlan">Free Plan</div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-item" onclick="switchTab('premium')">
+            <div class="settings-item-left">
+              <div class="settings-icon">⭐</div>
+              <span class="settings-label">Premium upgraden</span>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+          <div class="settings-item" onclick="switchTab('history')">
+            <div class="settings-item-left">
+              <div class="settings-icon">🕐</div>
+              <span class="settings-label">Mein Verlauf</span>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+          <div class="settings-item" onclick="switchTab('about')">
+            <div class="settings-item-left">
+              <div class="settings-icon">ℹ️</div>
+              <span class="settings-label">Über ELI10</span>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+        </div>
+
+        <button class="btn-logout" onclick="logout()">Abmelden</button>
+      </div>
+
+      <!-- ÜBER TAB -->
+      <div class="tab-panel" id="tab-about">
+        <h1 class="section-title">Über ELI10</h1>
+        <p class="section-subtitle">Was steckt dahinter?</p>
+
+        <div class="about-card">
+          <h3>🧒 Was ist ELI10?</h3>
+          <p>ELI10 steht für "Explain Like I'm 10" — erkläre es mir wie einem 10-jährigen Kind. Wir nutzen modernste KI um komplexe Dokumente in einfache, verständliche Sprache zu übersetzen.</p>
+        </div>
+
+        <div class="about-card">
+          <h3>📄 Was kann ich erklären lassen?</h3>
+          <p>Verträge, Mietverträge, Versicherungen, medizinische Befunde, Steuerdokumente, Behördenbriefe, wissenschaftliche Artikel und vieles mehr.</p>
+        </div>
+
+        <div class="about-card">
+          <h3>🔒 Datenschutz</h3>
+          <p>Deine Dokumente werden nur zur Analyse verwendet und nicht dauerhaft gespeichert. Wir nehmen Datenschutz sehr ernst.</p>
+        </div>
+
+        <div class="about-card">
+          <h3>⚠️ Wichtiger Hinweis</h3>
+          <p>ELI10 ist kein Ersatz für rechtliche, medizinische oder steuerliche Beratung. Bei wichtigen Entscheidungen konsultiere immer einen qualifizierten Experten.</p>
+        </div>
+      </div>
+
     </div>
+
+    <div class="disclaimer">⚠️ ELI10 ersetzt keine professionelle Beratung.</div>
   </div>
 
-  <div id="historySection" style="display:none; width:100%; max-width:600px; margin-bottom:20px;">
-    <div style="background:white; border-radius:16px; padding:24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-      <h2 style="color:#2563eb; margin-bottom:16px;">🕐 Mein Verlauf</h2>
-      <div id="historyList"></div>
-    </div>
-  </div>
+  <script>
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
+      'https://srmpdeqpwikjdbwjudqs.supabase.co',
+      'sb_publishable_bVb-24sFpnG6sPxDvmwqfw_F4_F9Mcw'
+    );
 
-  <p class="disclaimer">⚠️ ELI10 ist kein Ersatz für rechtliche, medizinische oder steuerliche Beratung.</p>
+    let currentAuthMode = 'login';
 
-<script>
+    // Auth Tab Switch
+    function switchAuthTab(mode) {
+      currentAuthMode = mode;
+      document.querySelectorAll('.auth-tab').forEach((t, i) => {
+        t.classList.toggle('active', (mode === 'login' && i === 0) || (mode === 'register' && i === 1));
+      });
+      document.getElementById('authBtn').textContent = mode === 'login' ? 'Anmelden' : 'Registrieren';
+      document.getElementById('authMessage').textContent = '';
+    }
 
-  const { createClient } = supabase;
-  const supabaseClient = createClient(
-    'https://srmpdeqpwikjdbwjudqs.supabase.co',
-    'sb_publishable_bVb-24sFpnG6sPxDvmwqfw_F4_F9Mcw'
-  );
-  
-  window.addEventListener('load', async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) { zeigeApp(session.user.email); }
-  });
-  
-  async function login() {
-    const email = document.getElementById('emailInput').value;
-    const password = document.getElementById('passwordInput').value;
-    const msg = document.getElementById('authMessage');
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-      msg.className = 'error';
-      msg.textContent = 'Fehler: ' + error.message;
-    } else {
+    // Handle Auth
+    async function handleAuth() {
+      const email = document.getElementById('emailInput').value;
+      const password = document.getElementById('passwordInput').value;
+      const msg = document.getElementById('authMessage');
+
+      if (currentAuthMode === 'login') {
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          msg.className = 'auth-message error';
+          msg.textContent = 'Fehler: ' + error.message;
+        } else {
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          zeigeApp(session.user.email);
+        }
+      } else {
+        if (password.length < 6) {
+          msg.className = 'auth-message error';
+          msg.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
+          return;
+        }
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) {
+          msg.className = 'auth-message error';
+          msg.textContent = 'Fehler: ' + error.message;
+        } else {
+          zeigeApp(email);
+        }
+      }
+    }
+
+    // Tab Switch
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      const tabs = ['home', 'history', 'premium', 'profile', 'about'];
+      document.querySelectorAll('.tab-item')[tabs.indexOf(tabName)].classList.add('active');
+      if (tabName === 'history') ladVerlauf();
+    }
+
+    // Session Check
+    window.addEventListener('load', async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
-      zeigeApp(session.user.email);
-    }
-  }
-  
-  async function register() {
-    const email = document.getElementById('emailInput').value;
-    const password = document.getElementById('passwordInput').value;
-    const msg = document.getElementById('authMessage');
-    if (password.length < 6) {
-      msg.className = 'error';
-      msg.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
-      return;
-    }
-    const { data, error } = await supabaseClient.auth.signUp({ email, password });
-    if (error) {
-      msg.className = 'error';
-      msg.textContent = 'Fehler: ' + error.message;
-    } else {
-      zeigeApp(email);
-    }
-  }
-  
-  async function logout() {
-    await supabaseClient.auth.signOut();
-    document.getElementById('appScreen').style.display = 'none';
-    document.getElementById('authCard').style.display = 'block';
-  }
-  
-  async function zeigeApp(email) {
-  document.getElementById('authCard').style.display = 'none';
-  document.getElementById('appScreen').style.display = 'flex';
-  document.getElementById('userEmail').textContent = email;
+      if (session) zeigeApp(session.user.email);
+    });
 
-  // Premium-Status prüfen und Zähler aktualisieren
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const user_id = session?.user?.id;
+    async function zeigeApp(email) {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('appScreen').style.display = 'flex';
+      document.getElementById('profileEmail').textContent = email;
 
-  const response = await fetch('/check-status', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id })
-  });
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user_id = session?.user?.id;
 
-  const data = await response.json();
-  document.getElementById('remainingCount').textContent = data.remaining;
-
-  document.getElementById('historySection').style.display = 'block';
-  ladVerlauf();
-}
-  
-  async function erklaeren() {
-    const text = document.getElementById('inputText').value.trim();
-    if (!text) { alert('Bitte füge zuerst einen Text ein.'); return; }
-  
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    const user_id = session?.user?.id;
-  
-    const btn = document.getElementById('explainBtn');
-    const resultCard = document.getElementById('resultCard');
-    const resultText = document.getElementById('resultText');
-  
-    btn.disabled = true;
-    btn.textContent = '⏳ Wird analysiert...';
-    resultCard.style.display = 'block';
-    resultText.innerHTML = '<span class="loading">KI analysiert deinen Text...</span>';
-  
-    try {
-      const response = await fetch('/explain', {
+      const response = await fetch('/check-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, user_id })
+        body: JSON.stringify({ user_id })
+      });
+
+      const data = await response.json();
+      aktualisiereZaehler(data.remaining, data.isPremium);
+
+      if (data.isPremium) {
+        document.getElementById('profilePlan').textContent = '⭐ Premium';
+        document.getElementById('profilePlan').style.color = '#059669';
+      }
+    }
+
+    function aktualisiereZaehler(remaining, isPremium) {
+      document.getElementById('remainingCount').textContent = isPremium ? '∞' : remaining;
+      const badge = document.getElementById('remainingBadge');
+      badge.className = isPremium ? 'remaining-badge premium' : 'remaining-badge';
+    }
+
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      document.getElementById('appScreen').style.display = 'none';
+      document.getElementById('authScreen').style.display = 'flex';
+    }
+
+    async function erklaeren() {
+      const text = document.getElementById('inputText').value.trim();
+      if (!text) { alert('Bitte füge zuerst einen Text ein.'); return; }
+
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user_id = session?.user?.id;
+
+      zeigeLoading('KI analysiert deinen Text...');
+
+      try {
+        const response = await fetch('/explain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, user_id })
+        });
+        const data = await response.json();
+
+        if (data.error === 'limit_reached') {
+          versteckeResult();
+          document.getElementById('limitBanner').style.display = 'block';
+        } else {
+          zeigeResult(data.explanation);
+          aktualisiereZaehler(data.remaining, data.remaining === 999);
+          document.getElementById('limitBanner').style.display = 'none';
+        }
+      } catch (error) {
+        zeigeResult('Fehler. Bitte versuche es erneut.');
+      }
+
+      document.getElementById('explainBtn').disabled = false;
+      document.getElementById('explainBtn').textContent = '✨ Jetzt erklären';
+    }
+
+    async function dokumentHochladen() {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return;
+      zeigeLoading('📄 Dokument wird analysiert...');
+      const formData = new FormData();
+      formData.append('document', file);
+      try {
+        const response = await fetch('/upload-document', { method: 'POST', body: formData });
+        const data = await response.json();
+        zeigeResult(data.error ? 'Fehler: ' + data.error : data.explanation);
+      } catch (e) {
+        zeigeResult('Fehler beim Hochladen.');
+      }
+      document.getElementById('fileInput').value = '';
+    }
+
+    async function fotoAnalysieren() {
+      const file = document.getElementById('imageInput').files[0];
+      if (!file) return;
+      zeigeLoading('📷 Foto wird analysiert...');
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const response = await fetch('/analyze-image', { method: 'POST', body: formData });
+        const data = await response.json();
+        zeigeResult(data.error ? 'Fehler: ' + data.error : data.explanation);
+      } catch (e) {
+        zeigeResult('Fehler beim Analysieren.');
+      }
+      document.getElementById('imageInput').value = '';
+    }
+
+    function zeigeLoading(text) {
+      const btn = document.getElementById('explainBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Analysiert...';
+      const resultCard = document.getElementById('resultCard');
+      const resultText = document.getElementById('resultText');
+      resultCard.style.display = 'block';
+      resultText.innerHTML = `
+        <div class="loading-state">
+          <div class="loading-spinner"></div>
+          <span class="loading-text">${text}</span>
+        </div>
+      `;
+    }
+
+    function zeigeResult(text) {
+      document.getElementById('resultCard').style.display = 'block';
+      document.getElementById('resultText').textContent = text;
+      document.getElementById('explainBtn').disabled = false;
+      document.getElementById('explainBtn').textContent = '✨ Jetzt erklären';
+    }
+
+    function versteckeResult() {
+      document.getElementById('resultCard').style.display = 'none';
+    }
+
+    async function ladVerlauf() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user_id = session?.user?.id;
+      const response = await fetch(`/history/${user_id}`);
+      const data = await response.json();
+      const historyList = document.getElementById('historyList');
+      if (!data.history || data.history.length === 0) {
+        historyList.innerHTML = '<p style="color:#9ca3af; text-align:center; padding:40px 0;">Noch keine Erklärungen vorhanden.</p>';
+        return;
+      }
+      historyList.innerHTML = data.history.map(item => `
+        <div class="history-item" onclick="toggleHistory(this)">
+          <div class="history-date">${new Date(item.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+          <div class="history-preview">📝 ${item.input_text.substring(0, 80)}${item.input_text.length > 80 ? '...' : ''}</div>
+          <div class="history-toggle">▼ Erklärung anzeigen</div>
+          <div class="history-explanation">${item.explanation}</div>
+        </div>
+      `).join('');
+    }
+
+    function toggleHistory(el) {
+      const exp = el.querySelector('.history-explanation');
+      const toggle = el.querySelector('.history-toggle');
+      const isOpen = exp.style.display === 'block';
+      exp.style.display = isOpen ? 'none' : 'block';
+      toggle.textContent = isOpen ? '▼ Erklärung anzeigen' : '▲ Erklärung verbergen';
+    }
+
+    async function upgrade() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user_id = session?.user?.id;
+      const email = session?.user?.email;
+      const response = await fetch('/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id, email })
       });
       const data = await response.json();
-  
-      if (data.error === 'limit_reached') {
-        resultText.innerHTML = `
-          <span style="color:#dc2626; font-weight:bold;">⚠️ Tageslimit erreicht!</span><br><br>
-          ${data.message}<br><br>
-<button onclick="upgrade()" style="background:#059669; color:white; border:none; padding:12px 24px; border-radius:10px; font-size:1rem; cursor:pointer; font-weight:bold;">
-  ⭐ Jetzt Premium werden — 9.99€/Monat
-</button>
-        `;
-      } else {
-        resultText.textContent = data.explanation;
-        document.getElementById('remainingCount').textContent = data.remaining;
-      }
-    } catch (error) {
-      resultText.textContent = 'Fehler. Bitte versuche es erneut.';
+      if (data.url) window.location.href = data.url;
     }
-  
-    btn.disabled = false;
-    btn.textContent = '✨ Jetzt erklären';
-  }
-
-  async function upgrade() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const user_id = session?.user?.id;
-  const email = session?.user?.email;
-
-  const response = await fetch('/create-checkout', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id, email })
-  });
-
-  const data = await response.json();
-  if (data.url) {
-    window.location.href = data.url;
-  }
-}
-
-async function dokumentHochladen() {
-  const fileInput = document.getElementById('fileInput');
-  const file = fileInput.files[0];
-  if (!file) return;
-
-  const resultCard = document.getElementById('resultCard');
-  const resultText = document.getElementById('resultText');
-
-  resultCard.style.display = 'block';
-  resultText.innerHTML = '<span class="loading">📄 Dokument wird analysiert...</span>';
-
-  const formData = new FormData();
-  formData.append('document', file);
-
-  try {
-    const response = await fetch('/upload-document', {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await response.json();
-
-    if (data.error) {
-      resultText.textContent = 'Fehler: ' + data.error;
-    } else {
-      resultText.textContent = data.explanation;
-    }
-  } catch (error) {
-    resultText.textContent = 'Fehler beim Hochladen. Bitte versuche es erneut.';
-  }
-
-  fileInput.value = '';
-}
-
-async function fotoAnalysieren() {
-  const imageInput = document.getElementById('imageInput');
-  const file = imageInput.files[0];
-  if (!file) return;
-
-  const resultCard = document.getElementById('resultCard');
-  const resultText = document.getElementById('resultText');
-
-  resultCard.style.display = 'block';
-  resultText.innerHTML = '<span class="loading">📷 Foto wird analysiert... Das kann 10-20 Sekunden dauern.</span>';
-
-  const formData = new FormData();
-  formData.append('image', file);
-
-  try {
-    const response = await fetch('/analyze-image', {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await response.json();
-
-    if (data.error) {
-      resultText.textContent = 'Fehler: ' + data.error;
-    } else {
-      resultText.textContent = data.explanation;
-    }
-  } catch (error) {
-    resultText.textContent = 'Fehler beim Analysieren. Bitte versuche es erneut.';
-  }
-
-  imageInput.value = '';
-}
-
-async function ladVerlauf() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const user_id = session?.user?.id;
-
-  const response = await fetch(`/history/${user_id}`);
-  const data = await response.json();
-
-  const historyList = document.getElementById('historyList');
-
-  if (!data.history || data.history.length === 0) {
-    historyList.innerHTML = '<p style="color:#9ca3af;">Noch keine Erklärungen vorhanden.</p>';
-    return;
-  }
-
-  historyList.innerHTML = data.history.map(item => `
-    <div style="border:1px solid #e5e7eb; border-radius:10px; padding:14px; margin-bottom:12px; cursor:pointer;" onclick="zeigeHistoryItem(this)">
-      <div style="font-size:0.8rem; color:#9ca3af; margin-bottom:6px;">
-        ${new Date(item.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}
-      </div>
-      <div style="color:#374151; font-size:0.9rem; font-weight:bold; margin-bottom:8px;">
-        📝 ${item.input_text.substring(0, 80)}${item.input_text.length > 80 ? '...' : ''}
-      </div>
-      <div class="history-explanation" style="display:none; color:#6b7280; font-size:0.9rem; margin-top:8px; line-height:1.6;">
-        ${item.explanation}
-      </div>
-      <div style="color:#2563eb; font-size:0.8rem; margin-top:4px;">▼ Erklärung anzeigen</div>
-    </div>
-  `).join('');
-}
-
-function zeigeHistoryItem(el) {
-  const explanation = el.querySelector('.history-explanation');
-  const arrow = el.querySelector('div:last-child');
-  if (explanation.style.display === 'none') {
-    explanation.style.display = 'block';
-    arrow.textContent = '▲ Erklärung verbergen';
-  } else {
-    explanation.style.display = 'none';
-    arrow.textContent = '▼ Erklärung anzeigen';
-  }
-}
-
-</script>
+  </script>
 
 </body>
 </html>
