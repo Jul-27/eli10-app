@@ -1023,8 +1023,8 @@ body {
       aktualisiereZaehler(data.remaining, data.isPremium);
 
       if (data.isPremium) {
-        document.getElementById('profilePlan').textContent = '⭐ Premium';
-        document.getElementById('profilePlan').style.color = '#059669';
+        document.getElementById('profilePlan').innerHTML = '<i data-lucide="zap" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px;"></i>Premium';
+        document.getElementById('profilePlan').style.color = '#34D399';
       }
 
       lucide.createIcons();
