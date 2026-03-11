@@ -174,21 +174,20 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
   }
 
   try {
-    // Bild zu Base64 konvertieren
-    const base64Image = req.file.buffer.toString('base64');
+    // OCR.space API aufrufen
+    const formData = new FormData();
+    formData.append('base64Image', `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`);
+    formData.append('language', 'ger');
+    formData.append('isOverlayRequired', 'false');
+    formData.append('apikey', process.env.OCR_SPACE_API_KEY);
 
-    // Google Vision API aufrufen
-    const visionResponse = await axios.post(
-      `https://vision.googleapis.com/v1/images:annotate?key=${process.env.GOOGLE_VISION_API_KEY}`,
-      {
-        requests: [{
-          image: { content: base64Image },
-          features: [{ type: 'DOCUMENT_TEXT_DETECTION', maxResults: 1 }]
-        }]
-      }
+    const ocrResponse = await axios.post(
+      'https://api.ocr.space/parse/image',
+      formData,
+      { headers: formData.getHeaders() }
     );
 
-    const text = visionResponse.data.responses[0]?.fullTextAnnotation?.text;
+    const text = ocrResponse.data.ParsedResults?.[0]?.ParsedText;
 
     if (!text || text.trim().length < 10) {
       return res.status(400).json({ error: 'Kein Text im Bild gefunden. Bitte ein klareres Foto machen.' });
@@ -229,6 +228,7 @@ Deine Regeln:
     res.status(500).json({ error: 'Bild konnte nicht verarbeitet werden.' });
   }
 });
+
 
 // Checkout Session erstellen
 app.post('/create-checkout', async (req, res) => {
