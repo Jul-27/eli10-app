@@ -467,6 +467,133 @@ app.get('/history/:user_id', async (req, res) => {
   res.json({ history: data });
 });
 
+app.post('/chat', async (req, res) => {
+  const { user_id, session_id, message } = req.body;
+  const FREE_LIMIT = 5;
+  const today = new Date().toISOString().split('T')[0];
+
+  try {
+    // Premium check
+    const { data: sessionData } = await supabase.auth.admin.getUserById(user_id);
+    const userEmail = sessionData?.user?.email;
+    const { data: userData } = await supabase.from('users').select('plan').eq('email', userEmail).single();
+    const isPremium = userData?.plan === 'premium';
+
+    // Usage check für Free User
+    if (!isPremium) {
+      const { data: usageData } = await supabase.from('usage').select('count').eq('user_id', user_id).eq('date', today).single();
+      const count = usageData?.count || 0;
+      if (count >= FREE_LIMIT) {
+        return res.status(429).json({ error: 'LIMIT_REACHED' });
+      }
+      await supabase.from('usage').upsert({ user_id, date: today, count: count + 1 }, { onConflict: 'user_id,date' });
+    }
+
+    // Bisherigen Chatverlauf laden
+    const { data: history } = await supabase
+      .from('chats')
+      .select('role, message')
+      .eq('user_id', user_id)
+      .eq('session_id', session_id)
+      .order('created_at', { ascending: true });
+
+    const messages = (history || []).map(h => ({
+      role: h.role,
+      content: h.message
+    }));
+
+    // Neue Nachricht anhängen
+    messages.push({ role: 'user', content: message });
+
+    // Nachricht in DB speichern
+    await supabase.from('chats').insert({ user_id, session_id, role: 'user', message });
+
+    // Groq API aufrufen
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        {
+          role: 'system',
+          content: `Du bist ELI10, ein Assistent der komplexe Themen und Dokumente so erklärt, dass ein Mensch ohne Fachkenntnisse sie vollständig versteht.
+Erkenne automatisch die Sprache der Nachricht und antworte in derselben Sprache.
+
+PFLICHTREGELN:
+- Erkläre JEDEN Fachbegriff sofort in Klammern, z.B.: API (= eine Schnittstelle die zwei Programme miteinander verbindet)
+- Stelle dir vor du erklärst es jemandem der dieses Thema noch nie gehört hat
+- Hebe wichtige Begriffe mit **fett** hervor
+- Beantworte Rückfragen immer im Kontext des bisherigen Gesprächs
+- Schreibe kurze, klare Sätze
+
+Wenn es eine erste Erklärung ist, strukturiere sie so:
+## 📋 Was ist das?
+## 🔍 Die wichtigsten Punkte
+## 💡 Zusammenfassung
+
+Bei Rückfragen antworte natürlich und direkt ohne starre Struktur.`
+        },
+        ...messages
+      ],
+      max_tokens: 1000
+    });
+
+    const reply = completion.choices[0].message.content;
+
+    // Antwort in DB speichern
+    await supabase.from('chats').insert({ user_id, session_id, role: 'assistant', message: reply });
+
+    res.json({ reply, session_id });
+
+  } catch (err) {
+    console.error('Chat Fehler:', err.message);
+    res.status(500).json({ error: 'Fehler beim Chat' });
+  }
+});
+
+app.get('/chat/:user_id', async (req, res) => {
+  const { user_id } = req.params;
+  try {
+    // Alle Sessions des Users laden (letzte Nachricht pro Session)
+    const { data } = await supabase
+      .from('chats')
+      .select('session_id, message, created_at')
+      .eq('user_id', user_id)
+      .eq('role', 'user')
+      .order('created_at', { ascending: false });
+
+    // Erste Nachricht pro Session als Titel
+    const sessions = {};
+    (data || []).forEach(row => {
+      if (!sessions[row.session_id]) {
+        sessions[row.session_id] = {
+          session_id: row.session_id,
+          title: row.message.substring(0, 60) + (row.message.length > 60 ? '...' : ''),
+          created_at: row.created_at
+        };
+      }
+    });
+
+    res.json(Object.values(sessions));
+  } catch (err) {
+    res.status(500).json({ error: 'Fehler beim Laden der Chats' });
+  }
+});
+
+app.get('/chat/:user_id/:session_id', async (req, res) => {
+  const { user_id, session_id } = req.params;
+  try {
+    const { data } = await supabase
+      .from('chats')
+      .select('role, message, created_at')
+      .eq('user_id', user_id)
+      .eq('session_id', session_id)
+      .order('created_at', { ascending: true });
+
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ error: 'Fehler beim Laden' });
+  }
+});
+
 app.listen(3000, () => {
   console.log('ELI10 läuft auf Port 3000');
 });
