@@ -1155,7 +1155,8 @@ lucide.createIcons();
     function zeigeLoading(text) {
       const btn = document.getElementById('explainBtn');
       btn.disabled = true;
-      btn.textContent = '⏳ Analysiert...';
+      btn.innerHTML = '<i data-lucide="loader" style="width:18px;height:18px;"></i> Analysiert...';
+      lucide.createIcons();
       const resultCard = document.getElementById('resultCard');
       const resultText = document.getElementById('resultText');
       resultCard.style.display = 'block';
@@ -1171,7 +1172,8 @@ lucide.createIcons();
       document.getElementById('resultCard').style.display = 'block';
       document.getElementById('resultText').textContent = text;
       document.getElementById('explainBtn').disabled = false;
-      document.getElementById('explainBtn').textContent = '✨ Jetzt erklären';
+      document.getElementById('explainBtn').innerHTML = '<i data-lucide="wand-2" style="width:18px;height:18px;"></i> Jetzt erklären';
+      lucide.createIcons();
     }
 
     function versteckeResult() {
@@ -1196,6 +1198,8 @@ lucide.createIcons();
       <div class="history-explanation" style="display:none;font-size:0.85rem;color:#9CA3AF;line-height:1.7;margin-top:12px;padding-top:12px;border-top:1px solid #2C2C2E;white-space:pre-wrap;">${item.explanation}</div>
     </div>
   `).join('');
+
+      lucide.createIcons();
     }
 
     function toggleHistory(el) {
