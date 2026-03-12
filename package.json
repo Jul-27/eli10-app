@@ -16,7 +16,7 @@
     "multer": "^2.1.1",
     "openai": "^6.27.0",
     "pdf-parse": "^1.1.1",
-    "pdfjs-dist": "^5.5.207",
+    "pdfjs-dist": "4.10.38",
     "stripe": "^20.4.1"
   }
 }
