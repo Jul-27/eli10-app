@@ -828,11 +828,6 @@ body {
   padding: 0 4px;
 }
 
-/* Risiken-Sektion orange hervorheben */
-.result-text h2:has(+ ul li) {
-  border-left-color: #3B82F6;
-}
-
 /* ── DESKTOP LAYOUT ── */
 #appScreen {
   display: none;
@@ -1015,6 +1010,7 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   color: white;
+  overflow: hidden;
 }
 
 .sidebar-user-info { flex: 1; min-width: 0; }
@@ -1725,73 +1721,74 @@ body {
       </div>
 
       <!-- PROFIL TAB -->
-<div class="tab-panel" id="tab-profile">
+      <div class="tab-panel" id="tab-profile">
 
-  <!-- Profilbild & Name -->
-  <div class="profile-section">
-    <div class="profile-avatar-upload" onclick="document.getElementById('avatarInput').click()">
-      <img id="profileAvatarImg" src="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
-      <div id="profileAvatarInitial" style="font-size:1.8rem;font-weight:700;color:white;">?</div>
-      <div class="avatar-overlay">
-        <i data-lucide="camera" style="width:20px;height:20px;"></i>
+        <!-- Profilbild & Name -->
+        <div class="profile-section">
+          <div class="profile-avatar-upload" onclick="document.getElementById('avatarInput').click()">
+            <img id="profileAvatarImg" src="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
+            <div id="profileAvatarInitial" style="font-size:1.8rem;font-weight:700;color:white;">?</div>
+            <div class="avatar-overlay">
+              <i data-lucide="camera" style="width:20px;height:20px;"></i>
+            </div>
+          </div>
+          <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="avatarHochladen()">
+          <div style="flex:1;">
+            <div class="profile-section-title">Mein Profil</div>
+            <div class="profile-email-display" id="profileEmailDisplay">—</div>
+            <div class="profile-plan-display" id="profilePlanDisplay">—</div>
+          </div>
+        </div>
+
+        <!-- Anzeigename -->
+        <div class="profile-card">
+          <div class="profile-card-title"><i data-lucide="user" style="width:15px;height:15px;color:#3B82F6;"></i> Anzeigename</div>
+          <input type="text" id="displayNameInput" class="profile-input" placeholder="Dein Name (optional)">
+          <button class="profile-save-btn" onclick="speichereAnzeigename()">Speichern</button>
+          <div id="displayNameMsg" class="profile-msg"></div>
+        </div>
+
+        <!-- Passwort ändern -->
+        <div class="profile-card">
+          <div class="profile-card-title"><i data-lucide="lock" style="width:15px;height:15px;color:#3B82F6;"></i> Passwort ändern</div>
+          <input type="password" id="newPasswordInput" class="profile-input" placeholder="Neues Passwort (min. 6 Zeichen)">
+          <input type="password" id="newPasswordConfirm" class="profile-input" placeholder="Passwort wiederholen" style="margin-top:8px;">
+          <button class="profile-save-btn" onclick="aenderePasswort()">Passwort ändern</button>
+          <div id="passwordMsg" class="profile-msg"></div>
+        </div>
+
+        <!-- Abo -->
+        <div class="profile-card">
+          <div class="profile-card-title"><i data-lucide="zap" style="width:15px;height:15px;color:#3B82F6;"></i> Mein Abo</div>
+          <div class="profile-info-row">
+            <span class="profile-info-label">Plan</span>
+            <span class="profile-info-value" id="profilePlanInfo">—</span>
+          </div>
+          <div class="profile-info-row" id="premiumSinceRow" style="display:none;">
+            <span class="profile-info-label">Aktiv seit</span>
+            <span class="profile-info-value" id="profilePremiumSince">—</span>
+          </div>
+          <!-- FIX 4: Nächste Zahlung (nur bei Premium) -->
+          <div class="profile-info-row" id="nextPaymentRow" style="display:none;">
+            <span class="profile-info-label">Nächste Zahlung</span>
+            <span class="profile-info-value" id="profileNextPayment">—</span>
+          </div>
+          <button class="profile-save-btn" id="profileUpgradeBtn" onclick="switchTab('premium')" style="display:none;background:#3B82F6;">
+            <i data-lucide="zap" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i> Auf Premium upgraden
+          </button>
+        </div>
+
+        <!-- FIX 5: "Account löschen" statt "Gefahrenzone" -->
+        <div class="profile-card danger-card">
+          <div class="profile-card-title"><i data-lucide="alert-triangle" style="width:15px;height:15px;color:#F87171;"></i> <span style="color:#F87171;">Account löschen</span></div>
+          <p style="font-size:0.85rem;color:#636366;margin-bottom:12px;">Das Löschen deines Accounts ist permanent und kann nicht rückgängig gemacht werden.</p>
+          <button class="profile-delete-btn" onclick="accountLoeschen()">Account dauerhaft löschen</button>
+        </div>
+
+        <!-- Abmelden -->
+        <button class="btn-logout" onclick="logout()" style="margin-top:8px;">Abmelden</button>
+
       </div>
-    </div>
-    <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="avatarHochladen()">
-    <div style="flex:1;">
-      <div class="profile-section-title">Mein Profil</div>
-      <div class="profile-email-display" id="profileEmailDisplay">—</div>
-      <div class="profile-plan-display" id="profilePlanDisplay">—</div>
-    </div>
-  </div>
-
-  <!-- Anzeigename -->
-  <div class="profile-card">
-    <div class="profile-card-title"><i data-lucide="user" style="width:15px;height:15px;color:#3B82F6;"></i> Anzeigename</div>
-    <input type="text" id="displayNameInput" class="profile-input" placeholder="Dein Name (optional)">
-    <button class="profile-save-btn" onclick="speichereAnzeigename()">Speichern</button>
-    <div id="displayNameMsg" class="profile-msg"></div>
-  </div>
-
-  <!-- Passwort ändern -->
-  <div class="profile-card">
-    <div class="profile-card-title"><i data-lucide="lock" style="width:15px;height:15px;color:#3B82F6;"></i> Passwort ändern</div>
-    <input type="password" id="newPasswordInput" class="profile-input" placeholder="Neues Passwort (min. 6 Zeichen)">
-    <input type="password" id="newPasswordConfirm" class="profile-input" placeholder="Passwort wiederholen" style="margin-top:8px;">
-    <button class="profile-save-btn" onclick="aenderePasswort()">Passwort ändern</button>
-    <div id="passwordMsg" class="profile-msg"></div>
-  </div>
-
-  <!-- Abo -->
-  <div class="profile-card">
-    <div class="profile-card-title"><i data-lucide="zap" style="width:15px;height:15px;color:#3B82F6;"></i> Mein Abo</div>
-    <div class="profile-info-row">
-      <span class="profile-info-label">Plan</span>
-      <span class="profile-info-value" id="profilePlanInfo">—</span>
-    </div>
-    <div class="profile-info-row" id="premiumSinceRow" style="display:none;">
-      <span class="profile-info-label">Aktiv seit</span>
-      <span class="profile-info-value" id="profilePremiumSince">—</span>
-    </div>
-    <div class="profile-info-row">
-      <span class="profile-info-label">Mitglied seit</span>
-      <span class="profile-info-value" id="profileMemberSince">—</span>
-    </div>
-    <button class="profile-save-btn" id="profileUpgradeBtn" onclick="switchTab('premium')" style="display:none;background:#3B82F6;">
-      <i data-lucide="zap" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i> Auf Premium upgraden
-    </button>
-  </div>
-
-  <!-- Danger Zone -->
-  <div class="profile-card danger-card">
-    <div class="profile-card-title"><i data-lucide="alert-triangle" style="width:15px;height:15px;color:#F87171;"></i> <span style="color:#F87171;">Gefahrenzone</span></div>
-    <p style="font-size:0.85rem;color:#636366;margin-bottom:12px;">Das Löschen deines Accounts ist permanent und kann nicht rückgängig gemacht werden.</p>
-    <button class="profile-delete-btn" onclick="accountLoeschen()">Account dauerhaft löschen</button>
-  </div>
-
-  <!-- Abmelden -->
-  <button class="btn-logout" onclick="logout()" style="margin-top:8px;">Abmelden</button>
-
-</div>
 
       <!-- ÜBER TAB -->
       <div class="tab-panel" id="tab-about">
@@ -1828,7 +1825,6 @@ body {
 
     let currentAuthMode = 'login';
 
-    // Auth Tab Switch
     function switchAuthTab(mode) {
       currentAuthMode = mode;
       document.querySelectorAll('.auth-tab').forEach((t, i) => {
@@ -1838,7 +1834,6 @@ body {
       document.getElementById('authMessage').textContent = '';
     }
 
-    // Handle Auth
     async function handleAuth() {
       const email = document.getElementById('emailInput').value;
       const password = document.getElementById('passwordInput').value;
@@ -1869,37 +1864,29 @@ body {
       }
     }
 
-    // Tab Switch
     function switchTab(tabName) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-  document.getElementById(`tab-${tabName}`).classList.add('active');
-  const tabs = ['home', 'history', 'premium', 'profile', 'about'];
-  const idx = tabs.indexOf(tabName);
-  if (idx >= 0) document.querySelectorAll('.tab-item')[idx]?.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      const tabs = ['home', 'history', 'premium', 'profile', 'about'];
+      const idx = tabs.indexOf(tabName);
+      if (idx >= 0) document.querySelectorAll('.tab-item')[idx]?.classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const navEl = document.getElementById(`nav-${tabName}`);
+      if (navEl) navEl.classList.add('active');
+      if (tabName === 'history') ladVerlauf();
+      if (tabName === 'profile') ladeProfil();
+    }
 
-  // Desktop Sidebar Nav aktualisieren
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const navEl = document.getElementById(`nav-${tabName}`);
-  if (navEl) navEl.classList.add('active');
-
-  if (tabName === 'history') ladVerlauf();
-  if (tabName === 'profile') ladeProfil();
-}
-
-    // Session Check
     document.addEventListener('DOMContentLoaded', async () => {
       lucide.createIcons();
       const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) zeigeApp(session.user.email);
+      if (session) zeigeApp(session.user.email);
     });
 
     async function zeigeApp(email) {
       document.getElementById('authScreen').style.display = 'none';
       document.getElementById('appScreen').style.display = 'flex';
-      document.getElementById('profileEmail').textContent = email;
-      document.getElementById('profilePlan').innerHTML = '<i data-lucide="circle" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px;"></i>Wird geladen...';
-      document.getElementById('profilePlan').style.color = '#636366';
 
       const { data: { session } } = await supabaseClient.auth.getSession();
       const user_id = session?.user?.id;
@@ -1914,45 +1901,31 @@ body {
       aktualisiereZaehler(data.remaining, data.isPremium);
 
       if (data.isPremium) {
-  // Profil
-  document.getElementById('profilePlan').innerHTML = '<i data-lucide="zap" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px;"></i>Premium';
-  document.getElementById('profilePlan').style.color = '#34D399';
+        document.getElementById('premiumActiveBox').style.display = 'block';
+        document.querySelector('.premium-hero').style.display = 'none';
+        document.querySelector('.premium-features').style.display = 'none';
+        if (data.premiumSince) {
+          const date = new Date(data.premiumSince).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+          document.getElementById('premiumSinceDate').textContent = date;
+        }
+      }
 
-  // Premium Tab — Info Box anzeigen, Upgrade Box verstecken
-  document.getElementById('premiumActiveBox').style.display = 'block';
-  document.querySelector('.premium-hero').style.display = 'none';
-  document.querySelector('.premium-features').style.display = 'none';
+      // FIX 1: Sidebar Plan korrekt setzen (auch für Premium)
+      const sidebarPlan = document.getElementById('sidebarPlan');
+      sidebarPlan.textContent = data.isPremium ? '✦ Premium' : 'Free Plan';
+      sidebarPlan.className = 'sidebar-user-plan' + (data.isPremium ? ' premium' : '');
 
-  // Datum setzen
-  if (data.premiumSince) {
-    const date = new Date(data.premiumSince).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-    document.getElementById('premiumSinceDate').textContent = date;
-  }
+      // Sidebar Badge
+      document.getElementById('sidebarCount').textContent = data.isPremium ? '∞' : data.remaining;
 
-  // Profil — "Premium upgraden" Button verstecken
-  document.querySelector('.settings-item[onclick="switchTab(\'premium\')"]').style.display = 'none';
-}
+      lucide.createIcons();
+      ladeChatSessions();
 
-// Sidebar Plan Label
-document.getElementById('sidebarPlan').textContent = data.isPremium ? '✦ Premium' : 'Free Plan';
-if (data.isPremium) document.getElementById('sidebarPlan').classList.add('premium');
-
-// Sidebar Badge
-document.getElementById('sidebarCount').textContent = data.isPremium ? '∞' : data.remaining;
-
-if (!data.isPremium) {
-  document.getElementById('profilePlan').innerHTML = '<i data-lucide="circle" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px;"></i>Free Plan';
-  document.getElementById('profilePlan').style.color = '#636366';
-}
-
-lucide.createIcons();
-ladeChatSessions();
-
-// Sidebar User Info befüllen
-const emailKurz = email.split('@')[0];
-document.getElementById('sidebarEmail').textContent = email;
-document.getElementById('sidebarAvatar').textContent = emailKurz[0].toUpperCase();
-
+      // FIX 2 & 3: Sidebar Avatar und Name korrekt befüllen
+      const emailKurz = email.split('@')[0];
+      document.getElementById('sidebarEmail').textContent = email;
+      // Avatar: Initiale aus E-Mail (wird in ladeProfil() ggf. durch Bild/Anzeigename ersetzt)
+      document.getElementById('sidebarAvatar').textContent = emailKurz[0].toUpperCase();
     }
 
     function aktualisiereZaehler(remaining, isPremium) {
@@ -1969,241 +1942,173 @@ document.getElementById('sidebarAvatar').textContent = emailKurz[0].toUpperCase(
 
     let currentSessionId = null;
 
-function generateSessionId() {
-  return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-}
-
-function neuerChat() {
-  currentSessionId = null;
-  document.getElementById('chatMessages').style.display = 'none';
-  document.getElementById('chatEmpty').style.display = 'flex';
-  document.getElementById('chatInput').value = '';
-  document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
-}
-
-async function sendChatMessage(vorgefertigterText) {
-  const input = document.getElementById('chatInput');
-  const message = vorgefertigterText || input.value.trim();
-  if (!message) return;
-
-  const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
-  if (!user) return;
-
-  if (!currentSessionId) currentSessionId = generateSessionId();
-
-  // UI: Leeren Zustand verstecken, Chat zeigen
-  document.getElementById('chatEmpty').style.display = 'none';
-  document.getElementById('chatMessages').style.display = 'flex';
-
-  // User Bubble hinzufügen
-  addBubble('user', message);
-  input.value = '';
-  input.style.height = 'auto';
-
-  // Lade-Bubble
-  const loadingId = 'loading_' + Date.now();
-  addBubble('assistant', '<span style="color:#48484A">ELI10 denkt nach...</span>', loadingId);
-
-  document.getElementById('sendBtn').disabled = true;
-
-  try {
-    const res = await fetch('/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: user.id,
-        session_id: currentSessionId,
-        message
-      })
-    });
-
-    const data = await res.json();
-
-    // Lade-Bubble entfernen
-    document.getElementById(loadingId)?.remove();
-
-    if (data.error === 'LIMIT_REACHED') {
-      zeigeLimitBanner(0);
-      return;
+    function generateSessionId() {
+      return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
 
-    addBubble('assistant', data.reply);
-    ladeChatSessions();
-
-  } catch (err) {
-    document.getElementById(loadingId)?.remove();
-    addBubble('assistant', 'Es ist ein Fehler aufgetreten. Bitte versuche es nochmal.');
-  }
-
-  document.getElementById('sendBtn').disabled = false;
-}
-
-function addBubble(role, text, id) {
-  const messages = document.getElementById('chatMessages');
-  const bubble = document.createElement('div');
-  bubble.className = `chat-bubble ${role}`;
-  if (id) bubble.id = id;
-
-  if (role === 'assistant') {
-    const div = document.createElement('div');
-    div.className = 'result-text';
-    div.innerHTML = marked.parse(text);
-    bubble.appendChild(div);
-  } else {
-    bubble.textContent = text;
-  }
-
-  messages.appendChild(bubble);
-  messages.scrollTop = messages.scrollHeight;
-  lucide.createIcons();
-}
-
-async function ladeChatSessions() {
-  const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
-  if (!user) return;
-
-  const res = await fetch(`/chat/${user.id}`);
-  const sessions = await res.json();
-
-  const container = document.getElementById('chatSessions');
-  if (!sessions.length) {
-    container.innerHTML = '<p class="sidebar-empty">Noch keine Chats</p>';
-    return;
-  }
-
-  container.innerHTML = sessions.map(s => `
-    <div class="session-item ${s.session_id === currentSessionId ? 'active' : ''}"
-         onclick="ladeSession('${s.session_id}')">
-      ${s.title}
-    </div>
-  `).join('');
-}
-
-async function ladeSession(session_id) {
-  const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
-  if (!user) return;
-
-  currentSessionId = session_id;
-
-  const res = await fetch(`/chat/${user.id}/${session_id}`);
-  const messages = await res.json();
-
-  document.getElementById('chatEmpty').style.display = 'none';
-  const chatMessages = document.getElementById('chatMessages');
-  chatMessages.style.display = 'flex';
-  chatMessages.innerHTML = '';
-
-  messages.forEach(m => addBubble(m.role, m.message));
-
-  document.querySelectorAll('.session-item').forEach(el => {
-    el.classList.toggle('active', el.onclick.toString().includes(session_id));
-  });
-}
-
-async function dokumentHochladen() {
-  const file = document.getElementById('pdfInput').files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append('document', file);
-
-  addBubble('user', `📄 ${file.name}`);
-  document.getElementById('chatEmpty').style.display = 'none';
-  document.getElementById('chatMessages').style.display = 'flex';
-
-  const loadingId = 'loading_' + Date.now();
-  addBubble('assistant', '<span style="color:#48484A">Dokument wird analysiert...</span>', loadingId);
-
-  try {
-    const res = await fetch('/upload-document', { method: 'POST', body: formData });
-    const data = await res.json();
-    document.getElementById(loadingId)?.remove();
-
-    if (!currentSessionId) currentSessionId = generateSessionId();
-
-    const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
-    if (user) {
-      await supabase.from('chats').insert([
-        { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${file.name}` },
-        { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
-      ]);
+    function neuerChat() {
+      currentSessionId = null;
+      document.getElementById('chatMessages').style.display = 'none';
+      document.getElementById('chatEmpty').style.display = 'flex';
+      document.getElementById('chatInput').value = '';
+      document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
     }
 
-    addBubble('assistant', data.explanation);
-    ladeChatSessions();
-  } catch (err) {
-    document.getElementById(loadingId)?.remove();
-    addBubble('assistant', 'Fehler beim Analysieren des Dokuments.');
-  }
+    async function sendChatMessage(vorgefertigterText) {
+      const input = document.getElementById('chatInput');
+      const message = vorgefertigterText || input.value.trim();
+      if (!message) return;
 
-  document.getElementById('pdfInput').value = '';
-}
+      const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+      if (!user) return;
 
-async function fotoAnalysieren() {
-  const file = document.getElementById('fotoInput').files[0];
-  if (!file) return;
+      if (!currentSessionId) currentSessionId = generateSessionId();
 
-  const formData = new FormData();
-  formData.append('image', file);
+      document.getElementById('chatEmpty').style.display = 'none';
+      document.getElementById('chatMessages').style.display = 'flex';
 
-  addBubble('user', '📸 Foto wird analysiert...');
-  document.getElementById('chatEmpty').style.display = 'none';
-  document.getElementById('chatMessages').style.display = 'flex';
+      addBubble('user', message);
+      input.value = '';
+      input.style.height = 'auto';
 
-  const loadingId = 'loading_' + Date.now();
-  addBubble('assistant', '<span style="color:#48484A">Bild wird erkannt...</span>', loadingId);
+      const loadingId = 'loading_' + Date.now();
+      addBubble('assistant', '<span style="color:#48484A">ELI10 denkt nach...</span>', loadingId);
+      document.getElementById('sendBtn').disabled = true;
 
-  try {
-    const res = await fetch('/analyze-image', { method: 'POST', body: formData });
-    const data = await res.json();
-    document.getElementById(loadingId)?.remove();
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: user.id, session_id: currentSessionId, message })
+        });
+        const data = await res.json();
+        document.getElementById(loadingId)?.remove();
+        if (data.error === 'LIMIT_REACHED') {
+          zeigeLimitBanner(0);
+          return;
+        }
+        addBubble('assistant', data.reply);
+        ladeChatSessions();
+      } catch (err) {
+        document.getElementById(loadingId)?.remove();
+        addBubble('assistant', 'Es ist ein Fehler aufgetreten. Bitte versuche es nochmal.');
+      }
 
-    if (!currentSessionId) currentSessionId = generateSessionId();
-
-    const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
-    if (user) {
-      await supabase.from('chats').insert([
-        { user_id: user.id, session_id: currentSessionId, role: 'user', message: '📸 Foto analysiert' },
-        { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
-      ]);
+      document.getElementById('sendBtn').disabled = false;
     }
 
-    addBubble('assistant', data.explanation);
-    ladeChatSessions();
-  } catch (err) {
-    document.getElementById(loadingId)?.remove();
-    addBubble('assistant', 'Fehler beim Analysieren des Fotos.');
-  }
-
-  document.getElementById('fotoInput').value = '';
-}
-
-    function zeigeLoading(text) {
-      const btn = document.getElementById('explainBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<i data-lucide="loader" style="width:18px;height:18px;"></i> Analysiert...';
+    function addBubble(role, text, id) {
+      const messages = document.getElementById('chatMessages');
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble ${role}`;
+      if (id) bubble.id = id;
+      if (role === 'assistant') {
+        const div = document.createElement('div');
+        div.className = 'result-text';
+        div.innerHTML = marked.parse(text);
+        bubble.appendChild(div);
+      } else {
+        bubble.textContent = text;
+      }
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
       lucide.createIcons();
-      const resultCard = document.getElementById('resultCard');
-      const resultText = document.getElementById('resultText');
-      resultCard.style.display = 'block';
-      resultText.innerHTML = `
-        <div class="loading-state">
-          <div class="loading-spinner"></div>
-          <span class="loading-text">${text}</span>
+    }
+
+    async function ladeChatSessions() {
+      const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+      if (!user) return;
+      const res = await fetch(`/chat/${user.id}`);
+      const sessions = await res.json();
+      const container = document.getElementById('chatSessions');
+      if (!sessions.length) {
+        container.innerHTML = '<p class="sidebar-empty">Noch keine Chats</p>';
+        return;
+      }
+      container.innerHTML = sessions.map(s => `
+        <div class="session-item ${s.session_id === currentSessionId ? 'active' : ''}"
+             onclick="ladeSession('${s.session_id}')">
+          ${s.title}
         </div>
-      `;
+      `).join('');
     }
 
-    function zeigeResult(text) {
-      document.getElementById('resultCard').style.display = 'block';
-      document.getElementById('resultText').innerHTML = marked.parse(text);
-      document.getElementById('explainBtn').disabled = false;
-      document.getElementById('explainBtn').innerHTML = '<i data-lucide="wand-2" style="width:18px;height:18px;"></i> Jetzt erklären';
-      lucide.createIcons();
+    async function ladeSession(session_id) {
+      const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+      if (!user) return;
+      currentSessionId = session_id;
+      const res = await fetch(`/chat/${user.id}/${session_id}`);
+      const messages = await res.json();
+      document.getElementById('chatEmpty').style.display = 'none';
+      const chatMessages = document.getElementById('chatMessages');
+      chatMessages.style.display = 'flex';
+      chatMessages.innerHTML = '';
+      messages.forEach(m => addBubble(m.role, m.message));
+      document.querySelectorAll('.session-item').forEach(el => {
+        el.classList.toggle('active', el.onclick.toString().includes(session_id));
+      });
     }
 
-    function versteckeResult() {
-      document.getElementById('resultCard').style.display = 'none';
+    async function dokumentHochladen() {
+      const file = document.getElementById('pdfInput').files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('document', file);
+      addBubble('user', `📄 ${file.name}`);
+      document.getElementById('chatEmpty').style.display = 'none';
+      document.getElementById('chatMessages').style.display = 'flex';
+      const loadingId = 'loading_' + Date.now();
+      addBubble('assistant', '<span style="color:#48484A">Dokument wird analysiert...</span>', loadingId);
+      try {
+        const res = await fetch('/upload-document', { method: 'POST', body: formData });
+        const data = await res.json();
+        document.getElementById(loadingId)?.remove();
+        if (!currentSessionId) currentSessionId = generateSessionId();
+        const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+        if (user) {
+          await supabase.from('chats').insert([
+            { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${file.name}` },
+            { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
+          ]);
+        }
+        addBubble('assistant', data.explanation);
+        ladeChatSessions();
+      } catch (err) {
+        document.getElementById(loadingId)?.remove();
+        addBubble('assistant', 'Fehler beim Analysieren des Dokuments.');
+      }
+      document.getElementById('pdfInput').value = '';
+    }
+
+    async function fotoAnalysieren() {
+      const file = document.getElementById('fotoInput').files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('image', file);
+      addBubble('user', '📸 Foto wird analysiert...');
+      document.getElementById('chatEmpty').style.display = 'none';
+      document.getElementById('chatMessages').style.display = 'flex';
+      const loadingId = 'loading_' + Date.now();
+      addBubble('assistant', '<span style="color:#48484A">Bild wird erkannt...</span>', loadingId);
+      try {
+        const res = await fetch('/analyze-image', { method: 'POST', body: formData });
+        const data = await res.json();
+        document.getElementById(loadingId)?.remove();
+        if (!currentSessionId) currentSessionId = generateSessionId();
+        const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+        if (user) {
+          await supabase.from('chats').insert([
+            { user_id: user.id, session_id: currentSessionId, role: 'user', message: '📸 Foto analysiert' },
+            { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
+          ]);
+        }
+        addBubble('assistant', data.explanation);
+        ladeChatSessions();
+      } catch (err) {
+        document.getElementById(loadingId)?.remove();
+        addBubble('assistant', 'Fehler beim Analysieren des Fotos.');
+      }
+      document.getElementById('fotoInput').value = '';
     }
 
     async function ladVerlauf() {
@@ -2217,14 +2122,13 @@ async function fotoAnalysieren() {
         return;
       }
       historyList.innerHTML = data.history.map(item => `
-    <div class="history-item" onclick="toggleHistory(this)" style="background:#1C1C1E; border-radius:12px; padding:16px 20px; border:1.5px solid #2C2C2E; margin-bottom:12px; cursor:pointer;">
-      <div class="history-date">${new Date(item.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-      <div class="history-preview"><i data-lucide="file-text" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;color:#3B82F6;"></i>${item.input_text.substring(0, 80)}${item.input_text.length > 80 ? '...' : ''}</div>
-      <div class="history-toggle" style="font-size:0.8rem;color:#3B82F6;margin-top:6px;">▼ Erklärung anzeigen</div>
-      <div class="history-explanation" style="display:none;font-size:0.85rem;color:#9CA3AF;line-height:1.7;margin-top:12px;padding-top:12px;border-top:1px solid #2C2C2E;white-space:pre-wrap;">${item.explanation}</div>
-    </div>
-  `).join('');
-
+        <div class="history-item" onclick="toggleHistory(this)" style="background:#1C1C1E; border-radius:12px; padding:16px 20px; border:1.5px solid #2C2C2E; margin-bottom:12px; cursor:pointer;">
+          <div class="history-date">${new Date(item.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+          <div class="history-preview"><i data-lucide="file-text" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;color:#3B82F6;"></i>${item.input_text.substring(0, 80)}${item.input_text.length > 80 ? '...' : ''}</div>
+          <div class="history-toggle" style="font-size:0.8rem;color:#3B82F6;margin-top:6px;">▼ Erklärung anzeigen</div>
+          <div class="history-explanation" style="display:none;font-size:0.85rem;color:#9CA3AF;line-height:1.7;margin-top:12px;padding-top:12px;border-top:1px solid #2C2C2E;white-space:pre-wrap;">${item.explanation}</div>
+        </div>
+      `).join('');
       lucide.createIcons();
     }
 
@@ -2250,165 +2154,171 @@ async function fotoAnalysieren() {
     }
 
     async function ladeProfil() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const user_id = session?.user?.id;
-  const email = session?.user?.email;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user_id = session?.user?.id;
+      const email = session?.user?.email;
 
-  document.getElementById('profileEmailDisplay').textContent = email;
+      document.getElementById('profileEmailDisplay').textContent = email;
 
-  const res = await fetch('/get-profile', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id })
-  });
-  const data = await res.json();
+      const res = await fetch('/get-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id })
+      });
+      const data = await res.json();
 
-  // Anzeigename
-  if (data.display_name) {
-    document.getElementById('displayNameInput').value = data.display_name;
-  }
+      // Anzeigename
+      if (data.display_name) {
+        document.getElementById('displayNameInput').value = data.display_name;
+        // FIX 2: Anzeigename in Sidebar anzeigen
+        document.getElementById('sidebarEmail').textContent = data.display_name;
+      } else {
+        document.getElementById('sidebarEmail').textContent = email;
+      }
 
-  // Avatar
-  if (data.avatar_url) {
-    document.getElementById('profileAvatarImg').src = data.avatar_url + '?t=' + Date.now();
-    document.getElementById('profileAvatarImg').style.display = 'block';
-    document.getElementById('profileAvatarInitial').style.display = 'none';
-    document.getElementById('sidebarAvatar').innerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-  } else {
-    const initial = email[0].toUpperCase();
-    document.getElementById('profileAvatarInitial').textContent = initial;
-  }
+      // FIX 3: Avatar — Initiale aus E-Mail in Sidebar korrekt setzen
+      if (data.avatar_url) {
+        document.getElementById('profileAvatarImg').src = data.avatar_url + '?t=' + Date.now();
+        document.getElementById('profileAvatarImg').style.display = 'block';
+        document.getElementById('profileAvatarInitial').style.display = 'none';
+        document.getElementById('sidebarAvatar').innerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        const initial = email[0].toUpperCase();
+        document.getElementById('profileAvatarInitial').textContent = initial;
+        // FIX 3: Sidebar Avatar ebenfalls mit korrekter Initiale befüllen
+        document.getElementById('sidebarAvatar').textContent = initial;
+      }
 
-  // Plan
-  const isPremium = data.plan === 'premium';
-  document.getElementById('profilePlanInfo').textContent = isPremium ? '✦ Premium' : 'Free Plan';
-  document.getElementById('profilePlanInfo').style.color = isPremium ? '#34D399' : '#636366';
-  document.getElementById('profilePlanDisplay').textContent = isPremium ? '✦ Premium' : 'Free Plan';
-  document.getElementById('profilePlanDisplay').style.color = isPremium ? '#34D399' : '#636366';
+      // Plan
+      const isPremium = data.plan === 'premium';
+      document.getElementById('profilePlanInfo').textContent = isPremium ? '✦ Premium' : 'Free Plan';
+      document.getElementById('profilePlanInfo').style.color = isPremium ? '#34D399' : '#636366';
+      document.getElementById('profilePlanDisplay').textContent = isPremium ? '✦ Premium' : 'Free Plan';
+      document.getElementById('profilePlanDisplay').style.color = isPremium ? '#34D399' : '#636366';
 
-  if (isPremium && data.created_at) {
-    document.getElementById('premiumSinceRow').style.display = 'flex';
-    document.getElementById('profilePremiumSince').textContent =
-      new Date(data.created_at).toLocaleDateString('de-DE');
-  }
+      if (isPremium && data.created_at) {
+        document.getElementById('premiumSinceRow').style.display = 'flex';
+        document.getElementById('profilePremiumSince').textContent =
+          new Date(data.created_at).toLocaleDateString('de-DE');
 
-  if (!isPremium) {
-    document.getElementById('profileUpgradeBtn').style.display = 'block';
-  }
+        // FIX 4: Nächste Zahlung berechnen (1 Monat nach letztem Zahlungsdatum)
+        const since = new Date(data.created_at);
+        const now = new Date();
+        const next = new Date(since);
+        while (next <= now) {
+          next.setMonth(next.getMonth() + 1);
+        }
+        document.getElementById('nextPaymentRow').style.display = 'flex';
+        document.getElementById('profileNextPayment').textContent = next.toLocaleDateString('de-DE');
+      }
 
-  if (data.created_at) {
-    document.getElementById('profileMemberSince').textContent =
-      new Date(data.created_at).toLocaleDateString('de-DE');
-  }
+      if (!isPremium) {
+        document.getElementById('profileUpgradeBtn').style.display = 'block';
+      }
 
-  lucide.createIcons();
-}
-
-async function avatarHochladen() {
-  const file = document.getElementById('avatarInput').files[0];
-  if (!file) return;
-
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const user_id = session?.user?.id;
-
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const base64 = e.target.result.split(',')[1];
-    const ext = file.name.split('.').pop().toLowerCase();
-
-    const res = await fetch('/upload-avatar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id, image_base64: base64, file_ext: ext })
-    });
-    const data = await res.json();
-
-    if (data.avatar_url) {
-      document.getElementById('profileAvatarImg').src = data.avatar_url + '?t=' + Date.now();
-      document.getElementById('profileAvatarImg').style.display = 'block';
-      document.getElementById('profileAvatarInitial').style.display = 'none';
-      document.getElementById('sidebarAvatar').innerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      lucide.createIcons();
     }
-  };
-  reader.readAsDataURL(file);
-}
 
-async function speichereAnzeigename() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const user_id = session?.user?.id;
-  const display_name = document.getElementById('displayNameInput').value.trim();
-  const msg = document.getElementById('displayNameMsg');
+    async function avatarHochladen() {
+      const file = document.getElementById('avatarInput').files[0];
+      if (!file) return;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user_id = session?.user?.id;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target.result.split(',')[1];
+        const ext = file.name.split('.').pop().toLowerCase();
+        const res = await fetch('/upload-avatar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id, image_base64: base64, file_ext: ext })
+        });
+        const data = await res.json();
+        if (data.avatar_url) {
+          document.getElementById('profileAvatarImg').src = data.avatar_url + '?t=' + Date.now();
+          document.getElementById('profileAvatarImg').style.display = 'block';
+          document.getElementById('profileAvatarInitial').style.display = 'none';
+          document.getElementById('sidebarAvatar').innerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
 
-  const res = await fetch('/update-profile', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id, display_name })
-  });
-  const data = await res.json();
+    async function speichereAnzeigename() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user_id = session?.user?.id;
+      const email = session?.user?.email;
+      const display_name = document.getElementById('displayNameInput').value.trim();
+      const msg = document.getElementById('displayNameMsg');
+      const res = await fetch('/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id, display_name })
+      });
+      const data = await res.json();
 
-  msg.className = 'profile-msg ' + (data.success ? 'success' : 'error');
-  msg.textContent = data.success ? '✓ Gespeichert!' : 'Fehler beim Speichern.';
-  setTimeout(() => msg.textContent = '', 3000);
-}
+      // FIX 2: Sidebar Name nach Speichern aktualisieren
+      if (data.success) {
+        document.getElementById('sidebarEmail').textContent = display_name || email;
+      }
 
-async function aenderePasswort() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const user_id = session?.user?.id;
-  const pw1 = document.getElementById('newPasswordInput').value;
-  const pw2 = document.getElementById('newPasswordConfirm').value;
-  const msg = document.getElementById('passwordMsg');
+      msg.className = 'profile-msg ' + (data.success ? 'success' : 'error');
+      msg.textContent = data.success ? '✓ Gespeichert!' : 'Fehler beim Speichern.';
+      setTimeout(() => msg.textContent = '', 3000);
+    }
 
-  if (pw1.length < 6) {
-    msg.className = 'profile-msg error';
-    msg.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
-    return;
-  }
-  if (pw1 !== pw2) {
-    msg.className = 'profile-msg error';
-    msg.textContent = 'Passwörter stimmen nicht überein.';
-    return;
-  }
+    async function aenderePasswort() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user_id = session?.user?.id;
+      const pw1 = document.getElementById('newPasswordInput').value;
+      const pw2 = document.getElementById('newPasswordConfirm').value;
+      const msg = document.getElementById('passwordMsg');
+      if (pw1.length < 6) {
+        msg.className = 'profile-msg error';
+        msg.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
+        return;
+      }
+      if (pw1 !== pw2) {
+        msg.className = 'profile-msg error';
+        msg.textContent = 'Passwörter stimmen nicht überein.';
+        return;
+      }
+      const res = await fetch('/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id, new_password: pw1 })
+      });
+      const data = await res.json();
+      msg.className = 'profile-msg ' + (data.success ? 'success' : 'error');
+      msg.textContent = data.success ? '✓ Passwort geändert!' : 'Fehler: ' + data.error;
+      if (data.success) {
+        document.getElementById('newPasswordInput').value = '';
+        document.getElementById('newPasswordConfirm').value = '';
+      }
+      setTimeout(() => msg.textContent = '', 4000);
+    }
 
-  const res = await fetch('/change-password', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id, new_password: pw1 })
-  });
-  const data = await res.json();
+    async function accountLoeschen() {
+      const bestaetigt = confirm('Bist du sicher? Dein Account und alle Daten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden!');
+      if (!bestaetigt) return;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user_id = session?.user?.id;
+      const res = await fetch('/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await supabaseClient.auth.signOut();
+        document.getElementById('appScreen').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'flex';
+      } else {
+        alert('Fehler beim Löschen: ' + data.error);
+      }
+    }
 
-  msg.className = 'profile-msg ' + (data.success ? 'success' : 'error');
-  msg.textContent = data.success ? '✓ Passwort geändert!' : 'Fehler: ' + data.error;
-  if (data.success) {
-    document.getElementById('newPasswordInput').value = '';
-    document.getElementById('newPasswordConfirm').value = '';
-  }
-  setTimeout(() => msg.textContent = '', 4000);
-}
-
-async function accountLoeschen() {
-  const bestaetigt = confirm('Bist du sicher? Dein Account und alle Daten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden!');
-  if (!bestaetigt) return;
-
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const user_id = session?.user?.id;
-
-  const res = await fetch('/delete-account', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id })
-  });
-  const data = await res.json();
-
-  if (data.success) {
-    await supabaseClient.auth.signOut();
-    document.getElementById('appScreen').style.display = 'none';
-    document.getElementById('authScreen').style.display = 'flex';
-  } else {
-    alert('Fehler beim Löschen: ' + data.error);
-  }
-}
-
-  </script>
+</script>
 
 </body>
 </html>
