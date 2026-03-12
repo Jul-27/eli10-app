@@ -98,12 +98,41 @@ Nur wenn vorhanden — sonst weglassen:
 ## 💡 Zusammenfassung
 Ein einziger, klarer Satz der alles zusammenfasst.`;
 
-// ── PDF Text extrahieren (ohne pdf-parse Test-Bug) ───────────────────────────
+// ── PDF Text extrahieren (Vercel-kompatibel mit pdfjs-dist) ──────────────────
 async function extractPdfText(buffer) {
-  // Dynamischer Import um den Vercel/Test-Bug von pdf-parse zu umgehen
-  const pdfParse = require('pdf-parse/lib/pdf-parse.js');
-  const data = await pdfParse(buffer, { max: 0 });
-  return data.text;
+  try {
+    // pdfjs-dist ist Vercel-kompatibel (kein nativer Code, kein Dateisystem-Zugriff)
+    const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+
+    // Worker deaktivieren (nicht verfügbar in Node/Vercel serverless)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+
+    const loadingTask = pdfjsLib.getDocument({
+      data: new Uint8Array(buffer),
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true
+    });
+
+    const pdf = await loadingTask.promise;
+    const numPages = pdf.numPages;
+    const textParts = [];
+
+    // Max 20 Seiten extrahieren (verhindert Timeout auf Vercel)
+    const maxPages = Math.min(numPages, 20);
+
+    for (let i = 1; i <= maxPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => item.str).join(' ');
+      textParts.push(pageText);
+    }
+
+    return textParts.join('\n');
+  } catch (err) {
+    console.error('pdfjs Fehler:', err.message);
+    throw err;
+  }
 }
 
 // ── Dokument hochladen und analysieren ───────────────────────────────────────
@@ -120,12 +149,16 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
         text = await extractPdfText(req.file.buffer);
       } catch (pdfErr) {
         console.error('PDF Parse Fehler:', pdfErr.message);
-        return res.status(400).json({ error: 'PDF konnte nicht gelesen werden. Bitte stelle sicher, dass das PDF Text enthält (kein gescanntes Bild).' });
+        return res.status(400).json({ 
+          error: 'PDF konnte nicht gelesen werden. Bitte stelle sicher, dass das PDF Text enthält (kein gescanntes Bild).' 
+        });
       }
     }
 
     if (!text || text.trim().length < 10) {
-      return res.status(400).json({ error: 'Kein Text im Dokument gefunden. Falls es ein gescanntes PDF ist, bitte als Foto hochladen.' });
+      return res.status(400).json({ 
+        error: 'Kein Text im Dokument gefunden. Falls es ein gescanntes PDF ist, bitte als Foto hochladen.' 
+      });
     }
 
     const cleanText = text.replace(/\s+/g, ' ').trim();
