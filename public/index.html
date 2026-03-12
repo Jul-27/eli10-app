@@ -2061,9 +2061,16 @@ body {
         let current = '';
         div.innerHTML = '';
 
+        // Zum Anfang der neuen Bubble scrollen
+        bubble.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        const messagesContainer = document.getElementById('chatMessages');
         for (let i = 0; i < words.length; i++) {
           current += (i === 0 ? '' : ' ') + words[i];
           div.innerHTML = marked.parse(current + (i < words.length - 1 ? ' ▍' : ''));
+          // Nur scrollen wenn User schon fast unten ist (nicht wegscrollen während er liest)
+          const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 100;
+          if (isNearBottom) messagesContainer.scrollTop = messagesContainer.scrollHeight;
           await new Promise(r => setTimeout(r, 18));
         }
 
@@ -2093,7 +2100,6 @@ body {
         bubble.textContent = text;
       }
       messages.appendChild(bubble);
-      messages.scrollTop = messages.scrollHeight;
       lucide.createIcons();
     }
 

@@ -181,14 +181,15 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
     }
 
     const cleanText = text.replace(/\s+/g, ' ').trim();
-    const truncatedText = cleanText.substring(0, 4000);
+    const truncatedText = cleanText.substring(0, 12000);
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       temperature: 0.3,
+      max_tokens: 1500,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: `Bitte erkläre mir dieses Dokument einfach und fasse es kurz zusammen. Maximal 300 Wörter:\n\n${truncatedText}` }
+        { role: 'user', content: `Analysiere dieses Dokument genau und erkläre mir alle wichtigen Informationen darin. Extrahiere konkret: Fahrzeug- oder Produktdetails, alle Preise und Kosten, alle Fristen und Gültigkeitsdaten, Konditionen und Bedingungen, sowie alle Aktionen oder Rabatte. Erkläre jeden Fachbegriff sofort in Klammern.\n\nDOKUMENT:\n${truncatedText}` }
       ]
     });
 
