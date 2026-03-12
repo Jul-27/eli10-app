@@ -1565,9 +1565,6 @@ body {
         <button class="tab-item active" onclick="switchTab('home')">
           <span class="tab-icon"><i data-lucide="wand-2" style="width:16px;height:16px;"></i></span>Erklären
         </button>
-        <button class="tab-item" onclick="switchTab('history')">
-          <span class="tab-icon"><i data-lucide="clock" style="width:16px;height:16px;"></i></span>Verlauf
-        </button>
         <button class="tab-item" onclick="switchTab('premium')">
           <span class="tab-icon"><i data-lucide="zap" style="width:16px;height:16px;"></i></span>Premium
         </button>
@@ -1600,9 +1597,6 @@ body {
       <div class="sidebar-nav">
         <button class="nav-item active" id="nav-home" onclick="switchTab('home')">
           <i data-lucide="wand-2" style="width:16px;height:16px;"></i> Erklären
-        </button>
-        <button class="nav-item" id="nav-history" onclick="switchTab('history')">
-          <i data-lucide="clock" style="width:16px;height:16px;"></i> Verlauf
         </button>
         <button class="nav-item" id="nav-premium" onclick="switchTab('premium')">
           <i data-lucide="zap" style="width:16px;height:16px;"></i> Premium
@@ -1671,13 +1665,6 @@ body {
             <p class="input-hint">ELI10 ersetzt keine professionelle Beratung</p>
           </div>
         </div>
-      </div>
-
-      <!-- VERLAUF TAB -->
-      <div class="tab-panel" id="tab-history">
-        <h1 class="section-title">Verlauf</h1>
-        <p class="section-subtitle">Deine letzten Erklärungen</p>
-        <div id="historyList"></div>
       </div>
 
       <!-- PREMIUM TAB -->
@@ -1874,7 +1861,6 @@ body {
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       const navEl = document.getElementById(`nav-${tabName}`);
       if (navEl) navEl.classList.add('active');
-      if (tabName === 'history') ladVerlauf();
       if (tabName === 'profile') ladeProfil();
     }
 
@@ -2109,35 +2095,6 @@ body {
         addBubble('assistant', 'Fehler beim Analysieren des Fotos.');
       }
       document.getElementById('fotoInput').value = '';
-    }
-
-    async function ladVerlauf() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      const user_id = session?.user?.id;
-      const response = await fetch(`/history/${user_id}`);
-      const data = await response.json();
-      const historyList = document.getElementById('historyList');
-      if (!data.history || data.history.length === 0) {
-        historyList.innerHTML = '<p style="color:#9ca3af; text-align:center; padding:40px 0;">Noch keine Erklärungen vorhanden.</p>';
-        return;
-      }
-      historyList.innerHTML = data.history.map(item => `
-        <div class="history-item" onclick="toggleHistory(this)" style="background:#1C1C1E; border-radius:12px; padding:16px 20px; border:1.5px solid #2C2C2E; margin-bottom:12px; cursor:pointer;">
-          <div class="history-date">${new Date(item.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-          <div class="history-preview"><i data-lucide="file-text" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;color:#3B82F6;"></i>${item.input_text.substring(0, 80)}${item.input_text.length > 80 ? '...' : ''}</div>
-          <div class="history-toggle" style="font-size:0.8rem;color:#3B82F6;margin-top:6px;">▼ Erklärung anzeigen</div>
-          <div class="history-explanation" style="display:none;font-size:0.85rem;color:#9CA3AF;line-height:1.7;margin-top:12px;padding-top:12px;border-top:1px solid #2C2C2E;white-space:pre-wrap;">${item.explanation}</div>
-        </div>
-      `).join('');
-      lucide.createIcons();
-    }
-
-    function toggleHistory(el) {
-      const exp = el.querySelector('.history-explanation');
-      const toggle = el.querySelector('.history-toggle');
-      const isOpen = exp.style.display === 'block';
-      exp.style.display = isOpen ? 'none' : 'block';
-      toggle.textContent = isOpen ? '▼ Erklärung anzeigen' : '▲ Erklärung verbergen';
     }
 
     async function upgrade() {
