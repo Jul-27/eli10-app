@@ -833,24 +833,66 @@ body {
   border-left-color: #3B82F6;
 }
 
-/* ── CHAT LAYOUT ── */
-.erklaeren-layout {
-  display: flex;
-  height: calc(100vh - 80px);
-  gap: 0;
+/* ── DESKTOP LAYOUT ── */
+#appScreen {
+  display: none;
+  flex-direction: column;
+  height: 100vh;
   overflow: hidden;
 }
 
+.app-header {
+  background: rgba(17,17,17,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid #232323;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: none; /* versteckt auf Desktop */
+}
+
+.app-content {
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+/* ── CHAT LAYOUT ── */
+.erklaeren-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── DESKTOP SIDEBAR (Navigation + Chats) ── */
 .chat-sidebar {
-  width: 260px;
-  min-width: 260px;
-  background: #1C1C1E;
-  border-right: 1px solid #2C2C2E;
+  width: 280px;
+  min-width: 280px;
+  background: #0D0D0D;
+  border-right: 1px solid #1E1E1E;
   display: flex;
   flex-direction: column;
-  padding: 16px 12px;
-  gap: 12px;
-  overflow-y: auto;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid #1E1E1E;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #F1F5F9;
+  margin-bottom: 16px;
 }
 
 .new-chat-btn {
@@ -863,7 +905,7 @@ body {
   border: none;
   border-radius: 10px;
   padding: 10px 16px;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   width: 100%;
@@ -872,26 +914,69 @@ body {
 
 .new-chat-btn:hover { background: #2563EB; }
 
-.chat-sessions { display: flex; flex-direction: column; gap: 4px; }
+/* Desktop Nav Links */
+.sidebar-nav {
+  padding: 12px 8px;
+  border-bottom: 1px solid #1E1E1E;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #636366;
+  transition: all 0.15s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-item:hover { background: #1A1A1A; color: #AEAEB2; }
+.nav-item.active { background: #1A1A1A; color: #F1F5F9; }
+.nav-item.active svg { color: #3B82F6; }
+
+/* Chat Sessions */
+.sidebar-sessions-title {
+  padding: 14px 16px 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #48484A;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.chat-sessions {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px 16px;
+}
+
+.chat-sessions::-webkit-scrollbar { width: 4px; }
+.chat-sessions::-webkit-scrollbar-track { background: transparent; }
+.chat-sessions::-webkit-scrollbar-thumb { background: #2C2C2E; border-radius: 4px; }
 
 .session-item {
-  padding: 10px 12px;
+  padding: 9px 12px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.8rem;
-  color: #AEAEB2;
+  color: #636366;
   line-height: 1.4;
-  transition: background 0.15s;
+  transition: all 0.15s;
   border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.session-item:hover { background: #2C2C2E; color: #F1F5F9; }
-
-.session-item.active {
-  background: #2C2C2E;
-  border-color: #3B82F6;
-  color: #F1F5F9;
-}
+.session-item:hover { background: #1A1A1A; color: #AEAEB2; }
+.session-item.active { background: #1E1E1E; border-color: #2C2C2E; color: #F1F5F9; }
 
 .sidebar-empty {
   font-size: 0.8rem;
@@ -900,13 +985,74 @@ body {
   padding: 20px 0;
 }
 
+/* Sidebar Footer */
+.sidebar-footer {
+  padding: 12px 8px;
+  border-top: 1px solid #1E1E1E;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sidebar-user:hover { background: #1A1A1A; }
+
+.sidebar-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+}
+
+.sidebar-user-info { flex: 1; min-width: 0; }
+.sidebar-user-email {
+  font-size: 0.78rem;
+  color: #AEAEB2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-user-plan {
+  font-size: 0.7rem;
+  color: #48484A;
+  margin-top: 1px;
+}
+.sidebar-user-plan.premium { color: #34D399; }
+
 /* ── CHAT MAIN ── */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: linear-gradient(160deg, #0D0D0D 0%, #111111 50%, #0A0A0A 100%);
   position: relative;
+}
+
+/* Subtle grid background */
+.chat-main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .chat-empty {
@@ -919,59 +1065,97 @@ body {
   color: #AEAEB2;
   padding: 40px;
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
-.chat-empty h2 { color: #F1F5F9; font-size: 1.3rem; margin: 0; }
-.chat-empty p { font-size: 0.9rem; margin: 0; }
+.chat-empty-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.05));
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
 
-.quick-actions { display: flex; gap: 10px; margin-top: 8px; }
+.chat-empty h2 {
+  color: #F1F5F9;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.chat-empty p { font-size: 0.9rem; margin: 0; color: #636366; }
+
+.quick-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
 
 .quick-btn {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 10px 18px;
-  background: #2C2C2E;
-  border: 1px solid #3C3C3E;
+  background: #1A1A1A;
+  border: 1px solid #2C2C2E;
   border-radius: 20px;
-  color: #F1F5F9;
+  color: #AEAEB2;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
-.quick-btn:hover { background: #3C3C3E; }
+.quick-btn:hover {
+  background: #222;
+  border-color: #3B82F6;
+  color: #F1F5F9;
+}
 
+/* ── CHAT MESSAGES ── */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  align-self: center;
 }
 
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: #2C2C2E; border-radius: 4px; }
+
 .chat-bubble {
-  max-width: 85%;
+  max-width: 80%;
   padding: 14px 18px;
   border-radius: 16px;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   line-height: 1.6;
 }
 
 .chat-bubble.user {
-  background: #3B82F6;
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   color: white;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.25);
 }
 
 .chat-bubble.assistant {
-  background: #1C1C1E;
-  border: 1px solid #2C2C2E;
+  background: #161616;
+  border: 1px solid #242424;
   color: #D1D1D6;
   align-self: flex-start;
   border-bottom-left-radius: 4px;
+  max-width: 90%;
 }
 
 .chat-bubble.assistant .result-text h2 { margin-top: 16px; }
@@ -979,19 +1163,32 @@ body {
 
 /* ── CHAT INPUT ── */
 .chat-input-area {
-  padding: 16px;
-  border-top: 1px solid #2C2C2E;
-  background: #111111;
+  padding: 16px 32px 24px;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+.chat-input-wrapper {
+  max-width: 860px;
+  margin: 0 auto;
 }
 
 .chat-input-row {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
-  background: #1C1C1E;
-  border: 1.5px solid #2C2C2E;
-  border-radius: 14px;
-  padding: 8px 12px;
+  gap: 10px;
+  background: #161616;
+  border: 1px solid #2C2C2E;
+  border-radius: 16px;
+  padding: 10px 14px;
+  transition: border-color 0.2s;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+.chat-input-row:focus-within {
+  border-color: #3B82F6;
+  box-shadow: 0 4px 24px rgba(59,130,246,0.1);
 }
 
 .chat-textarea {
@@ -1000,67 +1197,106 @@ body {
   border: none;
   outline: none;
   color: #F1F5F9;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   resize: none;
-  max-height: 120px;
+  max-height: 160px;
   line-height: 1.5;
   font-family: inherit;
 }
 
-.chat-textarea::placeholder { color: #48484A; }
+.chat-textarea::placeholder { color: #3C3C3E; }
 
 .attach-btn {
   background: none;
   border: none;
-  color: #AEAEB2;
+  color: #48484A;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: color 0.2s;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
-.attach-btn:hover { color: #F1F5F9; }
+.attach-btn:hover { color: #AEAEB2; background: #222; }
 
 .send-btn {
   background: #3B82F6;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   color: white;
   cursor: pointer;
-  padding: 8px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
-.send-btn:hover { background: #2563EB; }
-.send-btn:disabled { background: #2C2C2E; cursor: not-allowed; }
+.send-btn:hover { background: #2563EB; transform: scale(1.05); }
+.send-btn:disabled { background: #222; cursor: not-allowed; transform: none; }
+
+.input-hint {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #3C3C3E;
+  margin-top: 10px;
+}
 
 /* Limit Banner */
 .limit-banner {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: rgba(251,191,36,0.1);
-  border-top: 1px solid rgba(251,191,36,0.2);
+  gap: 10px;
+  padding: 12px 32px;
+  background: rgba(251,191,36,0.06);
+  border-top: 1px solid rgba(251,191,36,0.15);
   color: #FBBF24;
   font-size: 0.85rem;
+  position: relative;
+  z-index: 1;
 }
 
 .limit-upgrade-btn {
   margin-left: auto;
-  background: #FBBF24;
-  color: #000;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 12px;
+  background: rgba(251,191,36,0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(251,191,36,0.3);
+  border-radius: 8px;
+  padding: 5px 14px;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.limit-upgrade-btn:hover { background: rgba(251,191,36,0.25); }
+
+/* ── ANDERE TABS (Verlauf, Premium, etc.) ── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+#tab-history, #tab-premium, #tab-profile, #tab-about {
+  height: 100vh;
+  overflow-y: auto;
+  padding: 40px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ── MOBILE: Tab-Bar wieder einblenden ── */
+@media (max-width: 768px) {
+  .app-header { display: block !important; }
+  .chat-sidebar { display: none !important; }
+  .erklaeren-layout { height: calc(100vh - 80px); }
+  #tab-history, #tab-premium, #tab-profile, #tab-about {
+    height: auto;
+    padding: 20px;
+  }
+  .chat-messages { padding: 16px; }
+  .chat-input-area { padding: 12px 16px 16px; }
 }
 
   </style>
@@ -1138,12 +1374,50 @@ body {
 
     <!-- Linke Sidebar: Chat-Verlauf -->
     <div class="chat-sidebar" id="chatSidebar">
-      <button class="new-chat-btn" onclick="neuerChat()">
-        <i data-lucide="plus" style="width:16px;height:16px;"></i>
-        Neuer Chat
-      </button>
+      <!-- Logo -->
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <i data-lucide="sparkles" style="width:18px;height:18px;color:#3B82F6;"></i> ELI10
+          <span id="sidebarBadge" style="margin-left:auto;font-size:0.7rem;background:#2C2C2E;color:#636366;padding:2px 8px;border-radius:20px;font-weight:600;">
+            <span id="sidebarCount">5</span> heute
+          </span>
+        </div>
+        <button class="new-chat-btn" onclick="neuerChat()">
+          <i data-lucide="plus" style="width:15px;height:15px;"></i> Neuer Chat
+        </button>
+      </div>
+    
+      <!-- Navigation -->
+      <div class="sidebar-nav">
+        <button class="nav-item active" id="nav-home" onclick="switchTab('home')">
+          <i data-lucide="wand-2" style="width:16px;height:16px;"></i> Erklären
+        </button>
+        <button class="nav-item" id="nav-history" onclick="switchTab('history')">
+          <i data-lucide="clock" style="width:16px;height:16px;"></i> Verlauf
+        </button>
+        <button class="nav-item" id="nav-premium" onclick="switchTab('premium')">
+          <i data-lucide="zap" style="width:16px;height:16px;"></i> Premium
+        </button>
+        <button class="nav-item" id="nav-about" onclick="switchTab('about')">
+          <i data-lucide="info" style="width:16px;height:16px;"></i> Über ELI10
+        </button>
+      </div>
+    
+      <!-- Chat Sessions -->
+      <div class="sidebar-sessions-title">Chats</div>
       <div class="chat-sessions" id="chatSessions">
         <p class="sidebar-empty">Noch keine Chats</p>
+      </div>
+    
+      <!-- User Footer -->
+      <div class="sidebar-footer">
+        <div class="sidebar-user" onclick="switchTab('profile')">
+          <div class="sidebar-avatar" id="sidebarAvatar">?</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-email" id="sidebarEmail">—</div>
+            <div class="sidebar-user-plan" id="sidebarPlan">Free Plan</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1179,6 +1453,7 @@ body {
       <div class="chat-input-area">
         <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="dokumentHochladen()">
         <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none" onchange="fotoAnalysieren()">
+        <div class="chat-input-wrapper">
         <div class="chat-input-row">
           <button class="attach-btn" onclick="document.getElementById('pdfInput').click()" title="PDF hochladen">
             <i data-lucide="paperclip" style="width:18px;height:18px;"></i>
@@ -1193,6 +1468,8 @@ body {
             <i data-lucide="send" style="width:18px;height:18px;"></i>
           </button>
         </div>
+        <p class="input-hint">ELI10 ersetzt keine professionelle Beratung</p>
+      </div>
       </div>
 
     </div>
@@ -1327,7 +1604,6 @@ body {
 
     </div>
 
-    <div class="disclaimer"><i data-lucide="alert-triangle" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px;color:#FBBF24;"></i>ELI10 ersetzt keine professionelle Beratung.</div>
   </div>
 
   <script>
@@ -1382,13 +1658,20 @@ body {
 
     // Tab Switch
     function switchTab(tabName) {
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-      document.getElementById(`tab-${tabName}`).classList.add('active');
-      const tabs = ['home', 'history', 'premium', 'profile', 'about'];
-      document.querySelectorAll('.tab-item')[tabs.indexOf(tabName)].classList.add('active');
-      if (tabName === 'history') ladVerlauf();
-    }
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${tabName}`).classList.add('active');
+  const tabs = ['home', 'history', 'premium', 'profile', 'about'];
+  const idx = tabs.indexOf(tabName);
+  if (idx >= 0) document.querySelectorAll('.tab-item')[idx]?.classList.add('active');
+
+  // Desktop Sidebar Nav aktualisieren
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById(`nav-${tabName}`);
+  if (navEl) navEl.classList.add('active');
+
+  if (tabName === 'history') ladVerlauf();
+}
 
     // Session Check
     document.addEventListener('DOMContentLoaded', async () => {
@@ -1436,6 +1719,13 @@ body {
   document.querySelector('.settings-item[onclick="switchTab(\'premium\')"]').style.display = 'none';
 }
 
+// Sidebar Plan Label
+document.getElementById('sidebarPlan').textContent = data.isPremium ? '✦ Premium' : 'Free Plan';
+if (data.isPremium) document.getElementById('sidebarPlan').classList.add('premium');
+
+// Sidebar Badge
+document.getElementById('sidebarCount').textContent = data.isPremium ? '∞' : data.remaining;
+
 if (!data.isPremium) {
   document.getElementById('profilePlan').innerHTML = '<i data-lucide="circle" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px;"></i>Free Plan';
   document.getElementById('profilePlan').style.color = '#636366';
@@ -1443,6 +1733,11 @@ if (!data.isPremium) {
 
 lucide.createIcons();
 ladeChatSessions();
+
+// Sidebar User Info befüllen
+const emailKurz = email.split('@')[0];
+document.getElementById('sidebarEmail').textContent = email;
+document.getElementById('sidebarAvatar').textContent = emailKurz[0].toUpperCase();
 
     }
 
