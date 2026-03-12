@@ -1945,7 +1945,8 @@ body {
       const message = vorgefertigterText || input.value.trim();
       if (!message) return;
 
-      const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+      const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
+      const user = chatSession?.user;      
       if (!user) return;
 
       if (!currentSessionId) currentSessionId = generateSessionId();
@@ -2020,7 +2021,8 @@ body {
     }
 
     async function ladeSession(session_id) {
-      const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+      const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
+      const user = chatSession?.user;
       if (!user) return;
       currentSessionId = session_id;
       const res = await fetch(`/chat/${user.id}/${session_id}`);
@@ -2050,7 +2052,8 @@ body {
         const data = await res.json();
         document.getElementById(loadingId)?.remove();
         if (!currentSessionId) currentSessionId = generateSessionId();
-        const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+        const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
+        const user = chatSession?.user;
         if (user) {
           await supabase.from('chats').insert([
             { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${file.name}` },
@@ -2081,7 +2084,8 @@ body {
         const data = await res.json();
         document.getElementById(loadingId)?.remove();
         if (!currentSessionId) currentSessionId = generateSessionId();
-        const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+        const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
+        const user = chatSession?.user;
         if (user) {
           await supabase.from('chats').insert([
             { user_id: user.id, session_id: currentSessionId, role: 'user', message: '📸 Foto analysiert' },
