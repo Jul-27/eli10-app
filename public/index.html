@@ -1755,7 +1755,6 @@ body {
             <span class="profile-info-label">Aktiv seit</span>
             <span class="profile-info-value" id="profilePremiumSince">—</span>
           </div>
-          <!-- FIX 4: Nächste Zahlung (nur bei Premium) -->
           <div class="profile-info-row" id="nextPaymentRow" style="display:none;">
             <span class="profile-info-label">Nächste Zahlung</span>
             <span class="profile-info-value" id="profileNextPayment">—</span>
@@ -1765,7 +1764,7 @@ body {
           </button>
         </div>
 
-        <!-- FIX 5: "Account löschen" statt "Gefahrenzone" -->
+        <!-- Account löschen -->
         <div class="profile-card danger-card">
           <div class="profile-card-title"><i data-lucide="alert-triangle" style="width:15px;height:15px;color:#F87171;"></i> <span style="color:#F87171;">Account löschen</span></div>
           <p style="font-size:0.85rem;color:#636366;margin-bottom:12px;">Das Löschen deines Accounts ist permanent und kann nicht rückgängig gemacht werden.</p>
@@ -1896,21 +1895,16 @@ body {
         }
       }
 
-      // FIX 1: Sidebar Plan korrekt setzen (auch für Premium)
       const sidebarPlan = document.getElementById('sidebarPlan');
       sidebarPlan.textContent = data.isPremium ? '✦ Premium' : 'Free Plan';
       sidebarPlan.className = 'sidebar-user-plan' + (data.isPremium ? ' premium' : '');
-
-      // Sidebar Badge
       document.getElementById('sidebarCount').textContent = data.isPremium ? '∞' : data.remaining;
 
       lucide.createIcons();
       ladeChatSessions();
 
-      // FIX 2 & 3: Sidebar Avatar und Name korrekt befüllen
       const emailKurz = email.split('@')[0];
       document.getElementById('sidebarEmail').textContent = email;
-      // Avatar: Initiale aus E-Mail (wird in ladeProfil() ggf. durch Bild/Anzeigename ersetzt)
       document.getElementById('sidebarAvatar').textContent = emailKurz[0].toUpperCase();
     }
 
@@ -1932,21 +1926,14 @@ body {
       return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
 
-    function neuerChat() {
-      currentSessionId = null;
-      document.getElementById('chatMessages').style.display = 'none';
-      document.getElementById('chatEmpty').style.display = 'flex';
-      document.getElementById('chatInput').value = '';
-      document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
-    }
-
     async function sendChatMessage(vorgefertigterText) {
       const input = document.getElementById('chatInput');
       const message = vorgefertigterText || input.value.trim();
       if (!message) return;
 
+      // ✅ FIX: supabaseClient statt supabase
       const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
-      const user = chatSession?.user;      
+      const user = chatSession?.user;
       if (!user) return;
 
       if (!currentSessionId) currentSessionId = generateSessionId();
@@ -2002,22 +1989,29 @@ body {
       lucide.createIcons();
     }
 
+    // ✅ FIX: supabaseClient.auth.getSession() statt supabase.auth.getUser()
     async function ladeChatSessions() {
-      const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
       if (!user) return;
-      const res = await fetch(`/chat/${user.id}`);
-      const sessions = await res.json();
-      const container = document.getElementById('chatSessions');
-      if (!sessions.length) {
-        container.innerHTML = '<p class="sidebar-empty">Noch keine Chats</p>';
-        return;
+
+      try {
+        const res = await fetch(`/chat/${user.id}`);
+        const sessions = await res.json();
+        const container = document.getElementById('chatSessions');
+        if (!sessions.length) {
+          container.innerHTML = '<p class="sidebar-empty">Noch keine Chats</p>';
+          return;
+        }
+        container.innerHTML = sessions.map(s => `
+          <div class="session-item ${s.session_id === currentSessionId ? 'active' : ''}"
+               onclick="ladeSession('${s.session_id}')">
+            ${s.title}
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Fehler beim Laden der Sessions:', err);
       }
-      container.innerHTML = sessions.map(s => `
-        <div class="session-item ${s.session_id === currentSessionId ? 'active' : ''}"
-             onclick="ladeSession('${s.session_id}')">
-          ${s.title}
-        </div>
-      `).join('');
     }
 
     async function ladeSession(session_id) {
@@ -2052,10 +2046,11 @@ body {
         const data = await res.json();
         document.getElementById(loadingId)?.remove();
         if (!currentSessionId) currentSessionId = generateSessionId();
+        // ✅ FIX: supabaseClient statt supabase
         const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
         const user = chatSession?.user;
         if (user) {
-          await supabase.from('chats').insert([
+          await supabaseClient.from('chats').insert([
             { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${file.name}` },
             { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
           ]);
@@ -2084,10 +2079,11 @@ body {
         const data = await res.json();
         document.getElementById(loadingId)?.remove();
         if (!currentSessionId) currentSessionId = generateSessionId();
+        // ✅ FIX: supabaseClient statt supabase
         const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
         const user = chatSession?.user;
         if (user) {
-          await supabase.from('chats').insert([
+          await supabaseClient.from('chats').insert([
             { user_id: user.id, session_id: currentSessionId, role: 'user', message: '📸 Foto analysiert' },
             { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
           ]);
@@ -2128,16 +2124,13 @@ body {
       });
       const data = await res.json();
 
-      // Anzeigename
       if (data.display_name) {
         document.getElementById('displayNameInput').value = data.display_name;
-        // FIX 2: Anzeigename in Sidebar anzeigen
         document.getElementById('sidebarEmail').textContent = data.display_name;
       } else {
         document.getElementById('sidebarEmail').textContent = email;
       }
 
-      // FIX 3: Avatar — Initiale aus E-Mail in Sidebar korrekt setzen
       if (data.avatar_url) {
         document.getElementById('profileAvatarImg').src = data.avatar_url + '?t=' + Date.now();
         document.getElementById('profileAvatarImg').style.display = 'block';
@@ -2146,11 +2139,9 @@ body {
       } else {
         const initial = email[0].toUpperCase();
         document.getElementById('profileAvatarInitial').textContent = initial;
-        // FIX 3: Sidebar Avatar ebenfalls mit korrekter Initiale befüllen
         document.getElementById('sidebarAvatar').textContent = initial;
       }
 
-      // Plan
       const isPremium = data.plan === 'premium';
       document.getElementById('profilePlanInfo').textContent = isPremium ? '✦ Premium' : 'Free Plan';
       document.getElementById('profilePlanInfo').style.color = isPremium ? '#34D399' : '#636366';
@@ -2162,7 +2153,6 @@ body {
         document.getElementById('profilePremiumSince').textContent =
           new Date(data.created_at).toLocaleDateString('de-DE');
 
-        // FIX 4: Nächste Zahlung berechnen (1 Monat nach letztem Zahlungsdatum)
         const since = new Date(data.created_at);
         const now = new Date();
         const next = new Date(since);
@@ -2217,12 +2207,9 @@ body {
         body: JSON.stringify({ user_id, display_name })
       });
       const data = await res.json();
-
-      // FIX 2: Sidebar Name nach Speichern aktualisieren
       if (data.success) {
         document.getElementById('sidebarEmail').textContent = display_name || email;
       }
-
       msg.className = 'profile-msg ' + (data.success ? 'success' : 'error');
       msg.textContent = data.success ? '✓ Gespeichert!' : 'Fehler beim Speichern.';
       setTimeout(() => msg.textContent = '', 3000);
