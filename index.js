@@ -594,6 +594,81 @@ app.get('/chat/:user_id/:session_id', async (req, res) => {
   }
 });
 
+// Profilbild hochladen
+app.post('/upload-avatar', async (req, res) => {
+  const { user_id, image_base64, file_ext } = req.body;
+  try {
+    const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+    const email = userData?.user?.email;
+    const fileName = `${user_id}.${file_ext}`;
+    const buffer = Buffer.from(image_base64, 'base64');
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, buffer, { contentType: `image/${file_ext}`, upsert: true });
+    if (uploadError) return res.status(500).json({ error: uploadError.message });
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
+    await supabase.from('users').update({ avatar_url: urlData.publicUrl }).eq('email', email);
+    res.json({ avatar_url: urlData.publicUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Anzeigename speichern
+app.post('/update-profile', async (req, res) => {
+  const { user_id, display_name } = req.body;
+  try {
+    const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+    const email = userData?.user?.email;
+    await supabase.from('users').update({ display_name }).eq('email', email);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Passwort ändern
+app.post('/change-password', async (req, res) => {
+  const { user_id, new_password } = req.body;
+  try {
+    const { error } = await supabase.auth.admin.updateUserById(user_id, { password: new_password });
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Account löschen
+app.post('/delete-account', async (req, res) => {
+  const { user_id } = req.body;
+  try {
+    const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+    const email = userData?.user?.email;
+    await supabase.from('users').delete().eq('email', email);
+    await supabase.from('usage').delete().eq('user_id', user_id);
+    await supabase.from('history').delete().eq('user_id', user_id);
+    await supabase.from('chats').delete().eq('user_id', user_id);
+    await supabase.auth.admin.deleteUser(user_id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Profildaten laden
+app.post('/get-profile', async (req, res) => {
+  const { user_id } = req.body;
+  try {
+    const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+    const email = userData?.user?.email;
+    const { data } = await supabase.from('users').select('display_name, avatar_url, plan, created_at').eq('email', email).single();
+    res.json(data || {});
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(3000, () => {
   console.log('ELI10 läuft auf Port 3000');
 });
