@@ -100,58 +100,10 @@ Ein einziger, klarer Satz der alles zusammenfasst.`;
 
 // ── PDF Text extrahieren (Vercel-kompatibel, kein pdf-parse) ─────────────────
 async function extractPdfText(buffer) {
-  // Direkter Buffer-Parse: extrahiert Text-Streams aus PDF ohne externe Bibliothek
-  const str = buffer.toString('latin1');
-  const textParts = [];
-
-  // Methode 1: BT...ET Blöcke (Standard PDF Text-Objekte)
-  const btEtRegex = /BT([\s\S]*?)ET/g;
-  let match;
-  while ((match = btEtRegex.exec(str)) !== null) {
-    const block = match[1];
-    // Tj und TJ Operatoren extrahieren
-    const tjRegex = /\(((?:[^()\\]|\\[\s\S])*)\)\s*Tj/g;
-    const tjArrRegex = /\[((?:[^\[\]]|\((?:[^()\\]|\\[\s\S])*\))*)\]\s*TJ/g;
-    let m;
-    while ((m = tjRegex.exec(block)) !== null) {
-      const text = m[1]
-        .replace(/\\n/g, ' ')
-        .replace(/\\r/g, ' ')
-        .replace(/\\t/g, ' ')
-        .replace(/\\\(/g, '(')
-        .replace(/\\\)/g, ')')
-        .replace(/\\\\/g, '\\');
-      if (text.trim()) textParts.push(text);
-    }
-    while ((m = tjArrRegex.exec(block)) !== null) {
-      const inner = m[1];
-      const strRegex = /\(((?:[^()\\]|\\[\s\S])*)\)/g;
-      let s;
-      while ((s = strRegex.exec(inner)) !== null) {
-        const text = s[1]
-          .replace(/\\n/g, ' ')
-          .replace(/\\r/g, ' ')
-          .replace(/\\\(/g, '(')
-          .replace(/\\\)/g, ')')
-          .replace(/\\\\/g, '\\');
-        if (text.trim()) textParts.push(text);
-      }
-    }
-  }
-
-  // Methode 2: Falls BT/ET nichts liefert, rohe Strings suchen
-  if (textParts.length === 0) {
-    const rawRegex = /\(([\x20-\x7E]{4,})\)/g;
-    while ((match = rawRegex.exec(str)) !== null) {
-      const text = match[1].trim();
-      if (text.length >= 4 && !/^[\d\s.]+$/.test(text)) {
-        textParts.push(text);
-      }
-    }
-  }
-
-  const result = textParts.join(' ').replace(/\s+/g, ' ').trim();
-  return result;
+  // pdf-parse Vercel-Workaround: direkt die lib laden, nicht den Wrapper
+  const pdfParse = require('pdf-parse/lib/pdf-parse.js');
+  const data = await pdfParse(buffer);
+  return data.text;
 }
 
 // ── Dokument hochladen und analysieren ───────────────────────────────────────
