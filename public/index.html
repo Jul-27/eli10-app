@@ -1278,13 +1278,6 @@ body {
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
-#tab-history, #tab-premium, #tab-profile, #tab-about {
-  height: 100vh;
-  overflow-y: auto;
-  padding: 40px;
-  max-width: 720px;
-  margin: 0 auto;
-}
 
 /* ── MOBILE: Tab-Bar wieder einblenden ── */
 @media (max-width: 768px) {
@@ -1355,6 +1348,18 @@ body {
     margin-left: 0;
     margin-right: 0;
   }
+}
+
+#tab-home {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+#tab-home.active {
+  display: flex;
 }
 
   </style>
