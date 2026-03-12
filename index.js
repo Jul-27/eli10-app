@@ -311,7 +311,7 @@ app.get('/success', async (req, res) => {
   res.send(fs.readFileSync(htmlPath, 'utf8'));
 });
 
-// ── Chat ──────────────────────────────────────────────────────────────────────
+// ── Chat (Streaming) ──────────────────────────────────────────────────────────
 app.post('/chat', async (req, res) => {
   const { user_id, session_id, message } = req.body;
   const FREE_LIMIT = 5;
@@ -346,8 +346,14 @@ app.post('/chat', async (req, res) => {
     // Nachricht in DB speichern
     await supabase.from('chats').insert({ user_id, session_id, role: 'user', message });
 
-    const completion = await groq.chat.completions.create({
+    // SSE Header setzen
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const stream = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
+      stream: true,
       messages: [
         {
           role: 'system',
@@ -373,13 +379,45 @@ Bei Rückfragen antworte natürlich und direkt ohne starre Struktur.`
       max_tokens: 1000
     });
 
-    const reply = completion.choices[0].message.content;
-    await supabase.from('chats').insert({ user_id, session_id, role: 'assistant', message: reply });
-    res.json({ reply, session_id });
+    let fullReply = '';
+
+    for await (const chunk of stream) {
+      const token = chunk.choices[0]?.delta?.content || '';
+      if (token) {
+        fullReply += token;
+        res.write(`data: ${JSON.stringify({ token })}\n\n`);
+      }
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+
+    // Antwort in DB speichern
+    await supabase.from('chats').insert({ user_id, session_id, role: 'assistant', message: fullReply });
 
   } catch (err) {
     console.error('Chat Fehler:', err.message);
-    res.status(500).json({ error: 'Fehler beim Chat' });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Fehler beim Chat' });
+    } else {
+      res.write(`data: ${JSON.stringify({ error: 'Fehler beim Chat' })}\n\n`);
+      res.end();
+    }
+  }
+});
+
+// ── Chat Session löschen ──────────────────────────────────────────────────────
+app.delete('/chat/:user_id/:session_id', async (req, res) => {
+  const { user_id, session_id } = req.params;
+  try {
+    await supabase
+      .from('chats')
+      .delete()
+      .eq('user_id', user_id)
+      .eq('session_id', session_id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
