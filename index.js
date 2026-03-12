@@ -311,7 +311,7 @@ app.get('/success', async (req, res) => {
   res.send(fs.readFileSync(htmlPath, 'utf8'));
 });
 
-// ── Chat (Streaming) ──────────────────────────────────────────────────────────
+// ── Chat ─────────────────────────────────────────────────────────────────────
 app.post('/chat', async (req, res) => {
   const { user_id, session_id, message } = req.body;
   const FREE_LIMIT = 5;
@@ -332,7 +332,6 @@ app.post('/chat', async (req, res) => {
       await supabase.from('usage').upsert({ user_id, date: today, count: count + 1 }, { onConflict: 'user_id,date' });
     }
 
-    // Bisherigen Chatverlauf laden
     const { data: history } = await supabase
       .from('chats')
       .select('role, message')
@@ -343,17 +342,10 @@ app.post('/chat', async (req, res) => {
     const messages = (history || []).map(h => ({ role: h.role, content: h.message }));
     messages.push({ role: 'user', content: message });
 
-    // Nachricht in DB speichern
     await supabase.from('chats').insert({ user_id, session_id, role: 'user', message });
 
-    // SSE Header setzen
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    const stream = await groq.chat.completions.create({
+    const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
-      stream: true,
       messages: [
         {
           role: 'system',
@@ -379,30 +371,13 @@ Bei Rückfragen antworte natürlich und direkt ohne starre Struktur.`
       max_tokens: 1000
     });
 
-    let fullReply = '';
-
-    for await (const chunk of stream) {
-      const token = chunk.choices[0]?.delta?.content || '';
-      if (token) {
-        fullReply += token;
-        res.write(`data: ${JSON.stringify({ token })}\n\n`);
-      }
-    }
-
-    res.write('data: [DONE]\n\n');
-    res.end();
-
-    // Antwort in DB speichern
-    await supabase.from('chats').insert({ user_id, session_id, role: 'assistant', message: fullReply });
+    const reply = completion.choices[0].message.content;
+    await supabase.from('chats').insert({ user_id, session_id, role: 'assistant', message: reply });
+    res.json({ reply, session_id });
 
   } catch (err) {
     console.error('Chat Fehler:', err.message);
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'Fehler beim Chat' });
-    } else {
-      res.write(`data: ${JSON.stringify({ error: 'Fehler beim Chat' })}\n\n`);
-      res.end();
-    }
+    res.status(500).json({ error: 'Fehler beim Chat' });
   }
 });
 

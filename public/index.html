@@ -1278,6 +1278,21 @@ body {
 .send-btn:hover { background: #2563EB; transform: scale(1.05); }
 .send-btn:disabled { background: #222; cursor: not-allowed; transform: none; }
 
+/* Typing dots animation */
+.typing-dots span {
+  display: inline-block;
+  color: #48484A;
+  font-size: 1.4rem;
+  animation: typingBounce 1.2s infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
 .input-hint {
   text-align: center;
   font-size: 0.72rem;
@@ -2007,17 +2022,17 @@ body {
       input.style.height = 'auto';
       document.getElementById('sendBtn').disabled = true;
 
-      // Leere Assistent-Bubble erstellen für Streaming
+      // Leere Assistent-Bubble erstellen
       const streamId = 'stream_' + Date.now();
-      const messages = document.getElementById('chatMessages');
+      const messagesEl = document.getElementById('chatMessages');
       const bubble = document.createElement('div');
       bubble.className = 'chat-bubble assistant';
       bubble.id = streamId;
       const div = document.createElement('div');
       div.className = 'result-text';
-      div.innerHTML = '<span style="color:#48484A">ELI10 denkt nach...</span>';
+      div.innerHTML = '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>';
       bubble.appendChild(div);
-      messages.appendChild(bubble);
+      messagesEl.appendChild(bubble);
 
       try {
         const res = await fetch('/chat', {
@@ -2026,12 +2041,12 @@ body {
           body: JSON.stringify({ user_id: user.id, session_id: currentSessionId, message })
         });
 
+        const data = await res.json();
+
         if (!res.ok) {
-          const data = await res.json();
-          div.innerHTML = '';
           if (data.error === 'LIMIT_REACHED') {
-            zeigeLimitBanner(0);
             bubble.remove();
+            zeigeLimitBanner();
             document.getElementById('sendBtn').disabled = false;
             return;
           }
@@ -2040,41 +2055,23 @@ body {
           return;
         }
 
-        // Streaming lesen
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let fullText = '';
+        // Typewriter-Effekt: Text Wort für Wort eintippen
+        const fullText = data.reply;
+        const words = fullText.split(' ');
+        let current = '';
         div.innerHTML = '';
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          // SSE Format: "data: ..." Zeilen parsen
-          const lines = chunk.split('\n');
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') break;
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.token) {
-                  fullText += parsed.token;
-                  div.innerHTML = marked.parse(fullText);
-                  lucide.createIcons();
-                }
-                if (parsed.error === 'LIMIT_REACHED') {
-                  zeigeLimitBanner(0);
-                  bubble.remove();
-                  document.getElementById('sendBtn').disabled = false;
-                  return;
-                }
-              } catch(e) {}
-            }
-          }
+        for (let i = 0; i < words.length; i++) {
+          current += (i === 0 ? '' : ' ') + words[i];
+          div.innerHTML = marked.parse(current + (i < words.length - 1 ? ' ▍' : ''));
+          await new Promise(r => setTimeout(r, 18));
         }
 
+        // Finaler Render ohne Cursor
+        div.innerHTML = marked.parse(fullText);
+        lucide.createIcons();
         ladeChatSessions();
+
       } catch (err) {
         div.innerHTML = marked.parse('Es ist ein Fehler aufgetreten. Bitte versuche es nochmal.');
       }
