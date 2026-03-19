@@ -2150,6 +2150,11 @@ body {
 
       const isNewSession = !currentSessionId;
       if (!currentSessionId) currentSessionId = generateSessionId();
+
+      document.getElementById('chatEmpty').style.display = 'none';
+      document.getElementById('chatMessages').style.display = 'flex';
+
+      addBubble('user', message);
       input.value = '';
       input.style.height = 'auto';
       document.getElementById('sendBtn').disabled = true;
@@ -2244,7 +2249,7 @@ body {
         lucide.createIcons();
 
         // Sidebar nur aktualisieren wenn neue Session
-        if (isNewSession) ladeChatSessions();
+        if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
 
       } catch (err) {
         div.innerHTML = marked.parse('Es ist ein Fehler aufgetreten. Bitte versuche es nochmal.');
@@ -2352,7 +2357,7 @@ body {
           ]);
         }
         await zeigeAntwortMitTypewriter(data.explanation, data.followUps);
-        if (isNewSession) ladeChatSessions();
+        if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
       } catch (err) {
         document.getElementById(loadingId)?.remove();
         addBubble('assistant', 'Fehler beim Analysieren des Dokuments.');
@@ -2386,7 +2391,7 @@ body {
           ]);
         }
         await zeigeAntwortMitTypewriter(data.explanation, data.followUps);
-        if (isNewSession) ladeChatSessions();
+        if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
       } catch (err) {
         document.getElementById(loadingId)?.remove();
         addBubble('assistant', 'Fehler beim Analysieren des Fotos.');
@@ -2428,7 +2433,7 @@ body {
           return;
         }
         container.innerHTML = sessions.map(s => `
-          <div class="session-item-row ${s.session_id === currentSessionId ? 'active' : ''}">
+          <div class="session-item-row ${s.session_id === currentSessionId ? 'active' : ''}" data-session="${s.session_id}">
             <div class="session-item-label" onclick="ladeSession('${s.session_id}')">${s.title}</div>
             <button class="session-delete-btn" onclick="loescheSession('${s.session_id}', event)" title="Chat löschen">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
@@ -2438,6 +2443,12 @@ body {
       } catch (err) {
         console.error('Fehler beim Laden der Sessions:', err);
       }
+    }
+
+    function aktualisiereAktiveSession() {
+      document.querySelectorAll('.session-item-row').forEach(el => {
+        el.classList.toggle('active', el.dataset.session === currentSessionId);
+      });
     }
 
     async function loescheSession(session_id, event) {
@@ -2469,9 +2480,7 @@ body {
       chatMessages.style.display = 'flex';
       chatMessages.innerHTML = '';
       messages.forEach(m => addBubble(m.role, m.message));
-      document.querySelectorAll('.session-item').forEach(el => {
-        el.classList.toggle('active', el.onclick.toString().includes(session_id));
-      });
+      aktualisiereAktiveSession();
     }
 
     async function upgrade() {
