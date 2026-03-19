@@ -371,6 +371,18 @@ Bei Rückfragen antworte natürlich und direkt ohne starre Struktur.`
   }
 });
 
+// ── Feedback ──────────────────────────────────────────────────────────────────
+app.post('/feedback', async (req, res) => {
+  const { user_id, session_id, message, rating } = req.body;
+  try {
+    await supabase.from('feedback').insert({ user_id, session_id, message, rating });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Feedback Fehler:', err.message);
+    res.status(500).json({ error: 'Fehler beim Speichern' });
+  }
+});
+
 // ── Chat Session löschen ──────────────────────────────────────────────────────
 app.delete('/chat/:user_id/:session_id', async (req, res) => {
   const { user_id, session_id } = req.params;

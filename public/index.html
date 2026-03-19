@@ -1327,6 +1327,37 @@ body {
   background: rgba(59,130,246,0.08);
 }
 
+/* Feedback-Buttons */
+.feedback-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #1C1C1E;
+}
+.feedback-label {
+  font-size: 11px;
+  color: #3C3C3E;
+  margin-right: 2px;
+}
+.feedback-btn {
+  background: none;
+  border: 1px solid #2C2C2E;
+  border-radius: 8px;
+  color: #48484A;
+  cursor: pointer;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.feedback-btn:hover { border-color: #48484A; color: #AEAEB2; }
+.feedback-btn.active-up { border-color: #34D399; color: #34D399; background: rgba(52,211,153,0.08); }
+.feedback-btn.active-down { border-color: #F87171; color: #F87171; background: rgba(248,113,113,0.08); }
+
 /* Folgefragen-Chips */
 .followup-container {
   display: flex;
@@ -2264,6 +2295,21 @@ body {
         bubble.appendChild(chipContainer);
       }
 
+      // Feedback-Row
+      const feedbackRow = document.createElement('div');
+      feedbackRow.className = 'feedback-row';
+      feedbackRow.innerHTML = `
+        <span class="feedback-label">Hilfreich?</span>
+        <button class="feedback-btn" id="btn-up-${Date.now()}" onclick="sendFeedback(this, 'up', \`${text.replace(/`/g, "'")}\`)">
+          <i data-lucide="thumbs-up" style="width:13px;height:13px;"></i> Ja
+        </button>
+        <button class="feedback-btn" id="btn-down-${Date.now()}" onclick="sendFeedback(this, 'down', \`${text.replace(/`/g, "'")}\`)">
+          <i data-lucide="thumbs-down" style="width:13px;height:13px;"></i> Nein
+        </button>
+      `;
+      bubble.appendChild(feedbackRow);
+      lucide.createIcons();
+
       return bubble;
     }
 
@@ -2331,6 +2377,26 @@ body {
         addBubble('assistant', 'Fehler beim Analysieren des Fotos.');
       }
       document.getElementById('fotoInput').value = '';
+    }
+
+    async function sendFeedback(btn, rating, message) {
+      const row = btn.closest('.feedback-row');
+      // Beide Buttons deaktivieren
+      row.querySelectorAll('.feedback-btn').forEach(b => {
+        b.classList.remove('active-up', 'active-down');
+        b.onclick = null;
+      });
+      btn.classList.add(rating === 'up' ? 'active-up' : 'active-down');
+
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      if (!user) return;
+
+      await fetch('/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, session_id: currentSessionId, message, rating })
+      });
     }
 
     async function ladeChatSessions() {
