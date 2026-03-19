@@ -126,6 +126,12 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Kein Dokument hochgeladen' });
   }
+  const depth = parseInt(req.body.depth) || 2;
+  const depthInstructions = {
+    1: 'Erkläre so einfach wie möglich, als würdest du mit einem Kind sprechen. Kurze Sätze, keine Fachbegriffe.',
+    2: 'Erkläre verständlich für jemanden ohne Fachkenntnisse. Fachbegriffe kurz in Klammern erklären.',
+    3: 'Erkläre präzise und fachlich korrekt. Fachbegriffe dürfen verwendet werden.'
+  };
 
   try {
     let text = '';
@@ -155,7 +161,7 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
       temperature: 0.3,
       max_tokens: 1500,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: SYSTEM_PROMPT + `\n\nERKLÄRUNGSTIEFE: ${depthInstructions[depth]}` },
         { role: 'user', content: `Analysiere dieses Dokument genau und erkläre mir alle wichtigen Informationen darin. Extrahiere konkret: Fahrzeug- oder Produktdetails, alle Preise und Kosten, alle Fristen und Gültigkeitsdaten, Konditionen und Bedingungen, sowie alle Aktionen oder Rabatte. Erkläre jeden Fachbegriff sofort in Klammern.\n\nDOKUMENT:\n${truncatedText}` }
       ]
     });
@@ -213,6 +219,12 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Kein Bild hochgeladen' });
   }
+  const depth = parseInt(req.body.depth) || 2;
+  const depthInstructions = {
+    1: 'Erkläre so einfach wie möglich, als würdest du mit einem Kind sprechen. Kurze Sätze, keine Fachbegriffe.',
+    2: 'Erkläre verständlich für jemanden ohne Fachkenntnisse. Fachbegriffe kurz in Klammern erklären.',
+    3: 'Erkläre präzise und fachlich korrekt. Fachbegriffe dürfen verwendet werden.'
+  };
 
   try {
     const formData = new FormData();
@@ -241,7 +253,7 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
       temperature: 0.3,
       max_tokens: 1500,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: SYSTEM_PROMPT + `\n\nERKLÄRUNGSTIEFE: ${depthInstructions[depth]}` },
         { role: 'user', content: `Analysiere diesen Text aus einem Foto genau und erkläre mir alle wichtigen Informationen darin. Extrahiere konkret alle relevanten Daten, Preise, Fristen und Handlungsschritte. Erkläre jeden Fachbegriff sofort in Klammern.\n\nTEXT AUS FOTO:\n${truncatedText}` }
       ]
     });
@@ -284,7 +296,12 @@ app.get('/success', async (req, res) => {
 
 // ── Chat ─────────────────────────────────────────────────────────────────────
 app.post('/chat', async (req, res) => {
-  const { user_id, session_id, message } = req.body;
+  const { user_id, session_id, message, depth = 2 } = req.body;
+  const depthInstructions = {
+    1: 'Erkläre so einfach wie möglich, als würdest du mit einem Kind sprechen. Kurze Sätze, keine Fachbegriffe, nur Alltagssprache und Beispiele aus dem Alltag.',
+    2: 'Erkläre verständlich für jemanden ohne Fachkenntnisse. Fachbegriffe kurz in Klammern erklären.',
+    3: 'Erkläre präzise und fachlich korrekt. Fachbegriffe dürfen verwendet werden, aber trotzdem klar strukturiert.'
+  };
   const FREE_LIMIT = 5;
   const today = new Date().toISOString().split('T')[0];
 
@@ -320,12 +337,12 @@ app.post('/chat', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `Du bist ELI10, ein Assistent der komplexe Themen und Dokumente so erklärt, dass ein Mensch ohne Fachkenntnisse sie vollständig versteht.
+          content: `Du bist ELI10, ein Assistent der komplexe Themen und Dokumente erklärt.
 Erkenne automatisch die Sprache der Nachricht und antworte in derselben Sprache.
 
+ERKLÄRUNGSTIEFE: ${depthInstructions[depth] || depthInstructions[2]}
+
 PFLICHTREGELN:
-- Erkläre JEDEN Fachbegriff sofort in Klammern
-- Stelle dir vor du erklärst es jemandem der dieses Thema noch nie gehört hat
 - Hebe wichtige Begriffe mit **fett** hervor
 - Beantworte Rückfragen immer im Kontext des bisherigen Gesprächs
 - Schreibe kurze, klare Sätze

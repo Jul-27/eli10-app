@@ -1278,6 +1278,32 @@ body {
 .send-btn:hover { background: #2563EB; transform: scale(1.05); }
 .send-btn:disabled { background: #222; cursor: not-allowed; transform: none; }
 
+/* Erklärungstiefe-Slider */
+.depth-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px 4px;
+}
+.depth-label { font-size: 15px; line-height: 1; }
+.depth-slider-row input[type="range"] {
+  flex: 1;
+  height: 3px;
+  accent-color: #3B82F6;
+  cursor: pointer;
+}
+.depth-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: #636366;
+  background: #1C1C1E;
+  border: 1px solid #2C2C2E;
+  border-radius: 10px;
+  padding: 2px 8px;
+  min-width: 52px;
+  text-align: center;
+}
+
 /* Folgefragen-Chips */
 .followup-container {
   display: flex;
@@ -1733,6 +1759,12 @@ body {
           <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="dokumentHochladen()">
           <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none" onchange="fotoAnalysieren()">
           <div class="chat-input-wrapper">
+            <div class="depth-slider-row">
+              <span class="depth-label">🧒</span>
+              <input type="range" id="depthSlider" min="1" max="3" step="1" value="2" oninput="updateDepthLabel(this.value)">
+              <span class="depth-label">🎓</span>
+              <span class="depth-badge" id="depthBadge">Normal</span>
+            </div>
             <div class="chat-input-row">
               <button class="attach-btn" onclick="document.getElementById('pdfInput').click()">
                 <i data-lucide="paperclip" style="width:18px;height:18px;"></i>
@@ -2011,6 +2043,21 @@ body {
       return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
 
+    function updateDepthLabel(val) {
+      const labels = { '1': 'Einfach', '2': 'Normal', '3': 'Experte' };
+      document.getElementById('depthBadge').textContent = labels[val];
+    }
+
+    function getDepthLevel() {
+      return parseInt(document.getElementById('depthSlider')?.value || 2);
+    }
+
+    function getDepthPrompt(level) {
+      if (level === 1) return 'Erkläre so einfach wie möglich, als würdest du mit einem Kind sprechen. Kurze Sätze, keine Fachbegriffe, nur Alltagssprache und Beispiele aus dem Alltag.';
+      if (level === 3) return 'Erkläre präzise und fachlich korrekt. Fachbegriffe dürfen verwendet werden, aber trotzdem verständlich und strukturiert.';
+      return 'Erkläre verständlich für jemanden ohne Fachkenntnisse. Fachbegriffe kurz in Klammern erklären.';
+    }
+
     function neuerChat() {
       currentSessionId = null;
       document.getElementById('chatMessages').style.display = 'none';
@@ -2064,7 +2111,7 @@ body {
         const res = await fetch('/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: user.id, session_id: currentSessionId, message })
+          body: JSON.stringify({ user_id: user.id, session_id: currentSessionId, message, depth: getDepthLevel() })
         });
 
         const data = await res.json();
@@ -2193,6 +2240,7 @@ body {
       if (!file) return;
       const formData = new FormData();
       formData.append('document', file);
+      formData.append('depth', getDepthLevel());
       addBubble('user', `📄 ${file.name}`);
       document.getElementById('chatEmpty').style.display = 'none';
       document.getElementById('chatMessages').style.display = 'flex';
@@ -2225,6 +2273,7 @@ body {
       if (!file) return;
       const formData = new FormData();
       formData.append('image', file);
+      formData.append('depth', getDepthLevel());
       addBubble('user', '📸 Foto wird analysiert...');
       document.getElementById('chatEmpty').style.display = 'none';
       document.getElementById('chatMessages').style.display = 'flex';
