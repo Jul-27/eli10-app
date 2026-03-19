@@ -2148,12 +2148,8 @@ body {
       const user = chatSession?.user;
       if (!user) return;
 
+      const isNewSession = !currentSessionId;
       if (!currentSessionId) currentSessionId = generateSessionId();
-
-      document.getElementById('chatEmpty').style.display = 'none';
-      document.getElementById('chatMessages').style.display = 'flex';
-
-      addBubble('user', message);
       input.value = '';
       input.style.height = 'auto';
       document.getElementById('sendBtn').disabled = true;
@@ -2231,7 +2227,24 @@ body {
           bubble.appendChild(chipContainer);
         }
 
-        ladeChatSessions();
+        // Feedback-Row
+        const feedbackRow = document.createElement('div');
+        feedbackRow.className = 'feedback-row';
+        const fbId = Date.now();
+        feedbackRow.innerHTML = `
+          <span class="feedback-label">Hilfreich?</span>
+          <button class="feedback-btn" onclick="sendFeedback(this, 'up', ${JSON.stringify(fullText)})">
+            <i data-lucide="thumbs-up" style="width:13px;height:13px;"></i> Ja
+          </button>
+          <button class="feedback-btn" onclick="sendFeedback(this, 'down', ${JSON.stringify(fullText)})">
+            <i data-lucide="thumbs-down" style="width:13px;height:13px;"></i> Nein
+          </button>
+        `;
+        bubble.appendChild(feedbackRow);
+        lucide.createIcons();
+
+        // Sidebar nur aktualisieren wenn neue Session
+        if (isNewSession) ladeChatSessions();
 
       } catch (err) {
         div.innerHTML = marked.parse('Es ist ein Fehler aufgetreten. Bitte versuche es nochmal.');
@@ -2328,6 +2341,7 @@ body {
         const res = await fetch('/upload-document', { method: 'POST', body: formData });
         const data = await res.json();
         document.getElementById(loadingId)?.remove();
+        const isNewSession = !currentSessionId;
         if (!currentSessionId) currentSessionId = generateSessionId();
         const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
         const user = chatSession?.user;
@@ -2338,7 +2352,7 @@ body {
           ]);
         }
         await zeigeAntwortMitTypewriter(data.explanation, data.followUps);
-        ladeChatSessions();
+        if (isNewSession) ladeChatSessions();
       } catch (err) {
         document.getElementById(loadingId)?.remove();
         addBubble('assistant', 'Fehler beim Analysieren des Dokuments.');
@@ -2361,6 +2375,7 @@ body {
         const res = await fetch('/analyze-image', { method: 'POST', body: formData });
         const data = await res.json();
         document.getElementById(loadingId)?.remove();
+        const isNewSession = !currentSessionId;
         if (!currentSessionId) currentSessionId = generateSessionId();
         const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
         const user = chatSession?.user;
@@ -2371,7 +2386,7 @@ body {
           ]);
         }
         await zeigeAntwortMitTypewriter(data.explanation, data.followUps);
-        ladeChatSessions();
+        if (isNewSession) ladeChatSessions();
       } catch (err) {
         document.getElementById(loadingId)?.remove();
         addBubble('assistant', 'Fehler beim Analysieren des Fotos.');

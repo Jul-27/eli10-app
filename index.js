@@ -214,7 +214,7 @@ app.post('/check-status', async (req, res) => {
   }
 });
 
-// ── Foto analysieren (OCR) ────────────────────────────────────────────────────
+// ── Foto analysieren (Groq Vision) ───────────────────────────────────────────
 app.post('/analyze-image', upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Kein Bild hochgeladen' });
@@ -227,34 +227,30 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
   };
 
   try {
-    const formData = new FormData();
-    formData.append('base64Image', `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`);
-    formData.append('language', 'ger');
-    formData.append('isOverlayRequired', 'false');
-    formData.append('apikey', process.env.OCR_SPACE_API_KEY);
-
-    const ocrResponse = await axios.post(
-      'https://api.ocr.space/parse/image',
-      formData,
-      { headers: formData.getHeaders() }
-    );
-
-    const text = ocrResponse.data.ParsedResults?.[0]?.ParsedText;
-
-    if (!text || text.trim().length < 10) {
-      return res.status(400).json({ error: 'Kein Text im Bild gefunden. Bitte ein klareres Foto machen.' });
-    }
-
-    const cleanText = text.replace(/\s+/g, ' ').trim();
-    const truncatedText = cleanText.substring(0, 4000);
+    const base64Image = req.file.buffer.toString('base64');
+    const mimeType = req.file.mimetype;
 
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.3,
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       max_tokens: 1500,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT + `\n\nERKLÄRUNGSTIEFE: ${depthInstructions[depth]}` },
-        { role: 'user', content: `Analysiere diesen Text aus einem Foto genau und erkläre mir alle wichtigen Informationen darin. Extrahiere konkret alle relevanten Daten, Preise, Fristen und Handlungsschritte. Erkläre jeden Fachbegriff sofort in Klammern.\n\nTEXT AUS FOTO:\n${truncatedText}` }
+        {
+          role: 'system',
+          content: SYSTEM_PROMPT + `\n\nERKLÄRUNGSTIEFE: ${depthInstructions[depth]}`
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: `data:${mimeType};base64,${base64Image}` }
+            },
+            {
+              type: 'text',
+              text: 'Analysiere dieses Bild genau. Falls es Text enthält (Dokument, Brief, Formular, Rechnung usw.), erkläre alle wichtigen Informationen daraus: Preise, Fristen, Bedingungen, Handlungsschritte. Falls es kein Textdokument ist, beschreibe und erkläre was du siehst. Erkläre jeden Fachbegriff sofort in Klammern.'
+            }
+          ]
+        }
       ]
     });
 
@@ -263,7 +259,7 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
     res.json({ explanation, followUps });
 
   } catch (error) {
-    console.error('OCR Fehler:', error.message);
+    console.error('Vision Fehler:', error.message);
     res.status(500).json({ error: 'Bild konnte nicht verarbeitet werden.' });
   }
 });
