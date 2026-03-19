@@ -2147,6 +2147,111 @@ body {
       lucide.createIcons();
     }
 
+    // Typewriter + Chips — gemeinsame Hilfsfunktion für alle Antworten
+    async function zeigeAntwortMitTypewriter(text, followUps = []) {
+      const messagesEl = document.getElementById('chatMessages');
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble assistant';
+      const div = document.createElement('div');
+      div.className = 'result-text';
+      div.innerHTML = '';
+      bubble.appendChild(div);
+      messagesEl.appendChild(bubble);
+      bubble.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      const words = text.split(' ');
+      let current = '';
+      for (let i = 0; i < words.length; i++) {
+        current += (i === 0 ? '' : ' ') + words[i];
+        div.innerHTML = marked.parse(current + (i < words.length - 1 ? ' ▍' : ''));
+        const isNearBottom = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < 100;
+        if (isNearBottom) messagesEl.scrollTop = messagesEl.scrollHeight;
+        await new Promise(r => setTimeout(r, 18));
+      }
+
+      div.innerHTML = marked.parse(text);
+      lucide.createIcons();
+
+      if (followUps && followUps.length > 0) {
+        const chipContainer = document.createElement('div');
+        chipContainer.className = 'followup-container';
+        followUps.forEach(frage => {
+          const chip = document.createElement('button');
+          chip.className = 'followup-chip';
+          chip.textContent = frage;
+          chip.onclick = () => { chipContainer.remove(); sendChatMessage(frage); };
+          chipContainer.appendChild(chip);
+        });
+        bubble.appendChild(chipContainer);
+      }
+
+      return bubble;
+    }
+
+    async function dokumentHochladen() {
+      const file = document.getElementById('pdfInput').files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('document', file);
+      addBubble('user', `📄 ${file.name}`);
+      document.getElementById('chatEmpty').style.display = 'none';
+      document.getElementById('chatMessages').style.display = 'flex';
+      const loadingId = 'loading_' + Date.now();
+      addBubble('assistant', '<span style="color:#48484A">Dokument wird analysiert...</span>', loadingId);
+      try {
+        const res = await fetch('/upload-document', { method: 'POST', body: formData });
+        const data = await res.json();
+        document.getElementById(loadingId)?.remove();
+        if (!currentSessionId) currentSessionId = generateSessionId();
+        const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
+        const user = chatSession?.user;
+        if (user) {
+          await supabaseClient.from('chats').insert([
+            { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${file.name}` },
+            { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
+          ]);
+        }
+        await zeigeAntwortMitTypewriter(data.explanation, data.followUps);
+        ladeChatSessions();
+      } catch (err) {
+        document.getElementById(loadingId)?.remove();
+        addBubble('assistant', 'Fehler beim Analysieren des Dokuments.');
+      }
+      document.getElementById('pdfInput').value = '';
+    }
+
+    async function fotoAnalysieren() {
+      const file = document.getElementById('fotoInput').files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('image', file);
+      addBubble('user', '📸 Foto wird analysiert...');
+      document.getElementById('chatEmpty').style.display = 'none';
+      document.getElementById('chatMessages').style.display = 'flex';
+      const loadingId = 'loading_' + Date.now();
+      addBubble('assistant', '<span style="color:#48484A">Bild wird erkannt...</span>', loadingId);
+      try {
+        const res = await fetch('/analyze-image', { method: 'POST', body: formData });
+        const data = await res.json();
+        document.getElementById(loadingId)?.remove();
+        if (!currentSessionId) currentSessionId = generateSessionId();
+        const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
+        const user = chatSession?.user;
+        if (user) {
+          await supabaseClient.from('chats').insert([
+            { user_id: user.id, session_id: currentSessionId, role: 'user', message: '📸 Foto analysiert' },
+            { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
+          ]);
+        }
+        await zeigeAntwortMitTypewriter(data.explanation, data.followUps);
+        ladeChatSessions();
+      } catch (err) {
+        document.getElementById(loadingId)?.remove();
+        addBubble('assistant', 'Fehler beim Analysieren des Fotos.');
+      }
+      document.getElementById('fotoInput').value = '';
+    }
+
     async function ladeChatSessions() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       const user = session?.user;
@@ -2205,72 +2310,6 @@ body {
       document.querySelectorAll('.session-item').forEach(el => {
         el.classList.toggle('active', el.onclick.toString().includes(session_id));
       });
-    }
-
-    async function dokumentHochladen() {
-      const file = document.getElementById('pdfInput').files[0];
-      if (!file) return;
-      const formData = new FormData();
-      formData.append('document', file);
-      addBubble('user', `📄 ${file.name}`);
-      document.getElementById('chatEmpty').style.display = 'none';
-      document.getElementById('chatMessages').style.display = 'flex';
-      const loadingId = 'loading_' + Date.now();
-      addBubble('assistant', '<span style="color:#48484A">Dokument wird analysiert...</span>', loadingId);
-      try {
-        const res = await fetch('/upload-document', { method: 'POST', body: formData });
-        const data = await res.json();
-        document.getElementById(loadingId)?.remove();
-        if (!currentSessionId) currentSessionId = generateSessionId();
-        // ✅ FIX: supabaseClient statt supabase
-        const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
-        const user = chatSession?.user;
-        if (user) {
-          await supabaseClient.from('chats').insert([
-            { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${file.name}` },
-            { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
-          ]);
-        }
-        addBubble('assistant', data.explanation);
-        ladeChatSessions();
-      } catch (err) {
-        document.getElementById(loadingId)?.remove();
-        addBubble('assistant', 'Fehler beim Analysieren des Dokuments.');
-      }
-      document.getElementById('pdfInput').value = '';
-    }
-
-    async function fotoAnalysieren() {
-      const file = document.getElementById('fotoInput').files[0];
-      if (!file) return;
-      const formData = new FormData();
-      formData.append('image', file);
-      addBubble('user', '📸 Foto wird analysiert...');
-      document.getElementById('chatEmpty').style.display = 'none';
-      document.getElementById('chatMessages').style.display = 'flex';
-      const loadingId = 'loading_' + Date.now();
-      addBubble('assistant', '<span style="color:#48484A">Bild wird erkannt...</span>', loadingId);
-      try {
-        const res = await fetch('/analyze-image', { method: 'POST', body: formData });
-        const data = await res.json();
-        document.getElementById(loadingId)?.remove();
-        if (!currentSessionId) currentSessionId = generateSessionId();
-        // ✅ FIX: supabaseClient statt supabase
-        const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
-        const user = chatSession?.user;
-        if (user) {
-          await supabaseClient.from('chats').insert([
-            { user_id: user.id, session_id: currentSessionId, role: 'user', message: '📸 Foto analysiert' },
-            { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
-          ]);
-        }
-        addBubble('assistant', data.explanation);
-        ladeChatSessions();
-      } catch (err) {
-        document.getElementById(loadingId)?.remove();
-        addBubble('assistant', 'Fehler beim Analysieren des Fotos.');
-      }
-      document.getElementById('fotoInput').value = '';
     }
 
     async function upgrade() {
