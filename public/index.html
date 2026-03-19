@@ -1282,26 +1282,49 @@ body {
 .depth-slider-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 4px 4px;
+  gap: 10px;
+  padding: 6px 4px 8px;
+  border-bottom: 1px solid #2C2C2E;
+  margin-bottom: 6px;
 }
-.depth-label { font-size: 15px; line-height: 1; }
+.depth-label {
+  font-size: 11px;
+  color: #48484A;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.depth-label.active {
+  color: #AEAEB2;
+}
 .depth-slider-row input[type="range"] {
   flex: 1;
-  height: 3px;
+  height: 2px;
   accent-color: #3B82F6;
   cursor: pointer;
+  background: #2C2C2E;
+  border-radius: 2px;
+  outline: none;
+  border: none;
 }
-.depth-badge {
+.depth-steps {
+  display: flex;
+  gap: 4px;
+}
+.depth-step {
   font-size: 11px;
-  font-weight: 500;
-  color: #636366;
-  background: #1C1C1E;
+  color: #3C3C3E;
+  background: none;
   border: 1px solid #2C2C2E;
-  border-radius: 10px;
+  border-radius: 6px;
   padding: 2px 8px;
-  min-width: 52px;
-  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.depth-step.active {
+  color: #3B82F6;
+  border-color: #3B82F6;
+  background: rgba(59,130,246,0.08);
 }
 
 /* Folgefragen-Chips */
@@ -1759,25 +1782,31 @@ body {
           <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="dokumentHochladen()">
           <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none" onchange="fotoAnalysieren()">
           <div class="chat-input-wrapper">
-            <div class="depth-slider-row">
-              <span class="depth-label">🧒</span>
-              <input type="range" id="depthSlider" min="1" max="3" step="1" value="2" oninput="updateDepthLabel(this.value)">
-              <span class="depth-label">🎓</span>
-              <span class="depth-badge" id="depthBadge">Normal</span>
-            </div>
             <div class="chat-input-row">
-              <button class="attach-btn" onclick="document.getElementById('pdfInput').click()">
-                <i data-lucide="paperclip" style="width:18px;height:18px;"></i>
-              </button>
-              <button class="attach-btn" onclick="document.getElementById('fotoInput').click()">
-                <i data-lucide="camera" style="width:18px;height:18px;"></i>
-              </button>
-              <textarea id="chatInput" class="chat-textarea" placeholder="Stelle eine Frage oder füge Text ein..." rows="1"
-                onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendChatMessage()}"
-                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-              <button class="send-btn" onclick="sendChatMessage()" id="sendBtn">
-                <i data-lucide="send" style="width:18px;height:18px;"></i>
-              </button>
+              <div style="display:flex; flex-direction:column; flex:1; gap:0;">
+                <div class="depth-slider-row">
+                  <span class="depth-label">Erklärungstiefe:</span>
+                  <div class="depth-steps">
+                    <button class="depth-step active" onclick="setDepth(1, this)">Einfach</button>
+                    <button class="depth-step" onclick="setDepth(2, this)">Normal</button>
+                    <button class="depth-step" onclick="setDepth(3, this)">Experte</button>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:flex-end; gap:10px;">
+                  <button class="attach-btn" onclick="document.getElementById('pdfInput').click()">
+                    <i data-lucide="paperclip" style="width:18px;height:18px;"></i>
+                  </button>
+                  <button class="attach-btn" onclick="document.getElementById('fotoInput').click()">
+                    <i data-lucide="camera" style="width:18px;height:18px;"></i>
+                  </button>
+                  <textarea id="chatInput" class="chat-textarea" placeholder="Stelle eine Frage oder füge Text ein..." rows="1"
+                    onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendChatMessage()}"
+                    oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+                  <button class="send-btn" onclick="sendChatMessage()" id="sendBtn">
+                    <i data-lucide="send" style="width:18px;height:18px;"></i>
+                  </button>
+                </div>
+              </div>
             </div>
             <p class="input-hint">ELI10 ersetzt keine professionelle Beratung</p>
           </div>
@@ -2043,13 +2072,16 @@ body {
       return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
 
-    function updateDepthLabel(val) {
-      const labels = { '1': 'Einfach', '2': 'Normal', '3': 'Experte' };
-      document.getElementById('depthBadge').textContent = labels[val];
+    let currentDepth = 1;
+
+    function setDepth(level, btn) {
+      currentDepth = level;
+      document.querySelectorAll('.depth-step').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
     }
 
     function getDepthLevel() {
-      return parseInt(document.getElementById('depthSlider')?.value || 2);
+      return currentDepth;
     }
 
     function getDepthPrompt(level) {
