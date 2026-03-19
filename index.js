@@ -326,7 +326,25 @@ Bei Rückfragen antworte natürlich und direkt ohne starre Struktur.`
 
     const reply = completion.choices[0].message.content;
     await supabase.from('chats').insert({ user_id, session_id, role: 'assistant', message: reply });
-    res.json({ reply, session_id });
+
+    // Folgefragen generieren
+    const followUpCompletion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 200,
+      messages: [
+        { role: 'system', content: 'Generiere genau 3 kurze, natürliche Folgefragen die ein Nutzer nach dieser Erklärung stellen könnte. Antworte NUR mit einem JSON-Array, z.B.: ["Frage 1?","Frage 2?","Frage 3?"]. Keine anderen Texte, keine Erklärungen.' },
+        { role: 'user', content: `Die Erklärung war:\n${reply}\n\nGib 3 sinnvolle Folgefragen als JSON-Array aus.` }
+      ]
+    });
+
+    let followUps = [];
+    try {
+      const raw = followUpCompletion.choices[0].message.content.trim();
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (match) followUps = JSON.parse(match[0]);
+    } catch(e) { followUps = []; }
+
+    res.json({ reply, session_id, followUps });
 
   } catch (err) {
     console.error('Chat Fehler:', err.message);

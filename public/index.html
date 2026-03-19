@@ -1278,6 +1278,32 @@ body {
 .send-btn:hover { background: #2563EB; transform: scale(1.05); }
 .send-btn:disabled { background: #222; cursor: not-allowed; transform: none; }
 
+/* Folgefragen-Chips */
+.followup-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 4px 0;
+  padding: 0 2px;
+}
+.followup-chip {
+  background: transparent;
+  border: 1px solid #3A3A3C;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #AEAEB2;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  line-height: 1.4;
+}
+.followup-chip:hover {
+  border-color: #3B82F6;
+  color: #F1F5F9;
+  background: rgba(59,130,246,0.08);
+}
+
 /* Typing dots animation */
 .typing-dots span {
   display: inline-block;
@@ -2077,6 +2103,24 @@ body {
         // Finaler Render ohne Cursor
         div.innerHTML = marked.parse(fullText);
         lucide.createIcons();
+
+        // Folgefragen-Chips anzeigen
+        if (data.followUps && data.followUps.length > 0) {
+          const chipContainer = document.createElement('div');
+          chipContainer.className = 'followup-container';
+          data.followUps.forEach(frage => {
+            const chip = document.createElement('button');
+            chip.className = 'followup-chip';
+            chip.textContent = frage;
+            chip.onclick = () => {
+              chipContainer.remove();
+              sendChatMessage(frage);
+            };
+            chipContainer.appendChild(chip);
+          });
+          bubble.appendChild(chipContainer);
+        }
+
         ladeChatSessions();
 
       } catch (err) {
