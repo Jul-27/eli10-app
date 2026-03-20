@@ -1327,6 +1327,65 @@ body {
   background: rgba(59,130,246,0.08);
 }
 
+/* Fristen-Block */
+.fristen-block {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #0D1117;
+  border: 1px solid #2C2C2E;
+  border-left: 3px solid #3B82F6;
+  border-radius: 10px;
+}
+.fristen-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #AEAEB2;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.frist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #1C1C1E;
+}
+.frist-item:last-child { border-bottom: none; }
+.frist-info { flex: 1; min-width: 0; }
+.frist-titel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #F1F5F9;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.frist-datum {
+  font-size: 11px;
+  color: #636366;
+}
+.frist-datum.bald { color: #F59E0B; }
+.frist-export-btn {
+  background: none;
+  border: 1px solid #2C2C2E;
+  border-radius: 7px;
+  color: #48484A;
+  cursor: pointer;
+  padding: 5px 10px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.frist-export-btn:hover { border-color: #3B82F6; color: #3B82F6; }
+
 /* Feedback-Buttons */
 .feedback-row {
   display: flex;
@@ -2121,6 +2180,73 @@ body {
       return 'Erkläre verständlich für jemanden ohne Fachkenntnisse. Fachbegriffe kurz in Klammern erklären.';
     }
 
+    function generiereICS(titel, datum, beschreibung) {
+      const d = datum.replace(/-/g, '');
+      const uid = `eli10-${Date.now()}@eli10.app`;
+      const ics = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//ELI10//DE',
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTART;VALUE=DATE:${d}`,
+        `DTEND;VALUE=DATE:${d}`,
+        `SUMMARY:${titel}`,
+        `DESCRIPTION:${beschreibung.replace(/,/g, '\\,')}`,
+        'BEGIN:VALARM',
+        'TRIGGER:-P1D',
+        'ACTION:DISPLAY',
+        `DESCRIPTION:Erinnerung: ${titel}`,
+        'END:VALARM',
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].join('\r\n');
+
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${titel.replace(/[^a-zA-Z0-9äöüÄÖÜ]/g, '_')}.ics`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function zeigeFristenBlock(fristen, container) {
+      if (!fristen || fristen.length === 0) return;
+
+      const block = document.createElement('div');
+      block.className = 'fristen-block';
+
+      const title = document.createElement('div');
+      title.className = 'fristen-title';
+      title.innerHTML = `<i data-lucide="calendar-clock" style="width:14px;height:14px;color:#3B82F6;"></i> Erkannte Fristen`;
+      block.appendChild(title);
+
+      fristen.forEach(f => {
+        const tageBis = Math.ceil((new Date(f.datum) - new Date()) / (1000 * 60 * 60 * 24));
+        const bald = tageBis <= 30;
+        const datumFormatiert = new Date(f.datum).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        const item = document.createElement('div');
+        item.className = 'frist-item';
+        item.innerHTML = `
+          <div class="frist-info">
+            <div class="frist-titel">${f.titel}</div>
+            <div class="frist-datum ${bald ? 'bald' : ''}">
+              ${datumFormatiert}${bald ? ` · noch ${tageBis} Tage` : ''}
+            </div>
+          </div>
+          <button class="frist-export-btn" onclick="generiereICS(${JSON.stringify(f.titel)}, ${JSON.stringify(f.datum)}, ${JSON.stringify(f.beschreibung)})">
+            <i data-lucide="calendar-plus" style="width:12px;height:12px;"></i> In Kalender
+          </button>
+        `;
+        block.appendChild(item);
+      });
+
+      container.appendChild(block);
+      lucide.createIcons();
+    }
+
     function neuerChat() {
       currentSessionId = null;
       document.getElementById('chatMessages').style.display = 'none';
@@ -2276,7 +2402,7 @@ body {
     }
 
     // Typewriter + Chips — gemeinsame Hilfsfunktion für alle Antworten
-    async function zeigeAntwortMitTypewriter(text, followUps = []) {
+    async function zeigeAntwortMitTypewriter(text, followUps = [], fristen = []) {
       const messagesEl = document.getElementById('chatMessages');
       const bubble = document.createElement('div');
       bubble.className = 'chat-bubble assistant';
@@ -2312,6 +2438,9 @@ body {
         });
         bubble.appendChild(chipContainer);
       }
+
+      // Fristen-Block
+      zeigeFristenBlock(fristen, bubble);
 
       // Feedback-Row
       const feedbackRow = document.createElement('div');
@@ -2356,7 +2485,7 @@ body {
             { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
           ]);
         }
-        await zeigeAntwortMitTypewriter(data.explanation, data.followUps);
+        await zeigeAntwortMitTypewriter(data.explanation, data.followUps, data.fristen || []);
         if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
       } catch (err) {
         document.getElementById(loadingId)?.remove();
@@ -2390,7 +2519,7 @@ body {
             { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
           ]);
         }
-        await zeigeAntwortMitTypewriter(data.explanation, data.followUps);
+        await zeigeAntwortMitTypewriter(data.explanation, data.followUps, data.fristen || []);
         if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
       } catch (err) {
         document.getElementById(loadingId)?.remove();

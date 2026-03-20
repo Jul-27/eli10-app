@@ -98,6 +98,33 @@ Nur wenn vorhanden — sonst weglassen:
 ## 💡 Zusammenfassung
 Ein einziger, klarer Satz der alles zusammenfasst.`;
 
+// ── Fristen aus Text extrahieren ─────────────────────────────────────────────
+async function extrahiereFristen(text) {
+  try {
+    const heute = new Date().toISOString().split('T')[0];
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 400,
+      messages: [
+        {
+          role: 'system',
+          content: `Du extrahierst Fristen und Termine aus Dokumenten. Heute ist ${heute}.
+Antworte NUR mit einem JSON-Array. Jedes Element hat: "titel" (kurze Bezeichnung, max 50 Zeichen), "datum" (im Format YYYY-MM-DD), "beschreibung" (1 Satz was bis dann passieren muss).
+Nur Fristen mit konkretem Datum aufnehmen. Keine vergangenen Daten. Wenn keine Fristen gefunden: leeres Array [].
+Beispiel: [{"titel":"Widerrufsrecht endet","datum":"2024-03-15","beschreibung":"Bis zu diesem Datum kannst du den Vertrag ohne Angabe von Gründen widerrufen."}]`
+        },
+        { role: 'user', content: `Extrahiere alle Fristen aus diesem Text:\n\n${text.substring(0, 8000)}` }
+      ]
+    });
+    const raw = completion.choices[0].message.content.trim();
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) return [];
+    const fristen = JSON.parse(match[0]);
+    // Nur zukünftige Daten
+    return fristen.filter(f => f.datum && new Date(f.datum) > new Date());
+  } catch(e) { return []; }
+}
+
 // ── Folgefragen generieren ────────────────────────────────────────────────────
 async function generiereFollowUps(erklaerung) {
   try {
@@ -167,8 +194,11 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
     });
 
     const explanation = completion.choices[0].message.content;
-    const followUps = await generiereFollowUps(explanation);
-    res.json({ explanation, followUps });
+    const [followUps, fristen] = await Promise.all([
+      generiereFollowUps(explanation),
+      extrahiereFristen(truncatedText)
+    ]);
+    res.json({ explanation, followUps, fristen });
 
   } catch (error) {
     console.error('Upload Fehler:', error.message);
@@ -255,8 +285,11 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
     });
 
     const explanation = completion.choices[0].message.content;
-    const followUps = await generiereFollowUps(explanation);
-    res.json({ explanation, followUps });
+    const [followUps, fristen] = await Promise.all([
+      generiereFollowUps(explanation),
+      extrahiereFristen(explanation)
+    ]);
+    res.json({ explanation, followUps, fristen });
 
   } catch (error) {
     console.error('Vision Fehler:', error.message);
