@@ -62,7 +62,7 @@ app.post('/webhook', async (req, res) => {
 });
 
 // ── System Prompt (geteilt) ──────────────────────────────────────────────────
-const SYSTEM_PROMPT = `Du bist ELI10, ein Assistent der komplexe Texte so erklärt, dass ein Mensch ohne Fachkenntnisse sie vollständig versteht.
+const SYSTEM_PROMPT = `Du bist Dokuvo, ein KI-Assistent der komplexe Texte so erklärt, dass ein Mensch ohne Fachkenntnisse sie vollständig versteht.
 Erkenne automatisch die Sprache des Textes und antworte in derselben Sprache.
 
 PFLICHTREGELN — halte dich IMMER daran:
@@ -366,7 +366,7 @@ app.post('/chat', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `Du bist ELI10, ein Assistent der komplexe Themen und Dokumente erklärt.
+          content: `Du bist Dokuvo, ein KI-Assistent der komplexe Themen und Dokumente erklärt.
 Erkenne automatisch die Sprache der Nachricht und antworte in derselben Sprache.
 
 ERKLÄRUNGSTIEFE: ${depthInstructions[depth] || depthInstructions[2]}
@@ -547,7 +547,7 @@ app.post('/get-profile', async (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log('ELI10 läuft auf Port 3000');
+  console.log('Dokuvo läuft auf Port 3000');
 });
 
 module.exports = app;
