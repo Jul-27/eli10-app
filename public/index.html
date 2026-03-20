@@ -2230,17 +2230,21 @@ body {
 
         const item = document.createElement('div');
         item.className = 'frist-item';
-        item.innerHTML = `
-          <div class="frist-info">
-            <div class="frist-titel">${f.titel}</div>
-            <div class="frist-datum ${bald ? 'bald' : ''}">
-              ${datumFormatiert}${bald ? ` · noch ${tageBis} Tage` : ''}
-            </div>
-          </div>
-          <button class="frist-export-btn" onclick="generiereICS(${JSON.stringify(f.titel)}, ${JSON.stringify(f.datum)}, ${JSON.stringify(f.beschreibung)})">
-            <i data-lucide="calendar-plus" style="width:12px;height:12px;"></i> In Kalender
-          </button>
+
+        const info = document.createElement('div');
+        info.className = 'frist-info';
+        info.innerHTML = `
+          <div class="frist-titel">${f.titel}</div>
+          <div class="frist-datum ${bald ? 'bald' : ''}">${datumFormatiert}${bald ? ` · noch ${tageBis} Tage` : ''}</div>
         `;
+
+        const btn = document.createElement('button');
+        btn.className = 'frist-export-btn';
+        btn.innerHTML = `<i data-lucide="calendar-plus" style="width:12px;height:12px;"></i> In Kalender`;
+        btn.addEventListener('click', () => generiereICS(f.titel, f.datum, f.beschreibung));
+
+        item.appendChild(info);
+        item.appendChild(btn);
         block.appendChild(item);
       });
 
