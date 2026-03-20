@@ -2202,13 +2202,14 @@ body {
         'END:VCALENDAR'
       ].join('\r\n');
 
-      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
+      const dateiname = titel.replace(/[^a-zA-Z0-9äöüÄÖÜ]/g, '_') + '.ics';
+      const dataUrl = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${titel.replace(/[^a-zA-Z0-9äöüÄÖÜ]/g, '_')}.ics`;
+      a.href = dataUrl;
+      a.download = dateiname;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     }
 
     function zeigeFristenBlock(fristen, container) {
