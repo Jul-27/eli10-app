@@ -24,7 +24,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Webhook braucht raw body — muss VOR express.json() stehen
 app.use('/webhook', express.raw({ type: 'application/json' }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.get('/', (req, res) => {
   const htmlPath = path.join(__dirname, 'public', 'index.html');

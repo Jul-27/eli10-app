@@ -2724,22 +2724,34 @@ body {
       if (!file) return;
       const { data: { session } } = await supabaseClient.auth.getSession();
       const user_id = session?.user?.id;
+
+      // Bild auf max. 400x400 verkleinern vor dem Upload
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const base64 = e.target.result.split(',')[1];
-        const ext = file.name.split('.').pop().toLowerCase();
-        const res = await fetch('/upload-avatar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id, image_base64: base64, file_ext: ext })
-        });
-        const data = await res.json();
-        if (data.avatar_url) {
-          document.getElementById('profileAvatarImg').src = data.avatar_url + '?t=' + Date.now();
-          document.getElementById('profileAvatarImg').style.display = 'block';
-          document.getElementById('profileAvatarInitial').style.display = 'none';
-          document.getElementById('sidebarAvatar').innerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-        }
+        const img = new Image();
+        img.onload = async () => {
+          const canvas = document.createElement('canvas');
+          const MAX = 400;
+          const scale = Math.min(MAX / img.width, MAX / img.height, 1);
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          const base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+
+          const res = await fetch('/upload-avatar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id, image_base64: base64, file_ext: 'jpg' })
+          });
+          const data = await res.json();
+          if (data.avatar_url) {
+            document.getElementById('profileAvatarImg').src = data.avatar_url + '?t=' + Date.now();
+            document.getElementById('profileAvatarImg').style.display = 'block';
+            document.getElementById('profileAvatarInitial').style.display = 'none';
+            document.getElementById('sidebarAvatar').innerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+          }
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
