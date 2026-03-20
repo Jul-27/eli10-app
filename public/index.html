@@ -1522,12 +1522,19 @@ body {
 @media (max-width: 768px) {
   .app-header { display: block !important; }
   .chat-sidebar { display: none !important; }
-  .erklaeren-layout { height: calc(100vh - 56px); }
+  .erklaeren-layout { height: calc(100vh - 52px - 56px); }
   .chat-messages { padding: 12px 14px; }
   .chat-input-area { padding: 8px 12px 12px; }
   .chat-bubble { max-width: 95%; }
   .chat-bubble.assistant { max-width: 100%; }
   .depth-slider-row { padding: 4px 2px 6px; gap: 6px; }
+  .mobile-hidden { display: none !important; }
+}
+
+/* Mobile-only Elemente */
+.mobile-only { display: none; }
+@media (max-width: 768px) {
+  .mobile-only { display: inline-block !important; }
 }
 
 /* ── MOBILE BOTTOM NAVIGATION ── */
@@ -1881,22 +1888,6 @@ body {
   <!-- APP SCREEN -->
   <div id="appScreen">
 
-    <!-- MOBILE HEADER (nur auf Mobile sichtbar) -->
-    <div class="app-header">
-      <div class="header-top">
-        <div class="header-logo">
-          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAH+klEQVR4nO2YW4xdVRnHf2utvfc+Z84508604xQ6ndIpLS0tpVwoFim1FQSL1WpEjRqJiTHGB+ODGh98MjHGkGiMMcYYY4wxxhhjjDHG+GCMMcYYY4wxxhhjjDHGGGOMMcYY" style="width:22px;height:22px;vertical-align:middle;">
-          Dokuvo
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <span style="font-size:12px;color:#636366;">
-            <span class="remaining-badge" id="remainingBadgeM" style="font-size:11px;padding:3px 8px;">5</span>
-          </span>
-          <button onclick="neuerChat()" style="background:#3B82F6;border:none;border-radius:8px;color:white;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Neu</button>
-        </div>
-      </div>
-    </div>
-
     <!-- HEADER -->
     <div class="app-header">
       <div class="header-top">
@@ -1907,11 +1898,12 @@ body {
           <span class="remaining-badge" id="remainingBadge">
             <i data-lucide="zap" style="width:12px;height:12px;"></i> <span id="remainingCount">5</span> heute
           </span>
+          <button onclick="neuerChat()" class="mobile-only" style="background:#3B82F6;border:none;border-radius:8px;color:white;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-left:8px;">+ Neu</button>
         </div>
       </div>
 
-      <!-- TAB BAR -->
-      <div class="tab-bar">
+      <!-- TAB BAR (nur Desktop) -->
+      <div class="tab-bar mobile-hidden">
         <button class="tab-item active" onclick="switchTab('home')">
           <span class="tab-icon"><i data-lucide="wand-2" style="width:16px;height:16px;"></i></span>Erklären
         </button>
@@ -2779,6 +2771,8 @@ body {
       currentSessionId = session_id;
       const res = await fetch(`/chat/${user.id}/${session_id}`);
       const messages = await res.json();
+      // Automatisch zum Home-Tab wechseln
+      switchTab('home');
       document.getElementById('chatEmpty').style.display = 'none';
       const chatMessages = document.getElementById('chatMessages');
       chatMessages.style.display = 'flex';
