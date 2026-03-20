@@ -388,12 +388,11 @@ body {
       color: var(--primary);
     }
 
-    .result-text {
-      color: var(--gray-600);
-      line-height: 1.8;
-      font-size: 0.95rem;
-      white-space: pre-wrap;
-    }
+.result-text {
+  color: #D1D1D6;
+  line-height: 1.75;
+  font-size: 0.9rem;
+}
 
     .loading-state {
       display: flex;
@@ -727,106 +726,111 @@ body {
 
 /* ── MARKDOWN RENDERING ── */
 .result-text h2 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #F1F5F9;
-  margin: 24px 0 10px;
-  padding: 10px 14px;
-  background: #2C2C2E;
-  border-radius: 8px;
-  border-left: 3px solid #3B82F6;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #AEAEB2;
+  margin: 20px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  border: none;
 }
 
-.result-text h2:first-child {
-  margin-top: 0;
-}
+.result-text h2:first-child { margin-top: 0; }
 
 .result-text ul {
   padding-left: 0;
   list-style: none;
-  margin: 6px 0 12px;
+  margin: 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .result-text ol {
   padding-left: 0;
   list-style: none;
-  margin: 6px 0 12px;
+  margin: 0 0 16px;
   counter-reset: item;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .result-text ol li {
-  padding: 8px 12px 8px 36px;
+  padding: 9px 12px 9px 38px;
   position: relative;
-  color: #D1D1D6;
+  color: #C7C7CC;
   font-size: 0.875rem;
-  line-height: 1.65;
-  border-bottom: 1px solid #2C2C2E;
+  line-height: 1.6;
+  background: #1A1A1A;
+  border-radius: 8px;
   counter-increment: item;
-}
-
-.result-text ol li:last-child {
-  border-bottom: none;
+  border: none;
 }
 
 .result-text ol li::before {
   content: counter(item);
   position: absolute;
   left: 10px;
-  top: 8px;
-  width: 20px;
-  height: 20px;
-  background: #3B82F6;
-  color: white;
-  border-radius: 50%;
-  font-size: 0.75rem;
-  font-weight: 700;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  background: #2C2C2E;
+  color: #AEAEB2;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .result-text ul li {
-  padding: 8px 12px 8px 28px;
+  padding: 9px 12px 9px 28px;
   position: relative;
-  color: #D1D1D6;
+  color: #C7C7CC;
   font-size: 0.875rem;
-  line-height: 1.65;
-  border-bottom: 1px solid #2C2C2E;
-}
-
-.result-text ul li:last-child {
-  border-bottom: none;
+  line-height: 1.6;
+  background: #1A1A1A;
+  border-radius: 8px;
+  border: none;
 }
 
 .result-text ul li::before {
   content: '';
   position: absolute;
-  left: 10px;
-  top: 16px;
-  width: 6px;
-  height: 6px;
-  background: #3B82F6;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  background: #48484A;
   border-radius: 50%;
 }
 
 .result-text strong {
-  color: #FBBF24;
-  font-weight: 700;
-  background: rgba(251, 191, 36, 0.1);
-  padding: 1px 5px;
-  border-radius: 4px;
+  color: #F1F5F9;
+  font-weight: 600;
+  background: none;
+  padding: 0;
+  border-radius: 0;
 }
 
 .result-text p {
-  color: #D1D1D6;
+  color: #C7C7CC;
   font-size: 0.875rem;
-  line-height: 1.7;
-  margin: 6px 0 14px;
-  padding: 0 4px;
+  line-height: 1.75;
+  margin: 0 0 12px;
+  padding: 0;
 }
+
+.result-text p:last-child { margin-bottom: 0; }
 
 /* ── DESKTOP LAYOUT ── */
 #appScreen {
@@ -985,6 +989,21 @@ body {
 .session-item-row:hover { background: #1A1A1A; }
 .session-item-row:hover .session-delete-btn { opacity: 1; }
 .session-item-row.active { background: #1E1E1E; border-color: #2C2C2E; }
+
+.alle-chats-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid #2C2C2E;
+  color: #48484A;
+  font-size: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s;
+  margin-top: 2px;
+}
+.alle-chats-btn:hover { color: #AEAEB2; }
 
 .session-item-label {
   flex: 1;
@@ -1174,28 +1193,28 @@ body {
 .chat-messages::-webkit-scrollbar-thumb { background: #2C2C2E; border-radius: 4px; }
 
 .chat-bubble {
-  max-width: 80%;
-  padding: 14px 18px;
-  border-radius: 16px;
+  max-width: 88%;
+  padding: 12px 16px;
+  border-radius: 14px;
   font-size: 0.9rem;
   line-height: 1.6;
 }
 
 .chat-bubble.user {
-  background: linear-gradient(135deg, #3B82F6, #2563EB);
-  color: white;
+  background: #1E3A5F;
+  color: #E2EEFF;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
-  box-shadow: 0 4px 16px rgba(59,130,246,0.25);
+  border: 1px solid #2A4A7A;
 }
 
 .chat-bubble.assistant {
-  background: #161616;
-  border: 1px solid #242424;
+  background: transparent;
+  border: none;
   color: #D1D1D6;
   align-self: flex-start;
-  border-bottom-left-radius: 4px;
-  max-width: 90%;
+  padding: 4px 0;
+  max-width: 96%;
 }
 
 .chat-bubble.assistant .result-text h2 { margin-top: 16px; }
@@ -2553,7 +2572,7 @@ body {
       });
     }
 
-    async function ladeChatSessions() {
+    async function ladeChatSessions(alleAnzeigen = false) {
       const { data: { session } } = await supabaseClient.auth.getSession();
       const user = session?.user;
       if (!user) return;
@@ -2566,7 +2585,12 @@ body {
           container.innerHTML = '<p class="sidebar-empty">Noch keine Chats</p>';
           return;
         }
-        container.innerHTML = sessions.map(s => `
+
+        const LIMIT = 5;
+        const sichtbar = alleAnzeigen ? sessions : sessions.slice(0, LIMIT);
+        const hatMehr = sessions.length > LIMIT;
+
+        container.innerHTML = sichtbar.map(s => `
           <div class="session-item-row ${s.session_id === currentSessionId ? 'active' : ''}" data-session="${s.session_id}">
             <div class="session-item-label" onclick="ladeSession('${s.session_id}')">${s.title}</div>
             <button class="session-delete-btn" onclick="loescheSession('${s.session_id}', event)" title="Chat löschen">
@@ -2574,6 +2598,11 @@ body {
             </button>
           </div>
         `).join('');
+
+        if (hatMehr && !alleAnzeigen) {
+          container.innerHTML += `<button class="alle-chats-btn" onclick="ladeChatSessions(true)">Alle ${sessions.length} Chats anzeigen</button>`;
+        }
+
       } catch (err) {
         console.error('Fehler beim Laden der Sessions:', err);
       }
