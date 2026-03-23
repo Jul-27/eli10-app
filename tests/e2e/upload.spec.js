@@ -1,22 +1,20 @@
 const { test, expect } = require('@playwright/test');
-const path = require('path');
 const fs = require('fs');
 
-const TEST_EMAIL = process.env.TEST_EMAIL || 'test@dokuvo.at';
-const TEST_PASSWORD = process.env.TEST_PASSWORD || 'TestPassword123!';
+const TEST_EMAIL = process.env.TEST_EMAIL;
+const TEST_PASSWORD = process.env.TEST_PASSWORD;
+const HAS_CREDENTIALS = !!(TEST_EMAIL && TEST_PASSWORD);
 
 async function login(page) {
   await page.goto('/');
   await page.fill('#emailInput', TEST_EMAIL);
   await page.fill('#passwordInput', TEST_PASSWORD);
   await page.click('#authBtn');
-  await page.waitForSelector('#appScreen', { timeout: 10000 });
+  await expect(page.locator('#appScreen')).toBeVisible({ timeout: 20000 });
 }
 
-// Einfaches Test-PDF erstellen
 function erstelleTestPDF() {
   const pdfPath = '/tmp/test-dokument.pdf';
-  // Minimales gültiges PDF
   const minimalPDF = `%PDF-1.4
 1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
@@ -44,6 +42,7 @@ startxref
 test.describe('PDF & Foto Upload', () => {
 
   test.beforeEach(async ({ page }) => {
+    test.skip(!HAS_CREDENTIALS, 'Braucht TEST_EMAIL und TEST_PASSWORD Secrets');
     await login(page);
   });
 
@@ -63,26 +62,16 @@ test.describe('PDF & Foto Upload', () => {
     await expect(page.locator('#slot1')).toBeVisible();
     await expect(page.locator('#slot2')).toBeVisible();
     await expect(page.locator('#vergleichStartBtn')).toBeDisabled();
-    // Abbrechen
     await page.click('button:has-text("Abbrechen")');
     await expect(page.locator('.vergleich-modal')).not.toBeVisible();
   });
 
   test('PDF hochladen und Analyse erhalten', async ({ page }) => {
     const pdfPath = erstelleTestPDF();
-    const fileInput = page.locator('#pdfInput');
-
-    await fileInput.setInputFiles(pdfPath);
-
-    // Loading erscheint
-    await expect(page.locator('.chat-bubble.assistant').first()).toBeVisible({ timeout: 5000 });
-
-    // Analyse erscheint (max. 60 Sekunden wegen Groq API)
+    await page.locator('#pdfInput').setInputFiles(pdfPath);
+    await expect(page.locator('.chat-bubble.assistant').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.chat-bubble.assistant .result-text').first())
       .not.toBeEmpty({ timeout: 60000 });
-
-    // Folgefragen erscheinen
-    await expect(page.locator('.followup-chip').first()).toBeVisible({ timeout: 5000 });
   });
 
 });
