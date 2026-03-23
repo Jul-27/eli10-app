@@ -466,11 +466,36 @@ app.get('/chat/:user_id', async (req, res) => {
   }
 });
 
+// ── Google Token erneuern ─────────────────────────────────────────────────────
+let googleAccessToken = process.env.GOOGLE_ACCESS_TOKEN;
+
+async function erneuereGoogleToken() {
+  try {
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+        grant_type: 'refresh_token'
+      })
+    });
+    const data = await res.json();
+    if (data.access_token) {
+      googleAccessToken = data.access_token;
+      return true;
+    }
+    return false;
+  } catch(e) {
+    return false;
+  }
+}
+
 // ── Fristen-Alarm via Google Calendar ────────────────────────────────────────
 app.post('/kalender-alarm', async (req, res) => {
   const { titel, datum, beschreibung } = req.body;
   try {
-    // Datum formatieren: YYYY-MM-DD → RFC3339
     const startDate = new Date(datum);
     startDate.setHours(9, 0, 0, 0);
     const endDate = new Date(startDate);
@@ -484,21 +509,29 @@ app.post('/kalender-alarm', async (req, res) => {
       reminders: {
         useDefault: false,
         overrides: [
-          { method: 'popup', minutes: 24 * 60 },  // 1 Tag vorher
+          { method: 'popup', minutes: 24 * 60 },
           { method: 'email', minutes: 24 * 60 }
         ]
       }
     };
 
-    // Google Calendar API
-    const gcalRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GOOGLE_ACCESS_TOKEN}`
-      },
-      body: JSON.stringify(event)
-    });
+    const kalenderRequest = async (token) => {
+      return fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(event)
+      });
+    };
+
+    let gcalRes = await kalenderRequest(googleAccessToken);
+
+    // Token abgelaufen → erneuern und nochmal versuchen
+    if (gcalRes.status === 401) {
+      const erneuert = await erneuereGoogleToken();
+      if (erneuert) {
+        gcalRes = await kalenderRequest(googleAccessToken);
+      }
+    }
 
     if (gcalRes.ok) {
       const data = await gcalRes.json();
