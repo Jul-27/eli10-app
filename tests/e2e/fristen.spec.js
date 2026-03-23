@@ -10,7 +10,7 @@ async function login(page) {
   await page.fill('#emailInput', TEST_EMAIL);
   await page.fill('#passwordInput', TEST_PASSWORD);
   await page.click('#authBtn');
-  await expect(page.locator('#appScreen')).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('#chatEmpty')).toBeVisible({ timeout: 30000 });
 }
 
 test.describe('Fristen-Erkennung', () => {
@@ -45,7 +45,6 @@ startxref
     await page.locator('#pdfInput').setInputFiles('/tmp/test-frist.pdf');
     await expect(page.locator('.chat-bubble.assistant .result-text').first())
       .not.toBeEmpty({ timeout: 60000 });
-    // Fristen-Block ist optional je nach KI-Antwort
     const hatFristen = await page.locator('.fristen-block').count() > 0;
     if (hatFristen) {
       await expect(page.locator('.frist-export-btn').first()).toBeVisible();

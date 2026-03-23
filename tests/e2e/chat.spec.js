@@ -9,7 +9,8 @@ async function login(page) {
   await page.fill('#emailInput', TEST_EMAIL);
   await page.fill('#passwordInput', TEST_PASSWORD);
   await page.click('#authBtn');
-  await expect(page.locator('#appScreen')).toBeVisible({ timeout: 20000 });
+  // Warte auf #chatEmpty statt #appScreen — robuster
+  await expect(page.locator('#chatEmpty')).toBeVisible({ timeout: 30000 });
 }
 
 test.describe('Chat & Fragen stellen', () => {
