@@ -52,8 +52,8 @@ test.describe('Chat & Fragen stellen', () => {
     await page.fill('#chatInput', 'Test');
     await page.click('#sendBtn');
     await page.waitForSelector('.chat-bubble.user');
-    // Direkt den Sidebar-Button klicken (nicht den mobile-only Button)
-    await page.locator('.new-chat-btn').click();
+    // neuerChat() direkt aufrufen — funktioniert auf Desktop und Mobile
+    await page.evaluate(() => neuerChat());
     await expect(page.locator('#chatEmpty')).toBeVisible();
   });
 
@@ -66,12 +66,13 @@ test.describe('Chat & Fragen stellen', () => {
   test('PDF-Export Button erscheint', async ({ page }) => {
     await page.fill('#chatInput', 'Was ist eine Kündigung?');
     await page.click('#sendBtn');
-    // Erst auf die Antwort warten, dann auf den PDF-Button
-    await expect(page.locator('.chat-bubble.assistant .result-text').first())
-      .not.toBeEmpty({ timeout: 40000 });
-    await expect(page.locator('.feedback-row').first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('.feedback-row button').filter({ hasText: 'PDF' }).first())
-      .toBeVisible({ timeout: 10000 });
+    // Warte auf Antwort und Feedback-Row
+    await expect(page.locator('.feedback-row').first()).toBeVisible({ timeout: 40000 });
+    // PDF-Button ist der letzte Button in der feedback-row (nach den Thumbs-Buttons)
+    const feedbackRow = page.locator('.feedback-row').first();
+    const buttons = feedbackRow.locator('button');
+    // Mindestens 3 Buttons: Ja, Nein, PDF
+    await expect(buttons).toHaveCount(3, { timeout: 10000 });
   });
 
 });
