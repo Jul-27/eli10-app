@@ -1005,6 +1005,92 @@ body {
 }
 .alle-chats-btn:hover { color: #AEAEB2; }
 
+/* Rename Input */
+.session-rename-input {
+  flex: 1;
+  background: #1C1C1E;
+  border: 1px solid #3B82F6;
+  border-radius: 6px;
+  color: #F1F5F9;
+  font-size: 12px;
+  padding: 3px 7px;
+  outline: none;
+  font-family: inherit;
+  min-width: 0;
+}
+
+/* Dokumente vergleichen Modal */
+.vergleich-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.vergleich-modal {
+  background: #161616;
+  border: 1px solid #2C2C2E;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+}
+.vergleich-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #F1F5F9;
+  margin-bottom: 6px;
+}
+.vergleich-subtitle {
+  font-size: 13px;
+  color: #636366;
+  margin-bottom: 20px;
+}
+.vergleich-slots {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.vergleich-slot {
+  flex: 1;
+  border: 1.5px dashed #2C2C2E;
+  border-radius: 10px;
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.vergleich-slot:hover { border-color: #3B82F6; }
+.vergleich-slot.filled { border-color: #34D399; border-style: solid; }
+.vergleich-slot-label { font-size: 11px; color: #48484A; }
+.vergleich-slot-name { font-size: 12px; color: #34D399; font-weight: 500; word-break: break-all; }
+.vergleich-actions { display: flex; gap: 10px; }
+.vergleich-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.vergleich-btn-primary { background: #3B82F6; color: white; }
+.vergleich-btn-primary:hover { background: #2563EB; }
+.vergleich-btn-primary:disabled { background: #1C1C1E; color: #48484A; cursor: not-allowed; }
+.vergleich-btn-secondary { background: #1C1C1E; color: #AEAEB2; border: 1px solid #2C2C2E; }
+.vergleich-btn-secondary:hover { background: #2C2C2E; }
+
 .session-item-label {
   flex: 1;
   padding: 9px 4px 9px 12px;
@@ -1978,7 +2064,13 @@ body {
             <button class="quick-btn" onclick="document.getElementById('fotoInput').click()">
               <i data-lucide="camera" style="width:16px;height:16px;"></i> Foto machen
             </button>
+            <button class="quick-btn" onclick="starteVergleich()">
+              <i data-lucide="git-compare" style="width:16px;height:16px;"></i> Dokumente vergleichen
+            </button>
           </div>
+          <!-- Versteckte Inputs für Vergleich -->
+          <input type="file" id="vergleichInput1" accept=".pdf,image/*" style="display:none">
+          <input type="file" id="vergleichInput2" accept=".pdf,image/*" style="display:none">
         </div>
         <div id="chatMessages" class="chat-messages" style="display:none;"></div>
         <div id="limitBanner" class="limit-banner" style="display:none;">
@@ -2702,6 +2794,137 @@ body {
       });
     }
 
+    let vergleichDatei1 = null;
+    let vergleichDatei2 = null;
+
+    function starteVergleich() {
+      // Modal erstellen
+      const overlay = document.createElement('div');
+      overlay.className = 'vergleich-overlay';
+      overlay.id = 'vergleichOverlay';
+      overlay.innerHTML = `
+        <div class="vergleich-modal">
+          <div class="vergleich-title"><i data-lucide="git-compare" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px;color:#3B82F6;"></i>Dokumente vergleichen</div>
+          <div class="vergleich-subtitle">Lade zwei Dokumente hoch — Dokuvo erklärt die wichtigsten Unterschiede.</div>
+          <div class="vergleich-slots">
+            <div class="vergleich-slot" id="slot1" onclick="waehleVergleichDatei(1)">
+              <i data-lucide="file-plus" style="width:24px;height:24px;color:#48484A;"></i>
+              <div class="vergleich-slot-label">Dokument 1</div>
+              <div class="vergleich-slot-name" id="slot1Name">Datei wählen</div>
+            </div>
+            <div class="vergleich-slot" id="slot2" onclick="waehleVergleichDatei(2)">
+              <i data-lucide="file-plus" style="width:24px;height:24px;color:#48484A;"></i>
+              <div class="vergleich-slot-label">Dokument 2</div>
+              <div class="vergleich-slot-name" id="slot2Name">Datei wählen</div>
+            </div>
+          </div>
+          <div class="vergleich-actions">
+            <button class="vergleich-btn vergleich-btn-secondary" onclick="schliesseVergleich()">Abbrechen</button>
+            <button class="vergleich-btn vergleich-btn-primary" id="vergleichStartBtn" onclick="vergleicheDokumente()" disabled>Vergleichen</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      lucide.createIcons();
+      vergleichDatei1 = null;
+      vergleichDatei2 = null;
+    }
+
+    function schliesseVergleich() {
+      document.getElementById('vergleichOverlay')?.remove();
+    }
+
+    function waehleVergleichDatei(slot) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.pdf,image/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (slot === 1) {
+          vergleichDatei1 = file;
+          document.getElementById('slot1Name').textContent = file.name.substring(0, 25) + (file.name.length > 25 ? '...' : '');
+          document.getElementById('slot1').classList.add('filled');
+        } else {
+          vergleichDatei2 = file;
+          document.getElementById('slot2Name').textContent = file.name.substring(0, 25) + (file.name.length > 25 ? '...' : '');
+          document.getElementById('slot2').classList.add('filled');
+        }
+        if (vergleichDatei1 && vergleichDatei2) {
+          document.getElementById('vergleichStartBtn').disabled = false;
+        }
+      };
+      input.click();
+    }
+
+    async function vergleicheDokumente() {
+      if (!vergleichDatei1 || !vergleichDatei2) return;
+      schliesseVergleich();
+
+      document.getElementById('chatEmpty').style.display = 'none';
+      document.getElementById('chatMessages').style.display = 'flex';
+
+      addBubble('user', `📄 ${vergleichDatei1.name} vs. 📄 ${vergleichDatei2.name}`);
+
+      const loadingId = 'loading_' + Date.now();
+      addBubble('assistant', '<span style="color:#48484A">Dokumente werden verglichen...</span>', loadingId);
+
+      const formData = new FormData();
+      formData.append('doc1', vergleichDatei1);
+      formData.append('doc2', vergleichDatei2);
+      formData.append('depth', getDepthLevel());
+
+      try {
+        const res = await fetch('/compare-documents', { method: 'POST', body: formData });
+        const data = await res.json();
+        document.getElementById(loadingId)?.remove();
+
+        if (!currentSessionId) currentSessionId = generateSessionId();
+        const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
+        const user = chatSession?.user;
+        if (user) {
+          await supabaseClient.from('chats').insert([
+            { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${vergleichDatei1.name} vs. 📄 ${vergleichDatei2.name}` },
+            { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.comparison }
+          ]);
+        }
+        await zeigeAntwortMitTypewriter(data.comparison, data.followUps, data.fristen || []);
+        ladeChatSessions();
+      } catch (err) {
+        document.getElementById(loadingId)?.remove();
+        addBubble('assistant', 'Fehler beim Vergleichen der Dokumente.');
+      }
+    }
+
+    function starteRename(session_id, labelEl, event) {
+      event.stopPropagation();
+      const currentTitle = labelEl.textContent;
+      const input = document.createElement('input');
+      input.className = 'session-rename-input';
+      input.value = currentTitle;
+      labelEl.replaceWith(input);
+      input.focus();
+      input.select();
+
+      const speichern = async () => {
+        const neuerTitel = input.value.trim() || currentTitle;
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const user_id = session?.user?.id;
+        await fetch('/chat/rename', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id, session_id, title: neuerTitel })
+        });
+        ladeChatSessions();
+      };
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') speichern();
+        if (e.key === 'Escape') ladeChatSessions();
+      });
+      input.addEventListener('blur', speichern);
+    }
+
     async function ladeChatSessions(alleAnzeigen = false) {
       const { data: { session } } = await supabaseClient.auth.getSession();
       const user = session?.user;
@@ -2722,7 +2945,7 @@ body {
 
         container.innerHTML = sichtbar.map(s => `
           <div class="session-item-row ${s.session_id === currentSessionId ? 'active' : ''}" data-session="${s.session_id}">
-            <div class="session-item-label" onclick="ladeSession('${s.session_id}')">${s.title}</div>
+            <div class="session-item-label" onclick="ladeSession('${s.session_id}')" ondblclick="starteRename('${s.session_id}', this, event)">${s.title}</div>
             <button class="session-delete-btn" onclick="loescheSession('${s.session_id}', event)" title="Chat löschen">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
             </button>

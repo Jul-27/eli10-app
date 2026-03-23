@@ -439,12 +439,22 @@ app.get('/chat/:user_id', async (req, res) => {
       .eq('role', 'user')
       .order('created_at', { ascending: false });
 
+    // Custom-Titel laden
+    const { data: titles } = await supabase
+      .from('chat_titles')
+      .select('session_id, title')
+      .eq('user_id', user_id);
+
+    const titleMap = {};
+    (titles || []).forEach(t => { titleMap[t.session_id] = t.title; });
+
     const sessions = {};
     (data || []).forEach(row => {
       if (!sessions[row.session_id]) {
+        const autoTitle = row.message.substring(0, 60) + (row.message.length > 60 ? '...' : '');
         sessions[row.session_id] = {
           session_id: row.session_id,
-          title: row.message.substring(0, 60) + (row.message.length > 60 ? '...' : ''),
+          title: titleMap[row.session_id] || autoTitle,
           created_at: row.created_at
         };
       }
@@ -453,6 +463,101 @@ app.get('/chat/:user_id', async (req, res) => {
     res.json(Object.values(sessions));
   } catch (err) {
     res.status(500).json({ error: 'Fehler beim Laden der Chats' });
+  }
+});
+
+// ── Dokumente vergleichen ─────────────────────────────────────────────────────
+app.post('/compare-documents', upload.fields([{ name: 'doc1' }, { name: 'doc2' }]), async (req, res) => {
+  const depth = parseInt(req.body.depth) || 2;
+  const depthInstructions = {
+    1: 'Erkläre so einfach wie möglich, kurze Sätze, keine Fachbegriffe.',
+    2: 'Erkläre verständlich für jemanden ohne Fachkenntnisse. Fachbegriffe kurz in Klammern erklären.',
+    3: 'Erkläre präzise und fachlich korrekt.'
+  };
+
+  try {
+    const file1 = req.files['doc1']?.[0];
+    const file2 = req.files['doc2']?.[0];
+    if (!file1 || !file2) return res.status(400).json({ error: 'Zwei Dokumente erforderlich' });
+
+    // Texte extrahieren
+    const extractText = async (file) => {
+      if (file.mimetype === 'application/pdf') {
+        const pdfParse = require('pdf-parse/lib/pdf-parse.js');
+        const data = await pdfParse(file.buffer);
+        return data.text.replace(/\s+/g, ' ').trim().substring(0, 8000);
+      } else {
+        // Bild: Groq Vision
+        const base64 = file.buffer.toString('base64');
+        const completion = await groq.chat.completions.create({
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: [
+            { type: 'image_url', image_url: { url: `data:${file.mimetype};base64,${base64}` } },
+            { type: 'text', text: 'Extrahiere den gesamten Text aus diesem Bild. Gib nur den reinen Text zurück.' }
+          ]}]
+        });
+        return completion.choices[0].message.content.substring(0, 8000);
+      }
+    };
+
+    const [text1, text2] = await Promise.all([extractText(file1), extractText(file2)]);
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 1500,
+      messages: [
+        {
+          role: 'system',
+          content: `Du bist Dokuvo, ein KI-Assistent der Dokumente vergleicht und erklärt.
+${depthInstructions[depth]}
+
+Strukturiere den Vergleich so:
+## 📋 Worum geht es bei den Dokumenten?
+Kurze Beschreibung was beide Dokumente sind.
+
+## 🔍 Die wichtigsten Unterschiede
+Erkläre die konkreten Unterschiede zwischen den Dokumenten — Preise, Konditionen, Fristen, Inhalte.
+Nutze eine klare Gegenüberstellung.
+
+## ⚖️ Was ist besser?
+Gib eine ehrliche Einschätzung welches Dokument vorteilhafter ist und warum.
+
+## 💡 Zusammenfassung
+Ein klarer Satz was die wichtigste Erkenntnis aus dem Vergleich ist.`
+        },
+        {
+          role: 'user',
+          content: `Vergleiche diese zwei Dokumente:\n\n--- DOKUMENT 1: ${file1.originalname} ---\n${text1}\n\n--- DOKUMENT 2: ${file2.originalname} ---\n${text2}`
+        }
+      ]
+    });
+
+    const comparison = completion.choices[0].message.content;
+    const [followUps, fristen] = await Promise.all([
+      generiereFollowUps(comparison),
+      extrahiereFristen(text1 + ' ' + text2)
+    ]);
+
+    res.json({ comparison, followUps, fristen });
+
+  } catch (err) {
+    console.error('Vergleich Fehler:', err.message);
+    res.status(500).json({ error: 'Fehler beim Vergleichen' });
+  }
+});
+
+// ── Chat umbenennen ───────────────────────────────────────────────────────────
+app.post('/chat/rename', async (req, res) => {
+  const { user_id, session_id, title } = req.body;
+  try {
+    await supabase.from('chat_titles').upsert(
+      { user_id, session_id, title },
+      { onConflict: 'session_id' }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
