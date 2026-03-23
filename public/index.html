@@ -2720,6 +2720,10 @@ body {
           <button class="feedback-btn" onclick="sendFeedback(this, 'down', ${JSON.stringify(fullText)})">
             <i data-lucide="thumbs-down" style="width:13px;height:13px;"></i> Nein
           </button>
+          <span style="flex:1;"></span>
+          <button class="feedback-btn" onclick="exportierePDF(this)">
+            <i data-lucide="download" style="width:13px;height:13px;"></i> PDF
+          </button>
         `;
         bubble.appendChild(feedbackRow);
         lucide.createIcons();
