@@ -2284,10 +2284,7 @@ body {
 
       lucide.createIcons();
       ladeChatSessions();
-
-      const emailKurz = email.split('@')[0];
-      document.getElementById('sidebarEmail').textContent = email;
-      document.getElementById('sidebarAvatar').textContent = emailKurz[0].toUpperCase();
+      ladeProfil(); // Profilbild + Anzeigename direkt beim Start laden
     }
 
     function aktualisiereZaehler(remaining, isPremium) {
