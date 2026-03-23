@@ -466,6 +466,52 @@ app.get('/chat/:user_id', async (req, res) => {
   }
 });
 
+// ── Fristen-Alarm via Google Calendar ────────────────────────────────────────
+app.post('/kalender-alarm', async (req, res) => {
+  const { titel, datum, beschreibung } = req.body;
+  try {
+    // Datum formatieren: YYYY-MM-DD → RFC3339
+    const startDate = new Date(datum);
+    startDate.setHours(9, 0, 0, 0);
+    const endDate = new Date(startDate);
+    endDate.setHours(10, 0, 0, 0);
+
+    const event = {
+      summary: `⏰ ${titel}`,
+      description: `${beschreibung}\n\nErstellt von Dokuvo`,
+      start: { dateTime: startDate.toISOString(), timeZone: 'Europe/Vienna' },
+      end: { dateTime: endDate.toISOString(), timeZone: 'Europe/Vienna' },
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'popup', minutes: 24 * 60 },  // 1 Tag vorher
+          { method: 'email', minutes: 24 * 60 }
+        ]
+      }
+    };
+
+    // Google Calendar API
+    const gcalRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GOOGLE_ACCESS_TOKEN}`
+      },
+      body: JSON.stringify(event)
+    });
+
+    if (gcalRes.ok) {
+      const data = await gcalRes.json();
+      res.json({ success: true, eventId: data.id });
+    } else {
+      res.json({ success: false });
+    }
+  } catch (err) {
+    console.error('Kalender Fehler:', err.message);
+    res.json({ success: false });
+  }
+});
+
 // ── Dokumente vergleichen ─────────────────────────────────────────────────────
 app.post('/compare-documents', upload.fields([{ name: 'doc1' }, { name: 'doc2' }]), async (req, res) => {
   const depth = parseInt(req.body.depth) || 2;

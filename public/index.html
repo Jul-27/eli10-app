@@ -9,6 +9,7 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -2482,7 +2483,29 @@ body {
         const btn = document.createElement('button');
         btn.className = 'frist-export-btn';
         btn.innerHTML = `<i data-lucide="calendar-plus" style="width:12px;height:12px;"></i> In Kalender`;
-        btn.addEventListener('click', () => generiereICS(f.titel, f.datum, f.beschreibung));
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          btn.innerHTML = `<i data-lucide="loader" style="width:12px;height:12px;"></i> ...`;
+          lucide.createIcons();
+          try {
+            const result = await fristInGoogleKalender(f.titel, f.datum, f.beschreibung);
+            if (result.success) {
+              btn.innerHTML = `<i data-lucide="check" style="width:12px;height:12px;"></i> Gespeichert`;
+              btn.style.borderColor = '#34D399';
+              btn.style.color = '#34D399';
+            } else {
+              // Fallback: ICS Download
+              generiereICS(f.titel, f.datum, f.beschreibung);
+              btn.innerHTML = `<i data-lucide="calendar-plus" style="width:12px;height:12px;"></i> In Kalender`;
+              btn.disabled = false;
+            }
+          } catch(e) {
+            generiereICS(f.titel, f.datum, f.beschreibung);
+            btn.innerHTML = `<i data-lucide="calendar-plus" style="width:12px;height:12px;"></i> In Kalender`;
+            btn.disabled = false;
+          }
+          lucide.createIcons();
+        });
 
         item.appendChild(info);
         item.appendChild(btn);
@@ -2491,6 +2514,87 @@ body {
 
       container.appendChild(block);
       lucide.createIcons();
+    }
+
+    async function exportierePDF(btn) {
+      const bubble = btn.closest('.chat-bubble');
+      const resultText = bubble.querySelector('.result-text');
+      if (!resultText) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader" style="width:13px;height:13px;"></i> ...';
+      lucide.createIcons();
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        // Dokuvo Header
+        doc.setFillColor(26, 39, 68);
+        doc.rect(0, 0, 210, 18, 'F');
+        doc.setTextColor(241, 245, 249);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Dokuvo', 14, 12);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(174, 174, 178);
+        doc.text('Dein KI-Assistent für komplexe Dokumente und Fragen', 14, 16.5);
+        doc.text(new Date().toLocaleDateString('de-DE'), 196, 12, { align: 'right' });
+
+        // Inhalt — Markdown zu Plain Text
+        const plainText = resultText.innerText || resultText.textContent;
+        doc.setTextColor(30, 30, 30);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+
+        const lines = doc.splitTextToSize(plainText, 182);
+        let y = 28;
+        const pageH = 285;
+
+        for (const line of lines) {
+          if (y > pageH) {
+            doc.addPage();
+            y = 20;
+          }
+          // Überschriften fett
+          if (line.match(/^[📋🔍⚠️✅💡⚖️]/)) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(59, 130, 246);
+            y += 3;
+          } else {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(30, 30, 30);
+          }
+          doc.text(line, 14, y);
+          y += 5.5;
+        }
+
+        // Footer
+        doc.setFontSize(7);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Erstellt mit Dokuvo · dokuvo.at · Kein Ersatz für professionelle Beratung', 105, 293, { align: 'center' });
+
+        doc.save(`Dokuvo_Erklärung_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}.pdf`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="download" style="width:13px;height:13px;"></i> PDF';
+        lucide.createIcons();
+      }
+    }
+
+    async function fristInGoogleKalender(titel, datum, beschreibung) {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user_id = session?.user?.id;
+      const res = await fetch('/kalender-alarm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id, titel, datum, beschreibung })
+      });
+      const data = await res.json();
+      return data;
     }
 
     function neuerChat() {
@@ -2688,9 +2792,10 @@ body {
       // Fristen-Block
       zeigeFristenBlock(fristen, bubble);
 
-      // Feedback-Row
+      // Feedback-Row + Export
       const feedbackRow = document.createElement('div');
       feedbackRow.className = 'feedback-row';
+      const safeText = text.replace(/\\/g, '\\\\').replace(/`/g, "'").replace(/\$/g, '\\$');
       feedbackRow.innerHTML = `
         <span class="feedback-label">Hilfreich?</span>
         <button class="feedback-btn" id="btn-up-${Date.now()}" onclick="sendFeedback(this, 'up', \`${text.replace(/`/g, "'")}\`)">
@@ -2698,6 +2803,10 @@ body {
         </button>
         <button class="feedback-btn" id="btn-down-${Date.now()}" onclick="sendFeedback(this, 'down', \`${text.replace(/`/g, "'")}\`)">
           <i data-lucide="thumbs-down" style="width:13px;height:13px;"></i> Nein
+        </button>
+        <span style="flex:1;"></span>
+        <button class="feedback-btn" onclick="exportierePDF(this)">
+          <i data-lucide="download" style="width:13px;height:13px;"></i> PDF
         </button>
       `;
       bubble.appendChild(feedbackRow);
