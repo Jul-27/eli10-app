@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dokuvo — Komplexe Dokumente einfach verstehen</title>
+  <meta name="description" content="Dokuvo erklärt dir Verträge, Bescheide, Befunde und Behördenbriefe in einfacher Sprache. Kein Prompt nötig — Dokument hochladen, verstehen, handeln.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #08090A;
+      --surface: #111214;
+      --surface-2: #1A1C1F;
+      --border: #2A2D32;
+      --text: #E8EAED;
+      --text-muted: #7A7F88;
+      --text-dim: #4A4F58;
+      --accent: #3B82F6;
+      --accent-glow: rgba(59, 130, 246, 0.15);
+      --accent-2: #60A5FA;
+      --green: #34D399;
+      --orange: #FB923C;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(8, 9, 10, 0.8);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s;
+    }
+
+    .nav.scrolled { border-bottom-color: var(--border); }
+
+    .nav-logo {
+      font-family: var(--sans);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-logo img {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+
+    .nav-cta {
+      padding: 10px 24px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      font-family: var(--sans);
+    }
+
+    .nav-cta:hover { background: #2563EB; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(ellipse, rgba(59,130,246,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      animation: fadeInUp 0.6s ease both;
+    }
+
+    .hero-badge-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.8rem, 7vw, 5rem);
+      font-weight: 400;
+      line-height: 1.1;
+      max-width: 800px;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.6s ease 0.1s both;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent-2);
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--text-muted);
+      max-width: 560px;
+      margin-bottom: 48px;
+      line-height: 1.7;
+      animation: fadeInUp 0.6s ease 0.2s both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeInUp 0.6s ease 0.3s both;
+    }
+
+    .btn-hero {
+      padding: 16px 36px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s;
+      font-family: var(--sans);
+      border: none;
+    }
+
+    .btn-hero-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 24px rgba(59,130,246,0.3);
+    }
+
+    .btn-hero-primary:hover {
+      background: #2563EB;
+      box-shadow: 0 8px 32px rgba(59,130,246,0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-hero-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-hero-secondary:hover {
+      background: var(--surface-2);
+      border-color: var(--text-dim);
+    }
+
+    .hero-proof {
+      margin-top: 48px;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      animation: fadeInUp 0.6s ease 0.4s both;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── PROBLEM / COMPARISON ── */
+    .comparison {
+      padding: 120px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .section-desc {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin-bottom: 56px;
+      line-height: 1.7;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .compare-card {
+      padding: 36px 32px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .compare-card.old {
+      background: var(--surface);
+    }
+
+    .compare-card.new {
+      background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(59,130,246,0.02));
+      border-color: rgba(59,130,246,0.25);
+    }
+
+    .compare-card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .compare-card.old .compare-card-title { color: var(--text-dim); }
+    .compare-card.new .compare-card-title { color: var(--accent-2); }
+
+    .compare-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .compare-card.old .compare-item { color: var(--text-muted); }
+    .compare-card.new .compare-item { color: var(--text); }
+
+    .compare-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      margin-top: 2px;
+    }
+
+    /* ── FEATURES ── */
+    .features {
+      padding: 120px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card {
+      padding: 32px 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(59,130,246,0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+
+    .feature-card.highlight {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(59,130,246,0.05), var(--surface));
+      border-color: rgba(59,130,246,0.2);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+
+    .feature-card h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      padding: 120px 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .steps::before {
+      content: '';
+      position: absolute;
+      left: 23px;
+      top: 48px;
+      bottom: 48px;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--border), var(--accent), var(--border));
+    }
+
+    .step {
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      padding: 28px 0;
+    }
+
+    .step-num {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-content h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .step-content p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ── USE CASES ── */
+    .usecases {
+      padding: 120px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .usecase-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .usecase {
+      padding: 24px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .usecase:hover {
+      border-color: var(--accent);
+      background: var(--surface-2);
+    }
+
+    .usecase-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .usecase h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .usecase p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      padding: 120px 24px;
+      text-align: center;
+    }
+
+    .cta-box {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 72px 48px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.02));
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at center, rgba(59,130,246,0.06), transparent 60%);
+      pointer-events: none;
+    }
+
+    .cta-box h2 {
+      font-family: var(--serif);
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .cta-box p {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+      position: relative;
+    }
+
+    .cta-box .btn-hero-primary { position: relative; }
+
+    /* ── FOOTER ── */
+    .footer {
+      padding: 48px 24px;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer p {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.8;
+    }
+
+    .footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    .footer a:hover { color: var(--text); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .compare-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .feature-card.highlight { grid-column: span 1; }
+      .usecase-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .nav { padding: 12px 16px; }
+      .hero { padding: 100px 20px 60px; }
+      .hero-actions { flex-direction: column; align-items: center; }
+      .btn-hero { width: 100%; text-align: center; }
+      .usecase-grid { grid-template-columns: 1fr; }
+      .cta-box { padding: 48px 24px; }
+      .comparison, .features, .how, .usecases, .cta-section { padding: 80px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav" id="nav">
+    <a href="#" class="nav-logo">
+      <img src="data:image/png;base64,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" style="width:28px;height:28px;">
+      Dokuvo
+    </a>
+    <a href="/app" class="nav-cta">Kostenlos starten</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Spezialisiert auf Dokumente — nicht auf alles
+    </div>
+    <h1>Komplexe Dokumente <em>einfach</em> verstehen</h1>
+    <p class="hero-sub">
+      Vertrag unterschreiben? Bescheid vom Amt? Befund vom Arzt?<br>
+      Dokuvo erklärt dir jedes Dokument in Sekunden — in der Sprache, die du verstehst.
+    </p>
+    <div class="hero-actions">
+      <a href="/app" class="btn-hero btn-hero-primary">Jetzt Dokument hochladen</a>
+      <a href="#so-funktionierts" class="btn-hero btn-hero-secondary">So funktioniert's</a>
+    </div>
+    <p class="hero-proof">Kostenlos starten · Keine Kreditkarte nötig · 5 Erklärungen pro Tag gratis</p>
+  </section>
+
+  <!-- COMPARISON: Dokuvo vs. ChatGPT/Claude -->
+  <section class="comparison">
+    <div class="section-label">Warum Dokuvo?</div>
+    <h2 class="section-title">Nicht noch ein Chatbot.<br>Ein Dokumenten-Experte.</h2>
+    <p class="section-desc">
+      ChatGPT und Claude sind brillante Alleskönner. Aber wenn du einen 20-seitigen Mietvertrag verstehen musst, brauchst du kein Schweizer Taschenmesser — du brauchst ein Skalpell.
+    </p>
+    <div class="compare-grid">
+      <div class="compare-card old">
+        <div class="compare-card-title">
+          <span>○</span> Allgemeine KI-Chatbots
+        </div>
+        <div class="compare-item"><span class="compare-icon">→</span>Du musst den richtigen Prompt formulieren</div>
+        <div class="compare-item"><span class="compare-icon">→</span>Text manuell kopieren und einfügen</div>
+        <div class="compare-item"><span class="compare-icon">→</span>Antwort in beliebiger Tiefe und Sprache</div>
+        <div class="compare-item"><span class="compare-icon">→</span>Fristen und Deadlines übersehen</div>
+        <div class="compare-item"><span class="compare-icon">→</span>Ergebnis nicht speicherbar</div>
+        <div class="compare-item"><span class="compare-icon">→</span>Auf Englisch optimiert</div>
+      </div>
+      <div class="compare-card new">
+        <div class="compare-card-title">
+          <span>●</span> Dokuvo
+        </div>
+        <div class="compare-item"><span class="compare-icon">✓</span><strong>Hochladen, fertig.</strong> Kein Prompt nötig.</div>
+        <div class="compare-item"><span class="compare-icon">✓</span><strong>PDF & Foto direkt</strong> analysieren</div>
+        <div class="compare-item"><span class="compare-icon">✓</span><strong>Erklärungstiefe wählen:</strong> Einfach / Normal / Experte</div>
+        <div class="compare-item"><span class="compare-icon">✓</span><strong>Fristen automatisch erkennen</strong> + Kalender-Export</div>
+        <div class="compare-item"><span class="compare-icon">✓</span><strong>PDF-Export</strong> der Erklärung zum Aufbewahren</div>
+        <div class="compare-item"><span class="compare-icon">✓</span><strong>Für den DACH-Raum</strong> gebaut — Deutsch-first</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Alles, was du brauchst.<br>Nichts, was dich ablenkt.</h2>
+    <p class="section-desc">
+      Dokuvo wurde für einen einzigen Zweck gebaut: Dokumente verständlich machen. Jedes Feature dient diesem Ziel.
+    </p>
+    <div class="features-grid">
+      <div class="feature-card highlight">
+        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></svg></div>
+        <h3>Erklärungstiefe — du bestimmst</h3>
+        <p>Mit einem Klick wechselst du zwischen „Einfach" (wie für ein Kind), „Normal" (allgemeinverständlich) und „Experte" (fachlich präzise). Kein Prompt-Engineering, kein Raten.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M12 16.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/><path d="M12 13.5v3"/></svg></div>
+        <h3>Fristen erkennen</h3>
+        <p>Dokuvo findet automatisch Deadlines in deinen Dokumenten und lässt dich sie mit einem Klick in deinen Kalender exportieren.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <h3>PDF hochladen</h3>
+        <p>Verträge, Bescheide, Policen — lade das PDF hoch und bekomme in Sekunden eine verständliche Erklärung.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+        <h3>Foto abfotografieren</h3>
+        <p>Brief vom Amt auf dem Tisch? Einfach abfotografieren. Dokuvo erkennt den Text und erklärt ihn sofort.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/><path d="M18 3v12a9 9 0 0 1-9-9"/></svg></div>
+        <h3>Dokumente vergleichen</h3>
+        <p>Lade zwei Verträge hoch und erfahre in Sekunden, was sich geändert hat — ideal für Vertragsverlängerungen.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        <h3>PDF-Export</h3>
+        <p>Speichere jede Erklärung als professionelles PDF — zum Aufbewahren, Weiterleiten oder Ausdrucken.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="so-funktionierts">
+    <div class="section-label">So funktioniert's</div>
+    <h2 class="section-title">In 30 Sekunden zum Durchblick</h2>
+    <p class="section-desc">Kein Studium nötig. Kein Kleingedrucktes lesen. Kein Anwalt anrufen.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Dokument hochladen oder abfotografieren</h3>
+          <p>Lade dein PDF hoch, fotografiere einen Brief ab, oder füge einfach den Text ein. Dokuvo akzeptiert alles.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Erklärungstiefe wählen</h3>
+          <p>Willst du es ganz einfach erklärt oder fachlich präzise? Du entscheidest mit einem Klick, wie tief Dokuvo gehen soll.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Verstehen und handeln</h3>
+          <p>Du bekommst eine klare Erklärung, erkannte Fristen mit Kalender-Export und Folgefragen zum Weiterklicken. Fertig.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- USE CASES -->
+  <section class="usecases">
+    <div class="section-label">Anwendungsfälle</div>
+    <h2 class="section-title">Für jedes Dokument, das dich verwirrt</h2>
+    <p class="section-desc">Egal ob privat oder beruflich — wenn du ein Dokument nicht verstehst, hilft Dokuvo.</p>
+    <div class="usecase-grid">
+      <div class="usecase">
+        <span class="usecase-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+        <h4>Mietverträge</h4>
+        <p>Kündigungsfristen, Nebenkosten, Klauseln — alles verständlich</p>
+      </div>
+      <div class="usecase">
+        <span class="usecase-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+        <h4>Medizinische Befunde</h4>
+        <p>Laborwerte und Diagnosen endlich verstehen</p>
+      </div>
+      <div class="usecase">
+        <span class="usecase-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 8 4 8"/></svg></span>
+        <h4>Behördenbriefe</h4>
+        <p>Bescheide vom Finanzamt, AMS, Sozialamt erklärt</p>
+      </div>
+      <div class="usecase">
+        <span class="usecase-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></span>
+        <h4>Versicherungen</h4>
+        <p>Was ist wirklich abgedeckt? Was nicht?</p>
+      </div>
+      <div class="usecase">
+        <span class="usecase-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span>
+        <h4>Arbeitsverträge</h4>
+        <p>Probezeit, Konkurrenzklausel, Überstunden-Regelung</p>
+      </div>
+      <div class="usecase">
+        <span class="usecase-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+        <h4>Steuerdokumente</h4>
+        <p>Steuerbescheid, Vorauszahlung, Erklärungspflicht</p>
+      </div>
+      <div class="usecase">
+        <span class="usecase-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+        <h4>Wissenschaftliche Paper</h4>
+        <p>Studien und Fachartikel auf den Punkt gebracht</p>
+      </div>
+      <div class="usecase">
+        <span class="usecase-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9.5 15.5 12 18l2.5-2.5"/></svg></span>
+        <h4>Kaufverträge</h4>
+        <p>Immobilien, Autos, Geräte — kein Kleingedrucktes übersehen</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-box">
+      <h2>Bereit, dein nächstes Dokument zu verstehen?</h2>
+      <p>Kostenlos starten. Kein Account nötig für die erste Erklärung.</p>
+      <a href="/app" class="btn-hero btn-hero-primary">Jetzt kostenlos testen</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>
+      © 2025 Dokuvo · Dein KI-Assistent für komplexe Dokumente<br>
+      <span style="margin-top:8px;display:inline-block;">
+        Dokuvo ist kein Ersatz für rechtliche, medizinische oder steuerliche Beratung.
+      </span>
+    </p>
+  </footer>
+
+  <script>
+    // Nav scroll effect
+    window.addEventListener('scroll', function() {
+      document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 20);
+    });
+
+    // Scroll animations
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.compare-card, .feature-card, .step, .usecase, .cta-box').forEach(function(el) {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(24px)';
+      el.style.transition = 'all 0.6s ease';
+      observer.observe(el);
+    });
+  </script>
+
+</body>
+</html>

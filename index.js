@@ -28,6 +28,17 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.get('/', (req, res) => {
+  const landingPath = path.join(__dirname, 'public', 'landing.html');
+  if (fs.existsSync(landingPath)) {
+    res.send(fs.readFileSync(landingPath, 'utf8'));
+  } else {
+    // Fallback: wenn landing.html noch nicht existiert, zeige die App
+    const htmlPath = path.join(__dirname, 'public', 'index.html');
+    res.send(fs.readFileSync(htmlPath, 'utf8'));
+  }
+});
+
+app.get('/app', (req, res) => {
   const htmlPath = path.join(__dirname, 'public', 'index.html');
   res.send(fs.readFileSync(htmlPath, 'utf8'));
 });
