@@ -419,39 +419,7 @@ body {
       font-size: 0.9rem;
     }
 
-    /* ── LIMIT BANNER ── */
-    .limit-banner {
-      background: #FFF7ED;
-      border: 1.5px solid #FED7AA;
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
-      margin-bottom: 16px;
-      display: none;
-    }
-
-    .limit-banner h3 {
-      color: var(--warning);
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .limit-banner p {
-      color: var(--gray-600);
-      font-size: 0.85rem;
-      margin-bottom: 12px;
-    }
-
-    .btn-upgrade-banner {
-      padding: 10px 20px;
-      background: var(--warning);
-      color: white;
-      border: none;
-      border-radius: var(--radius-md);
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
+    /* ── LIMIT BANNER (styles in dark theme section below) ── */
 
     /* ── VERLAUF TAB ── */
     .history-item {
@@ -1593,32 +1561,63 @@ body {
 
 /* Limit Banner */
 .limit-banner {
-  display: flex;
+  display: none;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 12px 32px;
-  background: rgba(251,191,36,0.06);
-  border-top: 1px solid rgba(251,191,36,0.15);
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 32px;
+  margin: 0 16px 12px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(251,146,36,0.04));
+  border: 1px solid rgba(251,191,36,0.2);
+  border-radius: 16px;
   color: #FBBF24;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   position: relative;
   z-index: 1;
+  text-align: center;
+}
+.limit-banner.visible { display: flex; }
+
+.limit-banner-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(251,191,36,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.limit-banner-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #FBBF24;
+  line-height: 1.5;
+}
+
+.limit-banner-sub {
+  font-size: 0.8rem;
+  color: #A1A1AA;
 }
 
 .limit-upgrade-btn {
-  margin-left: auto;
-  background: rgba(251,191,36,0.15);
-  color: #FBBF24;
-  border: 1px solid rgba(251,191,36,0.3);
-  border-radius: 8px;
-  padding: 5px 14px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  background: linear-gradient(135deg, #FBBF24, #F59E0B);
+  color: #0D0D0D;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 28px;
+  font-size: 0.9rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+  margin-top: 4px;
 }
 
-.limit-upgrade-btn:hover { background: rgba(251,191,36,0.25); }
+.limit-upgrade-btn:hover { 
+  transform: translateY(-1px); 
+  box-shadow: 0 4px 16px rgba(251,191,36,0.3); 
+}
 
 /* ── ANDERE TABS (Verlauf, Premium, etc.) ── */
 .tab-panel { display: none; }
@@ -2094,10 +2093,13 @@ body {
           <input type="file" id="vergleichInput2" accept=".pdf,image/*" style="display:none">
         </div>
         <div id="chatMessages" class="chat-messages" style="display:none;"></div>
-        <div id="limitBanner" class="limit-banner" style="display:none;">
-          <i data-lucide="zap" style="width:16px;height:16px;"></i>
-          <span id="limitText"></span>
-          <button onclick="upgrade()" class="limit-upgrade-btn">Upgrade</button>
+        <div id="limitBanner" class="limit-banner">
+          <div class="limit-banner-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div class="limit-banner-text" id="limitText">Tageslimit erreicht</div>
+          <div class="limit-banner-sub">Du hast heute alle 5 kostenlosen Erklärungen verbraucht.<br>Morgen stehen dir wieder 5 zur Verfügung.</div>
+          <button onclick="upgrade()" class="limit-upgrade-btn">Jetzt auf Premium upgraden</button>
         </div>
         <div class="chat-input-area">
           <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="dokumentHochladen()">
@@ -2684,7 +2686,7 @@ body {
       document.getElementById('chatMessages').innerHTML = '';
       document.getElementById('chatEmpty').style.display = 'flex';
       document.getElementById('chatInput').value = '';
-      document.getElementById('limitBanner').style.display = 'none';
+      document.getElementById('limitBanner').classList.remove('visible');
       // Aktiven Session-Eintrag deselektieren
       document.querySelectorAll('.session-item-row').forEach(el => el.classList.remove('active'));
       // Sicherstellen dass Home-Tab aktiv ist
@@ -2692,8 +2694,7 @@ body {
     }
 
     function zeigeLimitBanner() {
-      document.getElementById('limitBanner').style.display = 'flex';
-      document.getElementById('limitText').textContent = 'Tageslimit erreicht. Upgrade auf Premium für unbegrenzte Erklärungen.';
+      document.getElementById('limitBanner').classList.add('visible');
     }
 
     async function sendChatMessage(vorgefertigterText) {
@@ -3250,22 +3251,32 @@ body {
       });
       const data = await res.json();
 
+      // Anzeigename
       if (data.display_name) {
         document.getElementById('displayNameInput').value = data.display_name;
         document.getElementById('sidebarEmail').textContent = data.display_name;
       } else {
+        document.getElementById('displayNameInput').value = '';
         document.getElementById('sidebarEmail').textContent = email;
       }
 
+      // Avatar — explizit zurücksetzen wenn kein avatar_url
+      const avatarImg = document.getElementById('profileAvatarImg');
+      const avatarInitial = document.getElementById('profileAvatarInitial');
+      const sidebarAvatar = document.getElementById('sidebarAvatar');
+      const initial = (email || '?')[0].toUpperCase();
+
       if (data.avatar_url) {
-        document.getElementById('profileAvatarImg').src = data.avatar_url + '?t=' + Date.now();
-        document.getElementById('profileAvatarImg').style.display = 'block';
-        document.getElementById('profileAvatarInitial').style.display = 'none';
-        document.getElementById('sidebarAvatar').innerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        avatarImg.src = data.avatar_url + '?t=' + Date.now();
+        avatarImg.style.display = 'block';
+        avatarInitial.style.display = 'none';
+        sidebarAvatar.innerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
       } else {
-        const initial = email[0].toUpperCase();
-        document.getElementById('profileAvatarInitial').textContent = initial;
-        document.getElementById('sidebarAvatar').textContent = initial;
+        avatarImg.src = '';
+        avatarImg.style.display = 'none';
+        avatarInitial.style.display = 'flex';
+        avatarInitial.textContent = initial;
+        sidebarAvatar.textContent = initial;
       }
 
       const isPremium = data.plan === 'premium';
