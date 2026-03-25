@@ -19,6 +19,26 @@ test.describe('Login & Registrierung', () => {
     await expect(page.locator('#authBtn')).toBeVisible();
   });
 
+  test('Passwort vergessen Link ist sichtbar', async ({ page }) => {
+    await page.goto('/app');
+    await expect(page.locator('#forgotPasswordLink')).toBeVisible();
+    await expect(page.locator('#forgotPasswordLink')).toContainText('Passwort vergessen');
+  });
+
+  test('Passwort vergessen zeigt Fehlermeldung ohne E-Mail', async ({ page }) => {
+    await page.goto('/app');
+    await page.click('#forgotPasswordLink');
+    await expect(page.locator('#authMessage')).toContainText('E-Mail');
+  });
+
+  test('Passwort vergessen Link verschwindet bei Registrieren', async ({ page }) => {
+    await page.goto('/app');
+    await page.click('button:has-text("Registrieren")');
+    await expect(page.locator('#forgotPasswordLink')).not.toBeVisible();
+    await page.click('button:has-text("Anmelden")');
+    await expect(page.locator('#forgotPasswordLink')).toBeVisible();
+  });
+
   test('Falsche Anmeldedaten → App bleibt verborgen', async ({ page }) => {
     await page.goto('/app');
     await page.fill('#emailInput', 'nichtvorhanden@test.at');

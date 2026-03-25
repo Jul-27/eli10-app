@@ -164,6 +164,100 @@ body {
     .auth-message.error { color: var(--danger); }
     .auth-message.success { color: var(--success); }
 
+    .forgot-password-link {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #60A5FA;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .forgot-password-link:hover { color: #93C5FD; text-decoration: underline; }
+
+    /* ── ONBOARDING TOUR ── */
+    .tour-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 9998;
+      transition: opacity 0.3s;
+    }
+    .tour-highlight {
+      position: absolute;
+      z-index: 9999;
+      box-shadow: 0 0 0 4000px rgba(0,0,0,0.55);
+      border-radius: 12px;
+      border: 2px solid #3B82F6;
+      pointer-events: none;
+      transition: all 0.4s ease;
+    }
+    .tour-tooltip {
+      position: absolute;
+      z-index: 10000;
+      background: #1A1C1F;
+      border: 1px solid #3B82F6;
+      border-radius: 14px;
+      padding: 20px 24px;
+      max-width: 320px;
+      min-width: 260px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      transition: all 0.4s ease;
+    }
+    .tour-tooltip h4 {
+      color: #E8EAED;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .tour-tooltip p {
+      color: #9CA3AF;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .tour-tooltip-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .tour-step-indicator {
+      color: #6B7280;
+      font-size: 0.75rem;
+    }
+    .tour-btn-group { display: flex; gap: 8px; }
+    .tour-btn {
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .tour-btn-skip {
+      background: transparent;
+      color: #6B7280;
+      border: 1px solid #374151;
+    }
+    .tour-btn-skip:hover { background: #1F2937; color: #9CA3AF; }
+    .tour-btn-next {
+      background: #3B82F6;
+      color: white;
+    }
+    .tour-btn-next:hover { background: #2563EB; }
+    .tour-arrow {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #1A1C1F;
+      border: 1px solid #3B82F6;
+      transform: rotate(45deg);
+    }
+    .tour-arrow-top { top: -7px; left: 24px; border-right: none; border-bottom: none; }
+    .tour-arrow-bottom { bottom: -7px; left: 24px; border-left: none; border-top: none; }
+    .tour-arrow-left { left: -7px; top: 20px; border-top: none; border-right: none; }
+
     /* ── APP SHELL ── */
     #appScreen { display: none; flex-direction: column; min-height: 100vh; }
 
@@ -1988,6 +2082,7 @@ body {
 
       <div id="authMessage" class="auth-message"></div>
       <button class="btn-primary" id="authBtn" onclick="handleAuth()">Anmelden</button>
+      <div id="forgotPasswordLink" class="forgot-password-link" onclick="passwortVergessen()">Passwort vergessen?</div>
     </div>
   </div>
 
@@ -2311,6 +2406,7 @@ body {
       });
       document.getElementById('authBtn').textContent = mode === 'login' ? 'Anmelden' : 'Registrieren';
       document.getElementById('authMessage').textContent = '';
+      document.getElementById('forgotPasswordLink').style.display = mode === 'login' ? 'block' : 'none';
     }
 
     async function handleAuth() {
@@ -2341,6 +2437,162 @@ body {
           zeigeApp(email);
         }
       }
+    }
+
+    // ── Passwort vergessen ──
+    async function passwortVergessen() {
+      const email = document.getElementById('emailInput').value.trim();
+      const msg = document.getElementById('authMessage');
+      if (!email) {
+        msg.className = 'auth-message error';
+        msg.textContent = 'Bitte gib deine E-Mail-Adresse ein.';
+        return;
+      }
+      try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/app'
+        });
+        if (error) {
+          msg.className = 'auth-message error';
+          msg.textContent = 'Fehler: ' + error.message;
+        } else {
+          msg.className = 'auth-message success';
+          msg.textContent = 'Falls ein Konto mit dieser Adresse existiert, wurde ein Link zum Zurücksetzen gesendet.';
+        }
+      } catch(e) {
+        msg.className = 'auth-message error';
+        msg.textContent = 'Es ist ein Fehler aufgetreten.';
+      }
+    }
+
+    // ── Onboarding Tour ──
+    const tourSteps = [
+      {
+        target: '.chat-empty .quick-actions',
+        title: 'Schnellaktionen',
+        text: 'Hier findest du die wichtigsten Aktionen: PDF hochladen, Foto abfotografieren oder Dokumente vergleichen.',
+        position: 'bottom'
+      },
+      {
+        target: '.depth-slider-row',
+        title: 'Erklärungstiefe',
+        text: 'Wähle, wie detailliert die Erklärung sein soll — von einfach (für Laien) bis Experte (fachlich präzise).',
+        position: 'top'
+      },
+      {
+        target: '.chat-textarea',
+        title: 'Fragen stellen',
+        text: 'Du kannst auch direkt eine Frage eingeben oder Text einfügen — Dokuvo erklärt dir alles Schritt für Schritt.',
+        position: 'top'
+      },
+      {
+        target: '#nav-home',
+        title: 'Navigation',
+        text: 'Wechsle hier zwischen Erklären, Verlauf, Premium und Profil. Im Verlauf findest du alle bisherigen Erklärungen.',
+        position: 'right'
+      },
+      {
+        target: '.remaining-badge',
+        title: 'Tägliches Limit',
+        text: 'Als Free-Nutzer hast du 5 Erklärungen pro Tag. Premium-Nutzer haben unbegrenzten Zugang.',
+        position: 'bottom'
+      }
+    ];
+
+    let currentTourStep = 0;
+    let tourActive = false;
+
+    function startOnboardingTour() {
+      tourActive = true;
+      currentTourStep = 0;
+      // Sicherstellen dass Home-Tab aktiv ist
+      switchTab('home');
+      setTimeout(() => showTourStep(0), 400);
+    }
+
+    function showTourStep(stepIdx) {
+      // Alte Elemente entfernen
+      document.querySelectorAll('.tour-overlay, .tour-highlight, .tour-tooltip').forEach(el => el.remove());
+
+      if (stepIdx >= tourSteps.length) {
+        endTour();
+        return;
+      }
+
+      const step = tourSteps[stepIdx];
+      const targetEl = document.querySelector(step.target);
+      if (!targetEl) {
+        // Element nicht sichtbar, nächsten Step versuchen
+        showTourStep(stepIdx + 1);
+        return;
+      }
+
+      const rect = targetEl.getBoundingClientRect();
+
+      // Highlight-Box
+      const highlight = document.createElement('div');
+      highlight.className = 'tour-highlight';
+      highlight.style.top = (rect.top - 6) + 'px';
+      highlight.style.left = (rect.left - 6) + 'px';
+      highlight.style.width = (rect.width + 12) + 'px';
+      highlight.style.height = (rect.height + 12) + 'px';
+      document.body.appendChild(highlight);
+
+      // Tooltip
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tour-tooltip';
+
+      const arrow = document.createElement('div');
+      arrow.className = 'tour-arrow';
+
+      let tooltipTop, tooltipLeft;
+      if (step.position === 'bottom') {
+        tooltipTop = rect.bottom + 16;
+        tooltipLeft = Math.max(16, rect.left);
+        arrow.classList.add('tour-arrow-top');
+      } else if (step.position === 'top') {
+        tooltipTop = rect.top - 180;
+        tooltipLeft = Math.max(16, rect.left);
+        arrow.classList.add('tour-arrow-bottom');
+      } else if (step.position === 'right') {
+        tooltipTop = rect.top;
+        tooltipLeft = rect.right + 16;
+        arrow.classList.add('tour-arrow-left');
+      }
+
+      // Sicherstellen dass Tooltip im Viewport bleibt
+      if (tooltipLeft + 320 > window.innerWidth) tooltipLeft = window.innerWidth - 336;
+      if (tooltipLeft < 8) tooltipLeft = 8;
+      if (tooltipTop < 8) tooltipTop = rect.bottom + 16;
+
+      tooltip.style.top = tooltipTop + 'px';
+      tooltip.style.left = tooltipLeft + 'px';
+
+      tooltip.innerHTML = `
+        <div class="tour-arrow ${step.position === 'bottom' ? 'tour-arrow-top' : step.position === 'top' ? 'tour-arrow-bottom' : 'tour-arrow-left'}"></div>
+        <h4>${step.title}</h4>
+        <p>${step.text}</p>
+        <div class="tour-tooltip-footer">
+          <span class="tour-step-indicator">${stepIdx + 1} / ${tourSteps.length}</span>
+          <div class="tour-btn-group">
+            <button class="tour-btn tour-btn-skip" onclick="endTour()">Überspringen</button>
+            <button class="tour-btn tour-btn-next" onclick="nextTourStep()">${stepIdx === tourSteps.length - 1 ? 'Fertig!' : 'Weiter'}</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(tooltip);
+      currentTourStep = stepIdx;
+    }
+
+    function nextTourStep() {
+      showTourStep(currentTourStep + 1);
+    }
+
+    function endTour() {
+      tourActive = false;
+      document.querySelectorAll('.tour-overlay, .tour-highlight, .tour-tooltip').forEach(el => el.remove());
+      localStorage.setItem('dokuvo_onboarding_done', 'true');
     }
 
     function switchTab(tabName) {
@@ -2445,6 +2697,11 @@ body {
       lucide.createIcons();
       ladeChatSessions();
       ladeProfil(); // Profilbild + Anzeigename direkt beim Start laden
+
+      // Onboarding-Tour beim ersten Login starten
+      if (!localStorage.getItem('dokuvo_onboarding_done')) {
+        setTimeout(() => startOnboardingTour(), 800);
+      }
     }
 
     function aktualisiereZaehler(remaining, isPremium) {
