@@ -724,7 +724,13 @@ app.post('/upload-avatar', verifyUser, async (req, res) => {
       .upload(fileName, buffer, { contentType: `image/${file_ext}`, upsert: true });
     if (uploadError) return res.status(500).json({ error: uploadError.message });
     const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
-    await supabase.from('users').update({ avatar_url: urlData.publicUrl }).eq('email', email);
+    // Zuerst versuchen zu updaten, wenn 0 rows → insert
+    const { data: existing } = await supabase.from('users').select('id').eq('email', email).single();
+    if (existing) {
+      await supabase.from('users').update({ avatar_url: urlData.publicUrl }).eq('email', email);
+    } else {
+      await supabase.from('users').insert({ id: user_id, email, avatar_url: urlData.publicUrl, plan: 'free' });
+    }
     res.json({ avatar_url: urlData.publicUrl });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -737,7 +743,13 @@ app.post('/update-profile', verifyUser, async (req, res) => {
   try {
     const { data: userData } = await supabase.auth.admin.getUserById(user_id);
     const email = userData?.user?.email;
-    await supabase.from('users').update({ display_name }).eq('email', email);
+    // Zuerst versuchen zu updaten, wenn 0 rows → insert
+    const { data: existing } = await supabase.from('users').select('id').eq('email', email).single();
+    if (existing) {
+      await supabase.from('users').update({ display_name }).eq('email', email);
+    } else {
+      await supabase.from('users').insert({ id: user_id, email, display_name, plan: 'free' });
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
