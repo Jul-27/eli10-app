@@ -27,6 +27,20 @@ app.use('/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+// ── Auth-Middleware: prüft ob user_id gültig ist ────────────────────────────
+async function verifyUser(req, res, next) {
+  const user_id = req.body.user_id || req.params.user_id;
+  if (!user_id) return res.status(401).json({ error: 'Nicht autorisiert' });
+  try {
+    const { data, error } = await supabase.auth.admin.getUserById(user_id);
+    if (error || !data?.user) return res.status(401).json({ error: 'Ungültige Sitzung' });
+    req.authUser = data.user;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Authentifizierung fehlgeschlagen' });
+  }
+}
+
 app.get('/', (req, res) => {
   const landingPath = path.join(__dirname, 'public', 'landing.html');
   if (fs.existsSync(landingPath)) {
@@ -219,7 +233,7 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
 });
 
 // ── Status prüfen ─────────────────────────────────────────────────────────────
-app.post('/check-status', async (req, res) => {
+app.post('/check-status', verifyUser, async (req, res) => {
   const { user_id } = req.body;
   const today = new Date().toISOString().split('T')[0];
   const FREE_LIMIT = 5;
@@ -336,7 +350,7 @@ app.get('/success', async (req, res) => {
 });
 
 // ── Chat ─────────────────────────────────────────────────────────────────────
-app.post('/chat', async (req, res) => {
+app.post('/chat', verifyUser, async (req, res) => {
   const { user_id, session_id, message, depth = 2 } = req.body;
   const depthInstructions = {
     1: 'Erkläre so einfach wie möglich, als würdest du mit einem Kind sprechen. Kurze Sätze, keine Fachbegriffe, nur Alltagssprache und Beispiele aus dem Alltag.',
@@ -413,7 +427,7 @@ Bei Rückfragen antworte natürlich und direkt ohne starre Struktur.`
 });
 
 // ── Feedback ──────────────────────────────────────────────────────────────────
-app.post('/feedback', async (req, res) => {
+app.post('/feedback', verifyUser, async (req, res) => {
   const { user_id, session_id, message, rating } = req.body;
   try {
     await supabase.from('feedback').insert({ user_id, session_id, message, rating });
@@ -425,7 +439,7 @@ app.post('/feedback', async (req, res) => {
 });
 
 // ── Chat Session löschen ──────────────────────────────────────────────────────
-app.delete('/chat/:user_id/:session_id', async (req, res) => {
+app.delete('/chat/:user_id/:session_id', verifyUser, async (req, res) => {
   const { user_id, session_id } = req.params;
   try {
     await supabase
@@ -440,7 +454,7 @@ app.delete('/chat/:user_id/:session_id', async (req, res) => {
 });
 
 // ── Chat Sessions laden ───────────────────────────────────────────────────────
-app.get('/chat/:user_id', async (req, res) => {
+app.get('/chat/:user_id', verifyUser, async (req, res) => {
   const { user_id } = req.params;
   try {
     const { data } = await supabase
@@ -638,7 +652,7 @@ Ein klarer Satz was die wichtigste Erkenntnis aus dem Vergleich ist.`
 });
 
 // ── Chat umbenennen ───────────────────────────────────────────────────────────
-app.post('/chat/rename', async (req, res) => {
+app.post('/chat/rename', verifyUser, async (req, res) => {
   const { user_id, session_id, title } = req.body;
   try {
     await supabase.from('chat_titles').upsert(
@@ -652,7 +666,7 @@ app.post('/chat/rename', async (req, res) => {
 });
 
 // ── Einzelne Chat Session laden ───────────────────────────────────────────────
-app.get('/chat/:user_id/:session_id', async (req, res) => {
+app.get('/chat/:user_id/:session_id', verifyUser, async (req, res) => {
   const { user_id, session_id } = req.params;
   try {
     const { data } = await supabase
@@ -668,7 +682,7 @@ app.get('/chat/:user_id/:session_id', async (req, res) => {
 });
 
 // ── Profilbild hochladen ──────────────────────────────────────────────────────
-app.post('/upload-avatar', async (req, res) => {
+app.post('/upload-avatar', verifyUser, async (req, res) => {
   const { user_id, image_base64, file_ext } = req.body;
   try {
     const { data: userData } = await supabase.auth.admin.getUserById(user_id);
@@ -688,7 +702,7 @@ app.post('/upload-avatar', async (req, res) => {
 });
 
 // ── Anzeigename speichern ─────────────────────────────────────────────────────
-app.post('/update-profile', async (req, res) => {
+app.post('/update-profile', verifyUser, async (req, res) => {
   const { user_id, display_name } = req.body;
   try {
     const { data: userData } = await supabase.auth.admin.getUserById(user_id);
@@ -701,7 +715,7 @@ app.post('/update-profile', async (req, res) => {
 });
 
 // ── Passwort ändern ───────────────────────────────────────────────────────────
-app.post('/change-password', async (req, res) => {
+app.post('/change-password', verifyUser, async (req, res) => {
   const { user_id, new_password } = req.body;
   try {
     const { error } = await supabase.auth.admin.updateUserById(user_id, { password: new_password });
@@ -713,7 +727,7 @@ app.post('/change-password', async (req, res) => {
 });
 
 // ── Account löschen ───────────────────────────────────────────────────────────
-app.post('/delete-account', async (req, res) => {
+app.post('/delete-account', verifyUser, async (req, res) => {
   const { user_id } = req.body;
   try {
     const { data: userData } = await supabase.auth.admin.getUserById(user_id);
@@ -730,7 +744,7 @@ app.post('/delete-account', async (req, res) => {
 });
 
 // ── Profildaten laden ─────────────────────────────────────────────────────────
-app.post('/get-profile', async (req, res) => {
+app.post('/get-profile', verifyUser, async (req, res) => {
   const { user_id } = req.body;
   try {
     const { data: userData } = await supabase.auth.admin.getUserById(user_id);

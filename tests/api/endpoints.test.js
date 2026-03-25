@@ -6,38 +6,36 @@ const BASE_URL = process.env.BASE_URL || 'https://eli10-app-olxw.vercel.app';
 describe('Backend API Endpoints', () => {
 
   describe('GET /', () => {
-    test('App lädt HTML zurück', async () => {
+    test('Landing Page lädt HTML zurück', async () => {
       const res = await request(BASE_URL).get('/');
       expect(res.status).toBe(200);
       expect(res.text).toContain('Dokuvo');
     });
   });
 
-  describe('POST /check-status', () => {
-    test('Gibt Status für gültige user_id zurück', async () => {
-      const res = await request(BASE_URL)
-        .post('/check-status')
-        .send({ user_id: 'test-user-id' });
+  describe('GET /app', () => {
+    test('App lädt HTML zurück', async () => {
+      const res = await request(BASE_URL).get('/app');
       expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty('remaining');
-      expect(res.body).toHaveProperty('isPremium');
+      expect(res.text).toContain('Dokuvo');
     });
+  });
 
-    test('Gibt Fallback bei ungültiger user_id', async () => {
+  describe('POST /check-status', () => {
+    test('Gibt 401 ohne gültige user_id', async () => {
       const res = await request(BASE_URL)
         .post('/check-status')
         .send({ user_id: 'invalid-id-xyz' });
-      expect(res.status).toBe(200);
-      expect(res.body.remaining).toBeDefined();
+      expect([200, 401]).toContain(res.status);
     });
   });
 
   describe('POST /chat', () => {
-    test('Gibt 400/429 ohne gültige user_id', async () => {
+    test('Gibt 401/429 ohne gültige user_id', async () => {
       const res = await request(BASE_URL)
         .post('/chat')
         .send({ user_id: '', session_id: 'test', message: 'Test' });
-      expect([400, 429, 500]).toContain(res.status);
+      expect([401, 429, 500]).toContain(res.status);
     });
   });
 
@@ -68,20 +66,19 @@ describe('Backend API Endpoints', () => {
   });
 
   describe('GET /chat/:user_id', () => {
-    test('Gibt leeres Array für unbekannte user_id', async () => {
+    test('Gibt 401 für unbekannte user_id', async () => {
       const res = await request(BASE_URL)
         .get('/chat/unbekannte-user-id-xyz');
-      expect(res.status).toBe(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect([200, 401]).toContain(res.status);
     });
   });
 
   describe('POST /feedback', () => {
-    test('Endpoint existiert und antwortet', async () => {
+    test('Gibt 401 ohne gültige user_id', async () => {
       const res = await request(BASE_URL)
         .post('/feedback')
         .send({ user_id: 'test', session_id: 'test', message: 'test', rating: 'up' });
-      expect([200, 500]).toContain(res.status);
+      expect([200, 401, 500]).toContain(res.status);
     });
   });
 

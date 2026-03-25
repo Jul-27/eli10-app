@@ -5,11 +5,10 @@ const TEST_PASSWORD = process.env.TEST_PASSWORD;
 const HAS_CREDENTIALS = !!(TEST_EMAIL && TEST_PASSWORD);
 
 async function login(page) {
-  await page.goto('/');
+  await page.goto('/app');
   await page.fill('#emailInput', TEST_EMAIL);
   await page.fill('#passwordInput', TEST_PASSWORD);
   await page.click('#authBtn');
-  // Warte auf #chatEmpty statt #appScreen — robuster
   await expect(page.locator('#chatEmpty')).toBeVisible({ timeout: 30000 });
 }
 
@@ -52,7 +51,6 @@ test.describe('Chat & Fragen stellen', () => {
     await page.fill('#chatInput', 'Test');
     await page.click('#sendBtn');
     await page.waitForSelector('.chat-bubble.user');
-    // neuerChat() direkt aufrufen — funktioniert auf Desktop und Mobile
     await page.evaluate(() => neuerChat());
     await expect(page.locator('#chatEmpty')).toBeVisible();
   });
@@ -66,12 +64,9 @@ test.describe('Chat & Fragen stellen', () => {
   test('PDF-Export Button erscheint', async ({ page }) => {
     await page.fill('#chatInput', 'Was ist eine Kündigung?');
     await page.click('#sendBtn');
-    // Warte auf Antwort und Feedback-Row
     await expect(page.locator('.feedback-row').first()).toBeVisible({ timeout: 40000 });
-    // PDF-Button ist der letzte Button in der feedback-row (nach den Thumbs-Buttons)
     const feedbackRow = page.locator('.feedback-row').first();
     const buttons = feedbackRow.locator('button');
-    // Mindestens 3 Buttons: Ja, Nein, PDF
     await expect(buttons).toHaveCount(3, { timeout: 10000 });
   });
 

@@ -5,7 +5,7 @@ module.exports = defineConfig({
   testDir: './tests/e2e',
   timeout: 30000,
   retries: 1,
-  workers: 1, // Sequentiell damit Tests sich nicht gegenseitig stören
+  workers: 1,
   reporter: [['html', { open: 'never' }], ['list']],
 
   use: {

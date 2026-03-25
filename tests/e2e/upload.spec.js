@@ -6,7 +6,7 @@ const TEST_PASSWORD = process.env.TEST_PASSWORD;
 const HAS_CREDENTIALS = !!(TEST_EMAIL && TEST_PASSWORD);
 
 async function login(page) {
-  await page.goto('/');
+  await page.goto('/app');
   await page.fill('#emailInput', TEST_EMAIL);
   await page.fill('#passwordInput', TEST_PASSWORD);
   await page.click('#authBtn');

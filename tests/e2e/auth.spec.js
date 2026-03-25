@@ -5,8 +5,14 @@ const TEST_PASSWORD = process.env.TEST_PASSWORD;
 
 test.describe('Login & Registrierung', () => {
 
-  test('Login-Screen wird angezeigt', async ({ page }) => {
+  test('Landing Page wird angezeigt', async ({ page }) => {
     await page.goto('/');
+    await expect(page.locator('text=Dokuvo')).toBeVisible();
+    await expect(page.locator('text=Kostenlos starten').first()).toBeVisible();
+  });
+
+  test('Login-Screen wird auf /app angezeigt', async ({ page }) => {
+    await page.goto('/app');
     await expect(page.locator('#authScreen')).toBeVisible();
     await expect(page.locator('#emailInput')).toBeVisible();
     await expect(page.locator('#passwordInput')).toBeVisible();
@@ -14,7 +20,7 @@ test.describe('Login & Registrierung', () => {
   });
 
   test('Falsche Anmeldedaten → App bleibt verborgen', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/app');
     await page.fill('#emailInput', 'nichtvorhanden@test.at');
     await page.fill('#passwordInput', 'falschespasswort123');
     await page.click('#authBtn');
@@ -24,7 +30,7 @@ test.describe('Login & Registrierung', () => {
   });
 
   test('Tab-Wechsel zwischen Login und Registrieren', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/app');
     await page.click('button:has-text("Registrieren")');
     await expect(page.locator('#authBtn')).toContainText('Registrieren');
     await page.click('button:has-text("Anmelden")');
@@ -33,11 +39,10 @@ test.describe('Login & Registrierung', () => {
 
   test('Erfolgreicher Login zeigt App-Screen', async ({ page }) => {
     test.skip(!TEST_EMAIL || !TEST_PASSWORD, 'TEST_EMAIL und TEST_PASSWORD müssen gesetzt sein');
-    await page.goto('/');
+    await page.goto('/app');
     await page.fill('#emailInput', TEST_EMAIL);
     await page.fill('#passwordInput', TEST_PASSWORD);
     await page.click('#authBtn');
-    // Warte auf #chatEmpty oder #chatMessages — diese erscheinen nur nach erfolgreichem Login
     await expect(page.locator('#chatEmpty')).toBeVisible({ timeout: 30000 });
   });
 
