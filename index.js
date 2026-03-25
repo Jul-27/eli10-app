@@ -41,6 +41,32 @@ async function verifyUser(req, res, next) {
   }
 }
 
+// ── Usage-Limit: prüft und zählt Verbrauch für Free-User ────────────────────
+const FREE_LIMIT = 5;
+
+async function checkAndCountUsage(user_id) {
+  const today = new Date().toISOString().split('T')[0];
+  // Premium-Check
+  const { data: sessionData } = await supabase.auth.admin.getUserById(user_id);
+  const userEmail = sessionData?.user?.email;
+  const { data: userData } = await supabase.from('users').select('plan').eq('email', userEmail).single();
+  const isPremium = userData?.plan === 'premium';
+
+  if (isPremium) return { allowed: true, remaining: 999, isPremium: true };
+
+  // Free-User: Verbrauch prüfen
+  const { data: usageData } = await supabase.from('usage').select('count').eq('user_id', user_id).eq('date', today).single();
+  const count = usageData?.count || 0;
+
+  if (count >= FREE_LIMIT) {
+    return { allowed: false, remaining: 0, isPremium: false };
+  }
+
+  // Verbrauch hochzählen
+  await supabase.from('usage').upsert({ user_id, date: today, count: count + 1 }, { onConflict: 'user_id,date' });
+  return { allowed: true, remaining: FREE_LIMIT - count - 1, isPremium: false };
+}
+
 app.get('/', (req, res) => {
   const landingPath = path.join(__dirname, 'public', 'landing.html');
   if (fs.existsSync(landingPath)) {
@@ -179,6 +205,11 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Kein Dokument hochgeladen' });
   }
+  const user_id = req.body.user_id;
+  if (user_id) {
+    const usage = await checkAndCountUsage(user_id);
+    if (!usage.allowed) return res.status(429).json({ error: 'LIMIT_REACHED', remaining: 0 });
+  }
   const depth = parseInt(req.body.depth) || 2;
   const depthInstructions = {
     1: 'Erkläre so einfach wie möglich, als würdest du mit einem Kind sprechen. Kurze Sätze, keine Fachbegriffe.',
@@ -275,6 +306,11 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Kein Bild hochgeladen' });
   }
+  const user_id = req.body.user_id;
+  if (user_id) {
+    const usage = await checkAndCountUsage(user_id);
+    if (!usage.allowed) return res.status(429).json({ error: 'LIMIT_REACHED', remaining: 0 });
+  }
   const depth = parseInt(req.body.depth) || 2;
   const depthInstructions = {
     1: 'Erkläre so einfach wie möglich, als würdest du mit einem Kind sprechen. Kurze Sätze, keine Fachbegriffe.',
@@ -357,22 +393,11 @@ app.post('/chat', verifyUser, async (req, res) => {
     2: 'Erkläre verständlich für jemanden ohne Fachkenntnisse. Fachbegriffe kurz in Klammern erklären.',
     3: 'Erkläre präzise und fachlich korrekt. Fachbegriffe dürfen verwendet werden, aber trotzdem klar strukturiert.'
   };
-  const FREE_LIMIT = 5;
-  const today = new Date().toISOString().split('T')[0];
 
   try {
-    const { data: sessionData } = await supabase.auth.admin.getUserById(user_id);
-    const userEmail = sessionData?.user?.email;
-    const { data: userData } = await supabase.from('users').select('plan').eq('email', userEmail).single();
-    const isPremium = userData?.plan === 'premium';
-
-    if (!isPremium) {
-      const { data: usageData } = await supabase.from('usage').select('count').eq('user_id', user_id).eq('date', today).single();
-      const count = usageData?.count || 0;
-      if (count >= FREE_LIMIT) {
-        return res.status(429).json({ error: 'LIMIT_REACHED' });
-      }
-      await supabase.from('usage').upsert({ user_id, date: today, count: count + 1 }, { onConflict: 'user_id,date' });
+    const usage = await checkAndCountUsage(user_id);
+    if (!usage.allowed) {
+      return res.status(429).json({ error: 'LIMIT_REACHED' });
     }
 
     const { data: history } = await supabase
@@ -572,6 +597,11 @@ app.post('/kalender-alarm', async (req, res) => {
 
 // ── Dokumente vergleichen ─────────────────────────────────────────────────────
 app.post('/compare-documents', upload.fields([{ name: 'doc1' }, { name: 'doc2' }]), async (req, res) => {
+  const user_id = req.body.user_id;
+  if (user_id) {
+    const usage = await checkAndCountUsage(user_id);
+    if (!usage.allowed) return res.status(429).json({ error: 'LIMIT_REACHED', remaining: 0 });
+  }
   const depth = parseInt(req.body.depth) || 2;
   const depthInstructions = {
     1: 'Erkläre so einfach wie möglich, kurze Sätze, keine Fachbegriffe.',

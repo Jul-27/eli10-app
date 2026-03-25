@@ -56,6 +56,10 @@ test.describe('PDF & Foto Upload', () => {
     await expect(page.locator('button:has-text("Foto machen")').first()).toBeVisible();
   });
 
+  test('Drag & Drop Overlay existiert', async ({ page }) => {
+    await expect(page.locator('#dropOverlay')).toBeAttached();
+  });
+
   test('Dokumente vergleichen Button öffnet Modal', async ({ page }) => {
     await page.click('button:has-text("Dokumente vergleichen")');
     await expect(page.locator('.vergleich-modal')).toBeVisible();

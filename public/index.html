@@ -1201,6 +1201,26 @@ body {
   z-index: 0;
 }
 
+/* ── Drag & Drop Overlay ── */
+#dropOverlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(59,130,246,0.08);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 2px dashed #3B82F6;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+#dropOverlay.active { display: flex; }
+.drop-overlay-content { text-align: center; color: #60A5FA; }
+.drop-overlay-content p { font-size: 1.2rem; font-weight: 600; margin-top: 12px; color: #60A5FA; }
+.drop-overlay-content span { font-size: 0.85rem; color: #7A7F88; }
+
 .chat-empty {
   flex: 1;
   display: flex;
@@ -2342,6 +2362,51 @@ body {
       lucide.createIcons();
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) zeigeApp(session.user.email);
+
+      // ── Drag & Drop für Dateien ──
+      const chatMain = document.querySelector('.chat-main');
+      if (chatMain) {
+        // Overlay für Drop-Hinweis erstellen
+        const dropOverlay = document.createElement('div');
+        dropOverlay.id = 'dropOverlay';
+        dropOverlay.innerHTML = '<div class="drop-overlay-content"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><p>Datei hier ablegen</p><span>PDF oder Bild</span></div>';
+        chatMain.style.position = 'relative';
+        chatMain.appendChild(dropOverlay);
+
+        let dragCounter = 0;
+
+        chatMain.addEventListener('dragenter', (e) => {
+          e.preventDefault();
+          dragCounter++;
+          dropOverlay.classList.add('active');
+        });
+
+        chatMain.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          dragCounter--;
+          if (dragCounter === 0) dropOverlay.classList.remove('active');
+        });
+
+        chatMain.addEventListener('dragover', (e) => {
+          e.preventDefault();
+        });
+
+        chatMain.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dragCounter = 0;
+          dropOverlay.classList.remove('active');
+          const files = e.dataTransfer.files;
+          if (files.length === 0) return;
+          const file = files[0];
+          if (file.type === 'application/pdf') {
+            dokumentHochladen(file);
+          } else if (file.type.startsWith('image/')) {
+            fotoAnalysieren(file);
+          } else {
+            alert('Bitte eine PDF- oder Bilddatei ablegen.');
+          }
+        });
+      }
     });
 
     async function zeigeApp(email) {
@@ -2390,6 +2455,22 @@ body {
         mBadge.textContent = isPremium ? '∞' : remaining;
         mBadge.className = isPremium ? 'remaining-badge premium' : 'remaining-badge';
       }
+    }
+
+    // Zähler nach jeder Aktion (Upload, Foto, Chat) aktualisieren
+    async function aktualisiereZaehlerNachAktion() {
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session?.user) return;
+        const res = await fetch('/check-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: session.user.id })
+        });
+        const data = await res.json();
+        aktualisiereZaehler(data.remaining, data.isPremium);
+        document.getElementById('sidebarCount').textContent = data.isPremium ? '∞' : data.remaining;
+      } catch(e) {}
     }
 
     async function logout() {
@@ -2730,6 +2811,7 @@ body {
 
         // Sidebar nur aktualisieren wenn neue Session
         if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
+        aktualisiereZaehlerNachAktion();
 
       } catch (err) {
         div.innerHTML = marked.parse('Es ist ein Fehler aufgetreten. Bitte versuche es nochmal.');
@@ -2819,12 +2901,18 @@ body {
       return bubble;
     }
 
-    async function dokumentHochladen() {
-      const file = document.getElementById('pdfInput').files[0];
+    async function dokumentHochladen(draggedFile) {
+      const file = draggedFile || document.getElementById('pdfInput').files[0];
       if (!file) return;
+
+      const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
+      const user = chatSession?.user;
+      if (!user) return;
+
       const formData = new FormData();
       formData.append('document', file);
       formData.append('depth', getDepthLevel());
+      formData.append('user_id', user.id);
       addBubble('user', `📄 ${file.name}`);
       document.getElementById('chatEmpty').style.display = 'none';
       document.getElementById('chatMessages').style.display = 'flex';
@@ -2833,19 +2921,22 @@ body {
       try {
         const res = await fetch('/upload-document', { method: 'POST', body: formData });
         const data = await res.json();
+        if (!res.ok) {
+          document.getElementById(loadingId)?.remove();
+          if (data.error === 'LIMIT_REACHED') { zeigeLimitBanner(); return; }
+          addBubble('assistant', data.error || 'Fehler beim Analysieren des Dokuments.');
+          return;
+        }
         document.getElementById(loadingId)?.remove();
         const isNewSession = !currentSessionId;
         if (!currentSessionId) currentSessionId = generateSessionId();
-        const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
-        const user = chatSession?.user;
-        if (user) {
-          await supabaseClient.from('chats').insert([
-            { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${file.name}` },
-            { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
-          ]);
-        }
+        await supabaseClient.from('chats').insert([
+          { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${file.name}` },
+          { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
+        ]);
         await zeigeAntwortMitTypewriter(data.explanation, data.followUps, data.fristen || []);
         if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
+        aktualisiereZaehlerNachAktion();
       } catch (err) {
         document.getElementById(loadingId)?.remove();
         addBubble('assistant', 'Fehler beim Analysieren des Dokuments.');
@@ -2853,12 +2944,18 @@ body {
       document.getElementById('pdfInput').value = '';
     }
 
-    async function fotoAnalysieren() {
-      const file = document.getElementById('fotoInput').files[0];
+    async function fotoAnalysieren(draggedFile) {
+      const file = draggedFile || document.getElementById('fotoInput').files[0];
       if (!file) return;
+
+      const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
+      const user = chatSession?.user;
+      if (!user) return;
+
       const formData = new FormData();
       formData.append('image', file);
       formData.append('depth', getDepthLevel());
+      formData.append('user_id', user.id);
       addBubble('user', '📸 Foto wird analysiert...');
       document.getElementById('chatEmpty').style.display = 'none';
       document.getElementById('chatMessages').style.display = 'flex';
@@ -2867,19 +2964,22 @@ body {
       try {
         const res = await fetch('/analyze-image', { method: 'POST', body: formData });
         const data = await res.json();
+        if (!res.ok) {
+          document.getElementById(loadingId)?.remove();
+          if (data.error === 'LIMIT_REACHED') { zeigeLimitBanner(); return; }
+          addBubble('assistant', data.error || 'Fehler beim Analysieren des Fotos.');
+          return;
+        }
         document.getElementById(loadingId)?.remove();
         const isNewSession = !currentSessionId;
         if (!currentSessionId) currentSessionId = generateSessionId();
-        const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
-        const user = chatSession?.user;
-        if (user) {
-          await supabaseClient.from('chats').insert([
-            { user_id: user.id, session_id: currentSessionId, role: 'user', message: '📸 Foto analysiert' },
-            { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
-          ]);
-        }
+        await supabaseClient.from('chats').insert([
+          { user_id: user.id, session_id: currentSessionId, role: 'user', message: '📸 Foto analysiert' },
+          { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
+        ]);
         await zeigeAntwortMitTypewriter(data.explanation, data.followUps, data.fristen || []);
         if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
+        aktualisiereZaehlerNachAktion();
       } catch (err) {
         document.getElementById(loadingId)?.remove();
         addBubble('assistant', 'Fehler beim Analysieren des Fotos.');
@@ -2972,6 +3072,11 @@ body {
 
     async function vergleicheDokumente() {
       if (!vergleichDatei1 || !vergleichDatei2) return;
+
+      const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
+      const user = chatSession?.user;
+      if (!user) return;
+
       schliesseVergleich();
 
       document.getElementById('chatEmpty').style.display = 'none';
@@ -2986,23 +3091,27 @@ body {
       formData.append('doc1', vergleichDatei1);
       formData.append('doc2', vergleichDatei2);
       formData.append('depth', getDepthLevel());
+      formData.append('user_id', user.id);
 
       try {
         const res = await fetch('/compare-documents', { method: 'POST', body: formData });
         const data = await res.json();
+        if (!res.ok) {
+          document.getElementById(loadingId)?.remove();
+          if (data.error === 'LIMIT_REACHED') { zeigeLimitBanner(); return; }
+          addBubble('assistant', data.error || 'Fehler beim Vergleichen der Dokumente.');
+          return;
+        }
         document.getElementById(loadingId)?.remove();
 
         if (!currentSessionId) currentSessionId = generateSessionId();
-        const { data: { session: chatSession } } = await supabaseClient.auth.getSession();
-        const user = chatSession?.user;
-        if (user) {
-          await supabaseClient.from('chats').insert([
-            { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${vergleichDatei1.name} vs. 📄 ${vergleichDatei2.name}` },
-            { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.comparison }
-          ]);
-        }
+        await supabaseClient.from('chats').insert([
+          { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${vergleichDatei1.name} vs. 📄 ${vergleichDatei2.name}` },
+          { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.comparison }
+        ]);
         await zeigeAntwortMitTypewriter(data.comparison, data.followUps, data.fristen || []);
         ladeChatSessions();
+        aktualisiereZaehlerNachAktion();
       } catch (err) {
         document.getElementById(loadingId)?.remove();
         addBubble('assistant', 'Fehler beim Vergleichen der Dokumente.');
