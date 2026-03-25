@@ -7,7 +7,7 @@ test.describe('Login & Registrierung', () => {
 
   test('Landing Page wird angezeigt', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('text=Dokuvo')).toBeVisible();
+    await expect(page.locator('.nav-logo')).toBeVisible();
     await expect(page.locator('text=Kostenlos starten').first()).toBeVisible();
   });
 
