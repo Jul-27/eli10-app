@@ -1663,6 +1663,83 @@ body {
 .feedback-btn.active-up { border-color: #34D399; color: #34D399; background: rgba(52,211,153,0.08); }
 .feedback-btn.active-down { border-color: #F87171; color: #F87171; background: rgba(248,113,113,0.08); }
 
+/* ── Share Modal ── */
+.share-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.share-modal {
+  background: #1A1C1F;
+  border: 1px solid #2A2D32;
+  border-radius: 16px;
+  padding: 28px 32px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}
+.share-modal h3 {
+  color: #E8EAED;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.share-modal p {
+  color: #7A7F88;
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+}
+.share-link-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.share-link-input {
+  flex: 1;
+  background: #111214;
+  border: 1px solid #2A2D32;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #E8EAED;
+  font-size: 0.85rem;
+  outline: none;
+}
+.share-link-input:focus { border-color: #3B82F6; }
+.share-copy-btn {
+  background: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.share-copy-btn:hover { background: #2563EB; }
+.share-copy-btn.copied { background: #34D399; }
+.share-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+.share-close-btn {
+  background: transparent;
+  color: #7A7F88;
+  border: 1px solid #2A2D32;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.share-close-btn:hover { background: #1F2937; color: #9CA3AF; }
+
 /* Folgefragen-Chips */
 .followup-container {
   display: flex;
@@ -2921,6 +2998,87 @@ body {
       lucide.createIcons();
     }
 
+    // ── Erklärung teilen ──
+    async function teileErklaerung(btn) {
+      const bubble = btn.closest('.chat-bubble');
+      const resultText = bubble.querySelector('.result-text');
+      if (!resultText || !currentSessionId) return;
+
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      if (!user) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader" style="width:13px;height:13px;"></i> ...';
+      lucide.createIcons();
+
+      try {
+        const content = resultText.innerHTML;
+        // Titel: erste Zeile des Textes oder Session-Titel
+        const titleEl = document.querySelector(`.session-item-row[data-session="${currentSessionId}"] .session-item-label`);
+        const title = titleEl ? titleEl.textContent : 'Dokuvo-Erklärung';
+
+        const res = await fetch('/share', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            session_id: currentSessionId,
+            title,
+            content
+          })
+        });
+
+        const data = await res.json();
+        if (data.shareUrl) {
+          zeigeShareModal(data.shareUrl);
+        }
+      } catch (err) {
+        console.error('Teilen fehlgeschlagen:', err);
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="share-2" style="width:13px;height:13px;"></i> Teilen';
+      lucide.createIcons();
+    }
+
+    function zeigeShareModal(url) {
+      // Altes Modal entfernen falls vorhanden
+      document.querySelectorAll('.share-modal-overlay').forEach(el => el.remove());
+
+      const overlay = document.createElement('div');
+      overlay.className = 'share-modal-overlay';
+      overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+      overlay.innerHTML = `
+        <div class="share-modal">
+          <h3>Erklärung teilen</h3>
+          <p>Jeder mit diesem Link kann die Erklärung lesen — ohne Anmeldung.</p>
+          <div class="share-link-row">
+            <input type="text" class="share-link-input" id="shareLinkInput" value="${url}" readonly onclick="this.select()">
+            <button class="share-copy-btn" onclick="copyShareLink(this)">Kopieren</button>
+          </div>
+          <div class="share-modal-footer">
+            <button class="share-close-btn" onclick="this.closest('.share-modal-overlay').remove()">Schließen</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+    }
+
+    function copyShareLink(btn) {
+      const input = document.getElementById('shareLinkInput');
+      navigator.clipboard.writeText(input.value).then(() => {
+        btn.textContent = 'Kopiert!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Kopieren';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
     async function exportierePDF(btn) {
       const bubble = btn.closest('.chat-bubble');
       const resultText = bubble.querySelector('.result-text');
@@ -3125,6 +3283,9 @@ body {
             <i data-lucide="thumbs-down" style="width:13px;height:13px;"></i> Nein
           </button>
           <span style="flex:1;"></span>
+          <button class="feedback-btn" onclick="teileErklaerung(this)">
+            <i data-lucide="share-2" style="width:13px;height:13px;"></i> Teilen
+          </button>
           <button class="feedback-btn" onclick="exportierePDF(this)">
             <i data-lucide="download" style="width:13px;height:13px;"></i> PDF
           </button>
@@ -3214,6 +3375,9 @@ body {
           <i data-lucide="thumbs-down" style="width:13px;height:13px;"></i> Nein
         </button>
         <span style="flex:1;"></span>
+        <button class="feedback-btn" onclick="teileErklaerung(this)">
+          <i data-lucide="share-2" style="width:13px;height:13px;"></i> Teilen
+        </button>
         <button class="feedback-btn" onclick="exportierePDF(this)">
           <i data-lucide="download" style="width:13px;height:13px;"></i> PDF
         </button>
