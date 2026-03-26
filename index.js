@@ -193,6 +193,108 @@ async function generiereFollowUps(erklaerung) {
     return match ? JSON.parse(match[0]) : [];
   } catch(e) { return []; }
 }
+
+// ── Risiko-Analyse (Ampel) ──────────────────────────────────────────────────
+async function analysiereRisiken(text) {
+  try {
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.2,
+      max_tokens: 800,
+      messages: [
+        { role: 'system', content: `Du bist ein Dokumenten-Analyst. Analysiere den folgenden Text und identifiziere wichtige Klauseln oder Bedingungen. Bewerte jede mit einem Risiko-Level:
+- "rot" = potenziell nachteilig, unfair, oder gefährlich für den Leser (z.B. einseitige Kündigungsrechte, Haftungsausschlüsse, versteckte Kosten, automatische Verlängerungen)
+- "gelb" = beachtenswert, könnte problematisch sein (z.B. Fristen, Bedingungen, Einschränkungen)
+- "grün" = unbedenklich, fair, oder vorteilhaft (z.B. Standardklauseln, Verbraucherschutz)
+
+Antworte NUR mit einem JSON-Array. Jedes Element hat: {"klausel": "Kurzbeschreibung der Klausel (max 80 Zeichen)", "risiko": "rot"|"gelb"|"grün", "grund": "Warum diese Bewertung (max 100 Zeichen)"}. Maximal 8 Klauseln. Keine anderen Texte.` },
+        { role: 'user', content: `Analysiere diesen Text auf Risiken:\n${text.substring(0, 8000)}` }
+      ]
+    });
+    const raw = completion.choices[0].message.content.trim();
+    const match = raw.match(/\[[\s\S]*\]/);
+    return match ? JSON.parse(match[0]) : [];
+  } catch(e) { return []; }
+}
+
+// ── 1-Seite Zusammenfassung ─────────────────────────────────────────────────
+async function generiereZusammenfassung(text) {
+  try {
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.2,
+      max_tokens: 600,
+      messages: [
+        { role: 'system', content: `Erstelle eine strukturierte Zusammenfassung des Dokuments. Antworte NUR mit einem JSON-Objekt mit diesen Feldern:
+- "typ": Art des Dokuments (z.B. "Mietvertrag", "Versicherungspolice", "Arztbefund")
+- "parteien": Array der beteiligten Parteien (z.B. ["Vermieter: Max Müller", "Mieter: Anna Schmidt"])
+- "kernpunkte": Array der 3-5 wichtigsten Punkte (kurze Strings, max 80 Zeichen je)
+- "kosten": String mit Kosten/Preisen oder "Keine Angabe"
+- "laufzeit": String mit Laufzeit/Gültigkeit oder "Keine Angabe"
+- "kuendigungsfrist": String mit Kündigungsfrist oder "Keine Angabe"
+Keine anderen Texte, nur das JSON-Objekt.` },
+        { role: 'user', content: `Fasse dieses Dokument zusammen:\n${text.substring(0, 8000)}` }
+      ]
+    });
+    const raw = completion.choices[0].message.content.trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    return match ? JSON.parse(match[0]) : null;
+  } catch(e) { return null; }
+}
+
+// ── Handlungsempfehlungen ───────────────────────────────────────────────────
+async function generiereHandlungsempfehlungen(text) {
+  try {
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.3,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: `Du bist ein praktischer Berater. Basierend auf dem Dokument, generiere konkrete Handlungsempfehlungen — was sollte der Leser jetzt tun? Antworte NUR mit einem JSON-Array von Objekten: {"aktion": "Was zu tun ist (max 80 Zeichen)", "prioritaet": "hoch"|"mittel"|"niedrig", "frist": "Bis wann (oder null)"}. Maximal 5 Empfehlungen, sortiert nach Priorität. Keine anderen Texte.` },
+        { role: 'user', content: `Welche konkreten Handlungen ergeben sich aus diesem Dokument?\n${text.substring(0, 8000)}` }
+      ]
+    });
+    const raw = completion.choices[0].message.content.trim();
+    const match = raw.match(/\[[\s\S]*\]/);
+    return match ? JSON.parse(match[0]) : [];
+  } catch(e) { return []; }
+}
+
+// ── Glossar-Extraktion ──────────────────────────────────────────────────────
+async function extrahiereGlossar(text) {
+  try {
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.2,
+      max_tokens: 500,
+      messages: [
+        { role: 'system', content: `Identifiziere alle Fachbegriffe und juristischen/medizinischen/technischen Begriffe im Text. Antworte NUR mit einem JSON-Array von Objekten: {"begriff": "Der Fachbegriff", "erklaerung": "Einfache Erklärung in 1-2 Sätzen"}. Maximal 10 Begriffe, nur wirklich erklärungsbedürftige Fachbegriffe. Keine anderen Texte.` },
+        { role: 'user', content: `Extrahiere Fachbegriffe aus:\n${text.substring(0, 8000)}` }
+      ]
+    });
+    const raw = completion.choices[0].message.content.trim();
+    const match = raw.match(/\[[\s\S]*\]/);
+    return match ? JSON.parse(match[0]) : [];
+  } catch(e) { return []; }
+}
+
+// ── Checklisten-Generator ───────────────────────────────────────────────────
+async function generiereCheckliste(text) {
+  try {
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.3,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: `Erstelle aus dem Dokument eine praktische Checkliste mit allen Aufgaben, Pflichten und Deadlines die der Leser beachten muss. Antworte NUR mit einem JSON-Array von Strings — jeder String ist ein Checklisten-Punkt (max 80 Zeichen). Maximal 8 Punkte. Keine anderen Texte.` },
+        { role: 'user', content: `Erstelle eine Checkliste aus:\n${text.substring(0, 8000)}` }
+      ]
+    });
+    const raw = completion.choices[0].message.content.trim();
+    const match = raw.match(/\[[\s\S]*\]/);
+    return match ? JSON.parse(match[0]) : [];
+  } catch(e) { return []; }
+}
 async function extractPdfText(buffer) {
   // pdf-parse Vercel-Workaround: direkt die lib laden, nicht den Wrapper
   const pdfParse = require('pdf-parse/lib/pdf-parse.js');
@@ -251,11 +353,16 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
     });
 
     const explanation = completion.choices[0].message.content;
-    const [followUps, fristen] = await Promise.all([
+    const [followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste] = await Promise.all([
       generiereFollowUps(explanation),
-      extrahiereFristen(truncatedText)
+      extrahiereFristen(truncatedText),
+      analysiereRisiken(truncatedText),
+      generiereZusammenfassung(truncatedText),
+      generiereHandlungsempfehlungen(truncatedText),
+      extrahiereGlossar(truncatedText),
+      generiereCheckliste(truncatedText)
     ]);
-    res.json({ explanation, followUps, fristen });
+    res.json({ explanation, followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste });
 
   } catch (error) {
     console.error('Upload Fehler:', error.message);
@@ -347,11 +454,16 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
     });
 
     const explanation = completion.choices[0].message.content;
-    const [followUps, fristen] = await Promise.all([
+    const [followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste] = await Promise.all([
       generiereFollowUps(explanation),
-      extrahiereFristen(explanation)
+      extrahiereFristen(explanation),
+      analysiereRisiken(explanation),
+      generiereZusammenfassung(explanation),
+      generiereHandlungsempfehlungen(explanation),
+      extrahiereGlossar(explanation),
+      generiereCheckliste(explanation)
     ]);
-    res.json({ explanation, followUps, fristen });
+    res.json({ explanation, followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste });
 
   } catch (error) {
     console.error('Vision Fehler:', error.message);

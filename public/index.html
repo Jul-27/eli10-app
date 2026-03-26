@@ -1651,6 +1651,162 @@ body {
 }
 .frist-export-btn:hover { border-color: #3B82F6; color: #3B82F6; }
 
+/* ── Analyse-Blöcke (Risiko, Zusammenfassung, Handlungen, Glossar, Checkliste) ── */
+.analyse-block {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: #0D1117;
+  border: 1px solid #2C2C2E;
+  border-radius: 10px;
+}
+.analyse-block-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #AEAEB2;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* Risiko-Ampel */
+.analyse-block.risiko { border-left: 3px solid #F59E0B; }
+.risiko-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #1C1C1E;
+}
+.risiko-item:last-child { border-bottom: none; }
+.risiko-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.risiko-dot.rot { background: #EF4444; box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+.risiko-dot.gelb { background: #F59E0B; box-shadow: 0 0 6px rgba(245,158,11,0.3); }
+.risiko-dot.gruen { background: #34D399; box-shadow: 0 0 6px rgba(52,211,153,0.3); }
+.risiko-text { flex: 1; min-width: 0; }
+.risiko-klausel { font-size: 13px; font-weight: 500; color: #E8EAED; margin-bottom: 2px; }
+.risiko-grund { font-size: 11px; color: #6B7280; }
+/* Zusammenfassung */
+.analyse-block.zusammenfassung { border-left: 3px solid #8B5CF6; }
+.zusammenfassung-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+.zusammenfassung-feld {
+  padding: 6px 0;
+}
+.zusammenfassung-feld.full { grid-column: 1 / -1; }
+.zusammenfassung-label { font-size: 10px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+.zusammenfassung-wert { font-size: 13px; color: #E8EAED; }
+.zusammenfassung-wert ul { list-style: none; padding: 0; margin: 0; }
+.zusammenfassung-wert li { padding: 2px 0; }
+.zusammenfassung-wert li::before { content: "•"; color: #8B5CF6; margin-right: 6px; }
+/* Handlungsempfehlungen */
+.analyse-block.handlungen { border-left: 3px solid #10B981; }
+.handlung-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #1C1C1E;
+}
+.handlung-item:last-child { border-bottom: none; }
+.handlung-prio {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.handlung-prio.hoch { background: rgba(239,68,68,0.15); color: #F87171; }
+.handlung-prio.mittel { background: rgba(245,158,11,0.15); color: #FBBF24; }
+.handlung-prio.niedrig { background: rgba(52,211,153,0.15); color: #34D399; }
+.handlung-text { flex: 1; }
+.handlung-aktion { font-size: 13px; color: #E8EAED; }
+.handlung-frist { font-size: 11px; color: #6B7280; margin-top: 2px; }
+/* Glossar */
+.analyse-block.glossar { border-left: 3px solid #06B6D4; }
+.glossar-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #1C1C1E;
+  cursor: pointer;
+}
+.glossar-item:last-child { border-bottom: none; }
+.glossar-begriff {
+  font-size: 13px;
+  font-weight: 600;
+  color: #06B6D4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.glossar-begriff::after {
+  content: "▸";
+  font-size: 10px;
+  color: #4A4F58;
+  transition: transform 0.2s;
+}
+.glossar-item.open .glossar-begriff::after { transform: rotate(90deg); }
+.glossar-erklaerung {
+  font-size: 12px;
+  color: #9CA3AF;
+  line-height: 1.6;
+  margin-top: 4px;
+  padding-left: 2px;
+  display: none;
+}
+.glossar-item.open .glossar-erklaerung { display: block; }
+/* Checkliste */
+.analyse-block.checkliste { border-left: 3px solid #F97316; }
+.checkliste-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+}
+.checkliste-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid #4A4F58;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  background: transparent;
+}
+.checkliste-checkbox.checked {
+  background: #10B981;
+  border-color: #10B981;
+}
+.checkliste-checkbox.checked::after {
+  content: "✓";
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+}
+.checkliste-text {
+  font-size: 13px;
+  color: #E8EAED;
+  line-height: 1.5;
+  transition: all 0.2s;
+}
+.checkliste-text.checked { text-decoration: line-through; color: #4A4F58; }
+
 /* Feedback-Buttons */
 .feedback-row {
   display: flex;
@@ -3298,6 +3454,113 @@ body {
       lucide.createIcons();
     }
 
+    // ── Risiko-Ampel ──
+    function zeigeRisikoBlock(risiken, container) {
+      if (!risiken || risiken.length === 0) return;
+      const block = document.createElement('div');
+      block.className = 'analyse-block risiko';
+      block.innerHTML = `<div class="analyse-block-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Risiko-Ampel</div>` +
+        risiken.map(r => `
+          <div class="risiko-item">
+            <div class="risiko-dot ${r.risiko}"></div>
+            <div class="risiko-text">
+              <div class="risiko-klausel">${escapeHtml(r.klausel)}</div>
+              <div class="risiko-grund">${escapeHtml(r.grund)}</div>
+            </div>
+          </div>
+        `).join('');
+      container.appendChild(block);
+    }
+
+    // ── 1-Seite Zusammenfassung ──
+    function zeigeZusammenfassungBlock(zusammenfassung, container) {
+      if (!zusammenfassung) return;
+      const z = zusammenfassung;
+      const block = document.createElement('div');
+      block.className = 'analyse-block zusammenfassung';
+
+      let kernpunkteHtml = '';
+      if (z.kernpunkte && z.kernpunkte.length) {
+        kernpunkteHtml = '<ul>' + z.kernpunkte.map(k => `<li>${escapeHtml(k)}</li>`).join('') + '</ul>';
+      }
+
+      let parteienHtml = '';
+      if (z.parteien && z.parteien.length) {
+        parteienHtml = z.parteien.map(p => escapeHtml(p)).join(', ');
+      }
+
+      block.innerHTML = `
+        <div class="analyse-block-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Zusammenfassung</div>
+        <div class="zusammenfassung-grid">
+          <div class="zusammenfassung-feld"><div class="zusammenfassung-label">Dokumenttyp</div><div class="zusammenfassung-wert">${escapeHtml(z.typ || '—')}</div></div>
+          <div class="zusammenfassung-feld"><div class="zusammenfassung-label">Parteien</div><div class="zusammenfassung-wert">${parteienHtml || '—'}</div></div>
+          <div class="zusammenfassung-feld"><div class="zusammenfassung-label">Kosten</div><div class="zusammenfassung-wert">${escapeHtml(z.kosten || '—')}</div></div>
+          <div class="zusammenfassung-feld"><div class="zusammenfassung-label">Laufzeit</div><div class="zusammenfassung-wert">${escapeHtml(z.laufzeit || '—')}</div></div>
+          <div class="zusammenfassung-feld"><div class="zusammenfassung-label">Kündigungsfrist</div><div class="zusammenfassung-wert">${escapeHtml(z.kuendigungsfrist || '—')}</div></div>
+          <div class="zusammenfassung-feld full"><div class="zusammenfassung-label">Kernpunkte</div><div class="zusammenfassung-wert">${kernpunkteHtml || '—'}</div></div>
+        </div>
+      `;
+      container.appendChild(block);
+    }
+
+    // ── Handlungsempfehlungen ──
+    function zeigeHandlungenBlock(handlungen, container) {
+      if (!handlungen || handlungen.length === 0) return;
+      const block = document.createElement('div');
+      block.className = 'analyse-block handlungen';
+      block.innerHTML = `<div class="analyse-block-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Handlungsempfehlungen</div>` +
+        handlungen.map(h => `
+          <div class="handlung-item">
+            <span class="handlung-prio ${h.prioritaet}">${h.prioritaet}</span>
+            <div class="handlung-text">
+              <div class="handlung-aktion">${escapeHtml(h.aktion)}</div>
+              ${h.frist ? `<div class="handlung-frist">Frist: ${escapeHtml(h.frist)}</div>` : ''}
+            </div>
+          </div>
+        `).join('');
+      container.appendChild(block);
+    }
+
+    // ── Glossar ──
+    function zeigeGlossarBlock(glossar, container) {
+      if (!glossar || glossar.length === 0) return;
+      const block = document.createElement('div');
+      block.className = 'analyse-block glossar';
+      block.innerHTML = `<div class="analyse-block-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Glossar</div>` +
+        glossar.map(g => `
+          <div class="glossar-item" onclick="this.classList.toggle('open')">
+            <div class="glossar-begriff">${escapeHtml(g.begriff)}</div>
+            <div class="glossar-erklaerung">${escapeHtml(g.erklaerung)}</div>
+          </div>
+        `).join('');
+      container.appendChild(block);
+    }
+
+    // ── Checkliste ──
+    function zeigeChecklisteBlock(checkliste, container) {
+      if (!checkliste || checkliste.length === 0) return;
+      const block = document.createElement('div');
+      block.className = 'analyse-block checkliste';
+      block.innerHTML = `<div class="analyse-block-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Checkliste</div>` +
+        checkliste.map(item => `
+          <div class="checkliste-item">
+            <div class="checkliste-checkbox" onclick="this.classList.toggle('checked'); this.nextElementSibling.classList.toggle('checked')"></div>
+            <span class="checkliste-text">${escapeHtml(item)}</span>
+          </div>
+        `).join('');
+      container.appendChild(block);
+    }
+
+    // ── Alle Analyse-Blöcke rendern ──
+    function zeigeAnalyseBlocks(data, container) {
+      zeigeRisikoBlock(data.risiken, container);
+      zeigeZusammenfassungBlock(data.zusammenfassung, container);
+      zeigeHandlungenBlock(data.handlungen, container);
+      zeigeGlossarBlock(data.glossar, container);
+      zeigeChecklisteBlock(data.checkliste, container);
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
     // ── Erklärung teilen ──
     async function teileErklaerung(btn) {
       const bubble = btn.closest('.chat-bubble');
@@ -3622,7 +3885,7 @@ body {
     }
 
     // Typewriter + Chips — gemeinsame Hilfsfunktion für alle Antworten
-    async function zeigeAntwortMitTypewriter(text, followUps = [], fristen = []) {
+    async function zeigeAntwortMitTypewriter(text, followUps = [], fristen = [], analyseData = {}) {
       const messagesEl = document.getElementById('chatMessages');
       const bubble = document.createElement('div');
       bubble.className = 'chat-bubble assistant';
@@ -3661,6 +3924,9 @@ body {
 
       // Fristen-Block
       zeigeFristenBlock(fristen, bubble);
+
+      // Analyse-Blöcke (Risiko, Zusammenfassung, Handlungen, Glossar, Checkliste)
+      zeigeAnalyseBlocks(analyseData, bubble);
 
       // Feedback-Row + Export
       const feedbackRow = document.createElement('div');
@@ -3721,7 +3987,7 @@ body {
           { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${file.name}` },
           { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
         ]);
-        await zeigeAntwortMitTypewriter(data.explanation, data.followUps, data.fristen || []);
+        await zeigeAntwortMitTypewriter(data.explanation, data.followUps, data.fristen || [], data);
         if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
         aktualisiereZaehlerNachAktion();
       } catch (err) {
@@ -3764,7 +4030,7 @@ body {
           { user_id: user.id, session_id: currentSessionId, role: 'user', message: '📸 Foto analysiert' },
           { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
         ]);
-        await zeigeAntwortMitTypewriter(data.explanation, data.followUps, data.fristen || []);
+        await zeigeAntwortMitTypewriter(data.explanation, data.followUps, data.fristen || [], data);
         if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
         aktualisiereZaehlerNachAktion();
       } catch (err) {
@@ -3896,7 +4162,7 @@ body {
           { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${vergleichDatei1.name} vs. 📄 ${vergleichDatei2.name}` },
           { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.comparison }
         ]);
-        await zeigeAntwortMitTypewriter(data.comparison, data.followUps, data.fristen || []);
+        await zeigeAntwortMitTypewriter(data.comparison, data.followUps, data.fristen || [], data);
         ladeChatSessions();
         aktualisiereZaehlerNachAktion();
       } catch (err) {
