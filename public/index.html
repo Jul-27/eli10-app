@@ -1256,6 +1256,25 @@ body {
   border-top: 1px solid #1E1E1E;
 }
 
+.lang-switcher {
+  display: flex;
+  gap: 4px;
+  padding: 4px 12px 8px;
+}
+.lang-btn {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #2C2C2E;
+  background: transparent;
+  color: #6B7280;
+  transition: all 0.2s;
+}
+.lang-btn:hover { color: #9CA3AF; border-color: #48484A; }
+.lang-btn.active { background: #3B82F6; color: white; border-color: #3B82F6; }
+
 .sidebar-user {
   display: flex;
   align-items: center;
@@ -2295,6 +2314,10 @@ body {
         <p class="sidebar-empty">Noch keine Chats</p>
       </div>
       <div class="sidebar-footer">
+        <div class="lang-switcher">
+          <button class="lang-btn active" id="langDE" onclick="setLanguage('de')">DE</button>
+          <button class="lang-btn" id="langEN" onclick="setLanguage('en')">EN</button>
+        </div>
         <div class="sidebar-user" onclick="switchTab('profile')">
           <div class="sidebar-avatar" id="sidebarAvatar">?</div>
           <div class="sidebar-user-info">
@@ -2541,6 +2564,274 @@ body {
 
     let currentAuthMode = 'login';
 
+    // ── Mehrsprachigkeit (i18n) ──
+    const i18n = {
+      de: {
+        // Auth
+        appTitle: 'Dokuvo',
+        appSubtitle: 'Dein KI-Assistent für komplexe Dokumente und Fragen',
+        login: 'Anmelden',
+        register: 'Registrieren',
+        email: 'E-Mail',
+        password: 'Passwort',
+        forgotPassword: 'Passwort vergessen?',
+        forgotNoEmail: 'Bitte gib deine E-Mail-Adresse ein.',
+        forgotSuccess: 'Falls ein Konto mit dieser Adresse existiert, wurde ein Link zum Zurücksetzen gesendet.',
+        passwordMinLength: 'Passwort muss mindestens 6 Zeichen haben.',
+        // Sidebar
+        newChat: 'Neuer Chat',
+        explain: 'Erklären',
+        premium: 'Premium',
+        aboutDokuvo: 'Über Dokuvo',
+        chats: 'Chats',
+        searchPlaceholder: 'Chats durchsuchen...',
+        noChats: 'Noch keine Chats',
+        noResults: 'Keine Ergebnisse für',
+        showAllChats: 'Alle {n} Chats anzeigen',
+        today: 'heute',
+        // Home
+        homeTitle: 'Was darf ich für dich erklären?',
+        homeSubtitle: 'Lade ein Dokument hoch, stelle eine Frage oder mache ein Foto',
+        uploadPdf: 'PDF hochladen',
+        takePhoto: 'Foto machen',
+        compareDocs: 'Dokumente vergleichen',
+        // Depth
+        depthLabel: 'Erklärungstiefe:',
+        depthSimple: 'Einfach',
+        depthNormal: 'Normal',
+        depthExpert: 'Experte',
+        // Input
+        inputPlaceholder: 'Stelle eine Frage oder füge Text ein...',
+        inputHint: 'Dokuvo ersetzt keine professionelle Beratung',
+        // Feedback
+        helpful: 'Hilfreich?',
+        yes: 'Ja',
+        no: 'Nein',
+        share: 'Teilen',
+        pdf: 'PDF',
+        // Limit
+        limitTitle: 'Tageslimit erreicht',
+        limitText: 'Du hast heute alle 5 kostenlosen Erklärungen verbraucht.<br>Morgen stehen dir wieder 5 zur Verfügung.',
+        limitUpgrade: 'Jetzt auf Premium upgraden',
+        // Profile
+        myProfile: 'Mein Profil',
+        displayName: 'Anzeigename',
+        displayNamePlaceholder: 'Dein Name (optional)',
+        save: 'Speichern',
+        changePassword: 'Passwort ändern',
+        newPasswordPlaceholder: 'Neues Passwort (min. 6 Zeichen)',
+        confirmPasswordPlaceholder: 'Passwort wiederholen',
+        deleteAccount: 'Konto löschen',
+        logout: 'Ausloggen',
+        // Share modal
+        shareTitle: 'Erklärung teilen',
+        shareDesc: 'Jeder mit diesem Link kann die Erklärung lesen — ohne Anmeldung.',
+        copy: 'Kopieren',
+        copied: 'Kopiert!',
+        close: 'Schließen',
+        // Compare
+        compareTitle: 'Dokumente vergleichen',
+        compareSlot: 'Datei wählen',
+        compareStart: 'Vergleich starten',
+        compareCancel: 'Abbrechen',
+        // Drag & drop
+        dropHere: 'Datei hier ablegen',
+        dropHint: 'PDF oder Bild',
+        dropWrongType: 'Bitte eine PDF- oder Bilddatei ablegen.',
+        // Tour
+        tourSkip: 'Überspringen',
+        tourNext: 'Weiter',
+        tourDone: 'Fertig!',
+        tourStep1Title: 'Schnellaktionen',
+        tourStep1Text: 'Hier findest du die wichtigsten Aktionen: PDF hochladen, Foto abfotografieren oder Dokumente vergleichen.',
+        tourStep2Title: 'Erklärungstiefe',
+        tourStep2Text: 'Wähle, wie detailliert die Erklärung sein soll — von einfach (für Laien) bis Experte (fachlich präzise).',
+        tourStep3Title: 'Fragen stellen',
+        tourStep3Text: 'Du kannst auch direkt eine Frage eingeben oder Text einfügen — Dokuvo erklärt dir alles Schritt für Schritt.',
+        tourStep4Title: 'Navigation',
+        tourStep4Text: 'Wechsle hier zwischen Erklären, Verlauf, Premium und Profil. Im Verlauf findest du alle bisherigen Erklärungen.',
+        tourStep5Title: 'Tägliches Limit',
+        tourStep5Text: 'Als Free-Nutzer hast du 5 Erklärungen pro Tag. Premium-Nutzer haben unbegrenzten Zugang.',
+        // Misc
+        analyzing: 'Dokument wird analysiert...',
+        recognizing: 'Bild wird erkannt...',
+        comparing: 'Dokumente werden verglichen...',
+        errorGeneric: 'Es ist ein Fehler aufgetreten. Bitte versuche es nochmal.',
+      },
+      en: {
+        appTitle: 'Dokuvo',
+        appSubtitle: 'Your AI assistant for complex documents and questions',
+        login: 'Sign in',
+        register: 'Sign up',
+        email: 'Email',
+        password: 'Password',
+        forgotPassword: 'Forgot password?',
+        forgotNoEmail: 'Please enter your email address.',
+        forgotSuccess: 'If an account with this address exists, a reset link has been sent.',
+        passwordMinLength: 'Password must be at least 6 characters.',
+        newChat: 'New Chat',
+        explain: 'Explain',
+        premium: 'Premium',
+        aboutDokuvo: 'About Dokuvo',
+        chats: 'Chats',
+        searchPlaceholder: 'Search chats...',
+        noChats: 'No chats yet',
+        noResults: 'No results for',
+        showAllChats: 'Show all {n} chats',
+        today: 'today',
+        homeTitle: 'What can I explain for you?',
+        homeSubtitle: 'Upload a document, ask a question, or take a photo',
+        uploadPdf: 'Upload PDF',
+        takePhoto: 'Take photo',
+        compareDocs: 'Compare documents',
+        depthLabel: 'Explanation depth:',
+        depthSimple: 'Simple',
+        depthNormal: 'Normal',
+        depthExpert: 'Expert',
+        inputPlaceholder: 'Ask a question or paste text...',
+        inputHint: 'Dokuvo does not replace professional advice',
+        helpful: 'Helpful?',
+        yes: 'Yes',
+        no: 'No',
+        share: 'Share',
+        pdf: 'PDF',
+        limitTitle: 'Daily limit reached',
+        limitText: 'You have used all 5 free explanations today.<br>5 more will be available tomorrow.',
+        limitUpgrade: 'Upgrade to Premium now',
+        myProfile: 'My Profile',
+        displayName: 'Display Name',
+        displayNamePlaceholder: 'Your name (optional)',
+        save: 'Save',
+        changePassword: 'Change Password',
+        newPasswordPlaceholder: 'New password (min. 6 characters)',
+        confirmPasswordPlaceholder: 'Confirm password',
+        deleteAccount: 'Delete Account',
+        logout: 'Sign out',
+        shareTitle: 'Share explanation',
+        shareDesc: 'Anyone with this link can read the explanation — no login required.',
+        copy: 'Copy',
+        copied: 'Copied!',
+        close: 'Close',
+        compareTitle: 'Compare documents',
+        compareSlot: 'Choose file',
+        compareStart: 'Start comparison',
+        compareCancel: 'Cancel',
+        dropHere: 'Drop file here',
+        dropHint: 'PDF or image',
+        dropWrongType: 'Please drop a PDF or image file.',
+        tourSkip: 'Skip',
+        tourNext: 'Next',
+        tourDone: 'Done!',
+        tourStep1Title: 'Quick Actions',
+        tourStep1Text: 'Here you\'ll find the key actions: upload PDF, take a photo, or compare documents.',
+        tourStep2Title: 'Explanation Depth',
+        tourStep2Text: 'Choose how detailed the explanation should be — from simple (for beginners) to expert (technically precise).',
+        tourStep3Title: 'Ask Questions',
+        tourStep3Text: 'You can also type a question or paste text — Dokuvo explains everything step by step.',
+        tourStep4Title: 'Navigation',
+        tourStep4Text: 'Switch between Explain, History, Premium, and Profile. Find all previous explanations in History.',
+        tourStep5Title: 'Daily Limit',
+        tourStep5Text: 'Free users get 5 explanations per day. Premium users have unlimited access.',
+        analyzing: 'Analyzing document...',
+        recognizing: 'Recognizing image...',
+        comparing: 'Comparing documents...',
+        errorGeneric: 'An error occurred. Please try again.',
+      }
+    };
+
+    let currentLang = localStorage.getItem('dokuvo_lang') || 'de';
+
+    function t(key) {
+      return (i18n[currentLang] && i18n[currentLang][key]) || i18n.de[key] || key;
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('dokuvo_lang', lang);
+      document.getElementById('langDE').classList.toggle('active', lang === 'de');
+      document.getElementById('langEN').classList.toggle('active', lang === 'en');
+      applyLanguage();
+    }
+
+    function applyLanguage() {
+      // Auth Screen
+      document.querySelector('.auth-title').textContent = t('appTitle');
+      document.querySelector('.auth-subtitle').textContent = t('appSubtitle');
+      const authTabs = document.querySelectorAll('.auth-tab');
+      if (authTabs[0]) authTabs[0].textContent = t('login');
+      if (authTabs[1]) authTabs[1].textContent = t('register');
+      const authBtn = document.getElementById('authBtn');
+      if (authBtn) authBtn.textContent = currentAuthMode === 'login' ? t('login') : t('register');
+      document.querySelector('.input-label').textContent = t('email');
+      document.querySelectorAll('.input-label')[1].textContent = t('password');
+      document.getElementById('forgotPasswordLink').textContent = t('forgotPassword');
+      document.getElementById('emailInput').placeholder = 'deine@email.com';
+      document.getElementById('chatSearchInput').placeholder = t('searchPlaceholder');
+      document.getElementById('chatInput').placeholder = t('inputPlaceholder');
+
+      // Sidebar
+      const newChatBtn = document.querySelector('.new-chat-btn');
+      if (newChatBtn) newChatBtn.innerHTML = '<i data-lucide="plus" style="width:15px;height:15px;"></i> ' + t('newChat');
+      document.getElementById('nav-home').innerHTML = '<i data-lucide="wand-2" style="width:16px;height:16px;"></i> ' + t('explain');
+      document.getElementById('nav-premium').innerHTML = '<i data-lucide="zap" style="width:16px;height:16px;"></i> ' + t('premium');
+      document.getElementById('nav-about').innerHTML = '<i data-lucide="info" style="width:16px;height:16px;"></i> ' + t('aboutDokuvo');
+      document.querySelector('.sidebar-sessions-title').textContent = t('chats');
+
+      // Home
+      const homeTitle = document.querySelector('#chatEmpty h2');
+      const homeSub = document.querySelector('#chatEmpty p');
+      if (homeTitle) homeTitle.textContent = t('homeTitle');
+      if (homeSub) homeSub.textContent = t('homeSubtitle');
+
+      // Quick action buttons
+      const quickBtns = document.querySelectorAll('.quick-btn');
+      if (quickBtns[0]) quickBtns[0].innerHTML = '<i data-lucide="file-text" style="width:16px;height:16px;"></i> ' + t('uploadPdf');
+      if (quickBtns[1]) quickBtns[1].innerHTML = '<i data-lucide="camera" style="width:16px;height:16px;"></i> ' + t('takePhoto');
+      if (quickBtns[2]) quickBtns[2].innerHTML = '<i data-lucide="git-compare" style="width:16px;height:16px;"></i> ' + t('compareDocs');
+
+      // Depth
+      const depthLabel = document.querySelector('.depth-label');
+      if (depthLabel) depthLabel.textContent = t('depthLabel');
+      const depthSteps = document.querySelectorAll('.depth-step');
+      if (depthSteps[0]) depthSteps[0].textContent = t('depthSimple');
+      if (depthSteps[1]) depthSteps[1].textContent = t('depthNormal');
+      if (depthSteps[2]) depthSteps[2].textContent = t('depthExpert');
+
+      // Input hint
+      const inputHint = document.querySelector('.input-hint');
+      if (inputHint) inputHint.textContent = t('inputHint');
+
+      // Limit banner
+      document.getElementById('limitText').textContent = t('limitTitle');
+      const limitSub = document.querySelector('.limit-banner-sub');
+      if (limitSub) limitSub.innerHTML = t('limitText');
+      const limitBtn = document.querySelector('.limit-upgrade-btn');
+      if (limitBtn) limitBtn.textContent = t('limitUpgrade');
+
+      // Profile section title
+      const profileTitle = document.querySelector('.profile-section-title');
+      if (profileTitle) profileTitle.textContent = t('myProfile');
+
+      // Re-render icons after innerHTML changes
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+
+      // Update tour steps
+      updateTourSteps();
+    }
+
+    function updateTourSteps() {
+      tourSteps[0].title = t('tourStep1Title');
+      tourSteps[0].text = t('tourStep1Text');
+      tourSteps[1].title = t('tourStep2Title');
+      tourSteps[1].text = t('tourStep2Text');
+      tourSteps[2].title = t('tourStep3Title');
+      tourSteps[2].text = t('tourStep3Text');
+      tourSteps[3].title = t('tourStep4Title');
+      tourSteps[3].text = t('tourStep4Text');
+      tourSteps[4].title = t('tourStep5Title');
+      tourSteps[4].text = t('tourStep5Text');
+    }
+
     function switchAuthTab(mode) {
       currentAuthMode = mode;
       document.querySelectorAll('.auth-tab').forEach((t, i) => {
@@ -2756,6 +3047,10 @@ body {
 
     document.addEventListener('DOMContentLoaded', async () => {
       lucide.createIcons();
+
+      // Sprache auf Auth-Screen anwenden
+      applyLanguage();
+
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) zeigeApp(session.user.email);
 
@@ -2765,7 +3060,7 @@ body {
         // Overlay für Drop-Hinweis erstellen
         const dropOverlay = document.createElement('div');
         dropOverlay.id = 'dropOverlay';
-        dropOverlay.innerHTML = '<div class="drop-overlay-content"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><p>Datei hier ablegen</p><span>PDF oder Bild</span></div>';
+        dropOverlay.innerHTML = `<div class="drop-overlay-content"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><p>${t('dropHere')}</p><span>${t('dropHint')}</span></div>`;
         chatMain.style.position = 'relative';
         chatMain.appendChild(dropOverlay);
 
@@ -2799,7 +3094,7 @@ body {
           } else if (file.type.startsWith('image/')) {
             fotoAnalysieren(file);
           } else {
-            alert('Bitte eine PDF- oder Bilddatei ablegen.');
+            alert(t('dropWrongType'));
           }
         });
       }
@@ -2839,6 +3134,11 @@ body {
       lucide.createIcons();
       ladeChatSessions();
       ladeProfil(); // Profilbild + Anzeigename direkt beim Start laden
+
+      // Sprache setzen
+      document.getElementById('langDE').classList.toggle('active', currentLang === 'de');
+      document.getElementById('langEN').classList.toggle('active', currentLang === 'en');
+      applyLanguage();
 
       // Onboarding-Tour beim ersten Login starten
       if (!localStorage.getItem('dokuvo_onboarding_done')) {
@@ -3052,14 +3352,14 @@ body {
 
       overlay.innerHTML = `
         <div class="share-modal">
-          <h3>Erklärung teilen</h3>
-          <p>Jeder mit diesem Link kann die Erklärung lesen — ohne Anmeldung.</p>
+          <h3>${t('shareTitle')}</h3>
+          <p>${t('shareDesc')}</p>
           <div class="share-link-row">
             <input type="text" class="share-link-input" id="shareLinkInput" value="${url}" readonly onclick="this.select()">
-            <button class="share-copy-btn" onclick="copyShareLink(this)">Kopieren</button>
+            <button class="share-copy-btn" onclick="copyShareLink(this)">${t('copy')}</button>
           </div>
           <div class="share-modal-footer">
-            <button class="share-close-btn" onclick="this.closest('.share-modal-overlay').remove()">Schließen</button>
+            <button class="share-close-btn" onclick="this.closest('.share-modal-overlay').remove()">${t('close')}</button>
           </div>
         </div>
       `;
@@ -3070,10 +3370,10 @@ body {
     function copyShareLink(btn) {
       const input = document.getElementById('shareLinkInput');
       navigator.clipboard.writeText(input.value).then(() => {
-        btn.textContent = 'Kopiert!';
+        btn.textContent = t('copied');
         btn.classList.add('copied');
         setTimeout(() => {
-          btn.textContent = 'Kopieren';
+          btn.textContent = t('copy');
           btn.classList.remove('copied');
         }, 2000);
       });
