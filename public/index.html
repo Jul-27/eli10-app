@@ -1013,6 +1013,64 @@ body {
   letter-spacing: 0.08em;
 }
 
+.sidebar-search {
+  position: relative;
+  padding: 4px 10px 6px;
+  display: flex;
+  align-items: center;
+}
+.sidebar-search-icon {
+  position: absolute;
+  left: 20px;
+  pointer-events: none;
+}
+.sidebar-search-input {
+  width: 100%;
+  background: #1A1A1A;
+  border: 1px solid #2C2C2E;
+  border-radius: 8px;
+  padding: 7px 30px 7px 32px;
+  font-size: 0.78rem;
+  color: #E8EAED;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.sidebar-search-input:focus { border-color: #3B82F6; }
+.sidebar-search-input::placeholder { color: #4A4F58; }
+.sidebar-search-clear {
+  position: absolute;
+  right: 18px;
+  background: none;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+.sidebar-search-clear:hover { color: #9CA3AF; }
+
+.search-result-match {
+  font-size: 0.72rem;
+  color: #6B7280;
+  padding: 2px 12px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-result-match mark {
+  background: rgba(59,130,246,0.25);
+  color: #93C5FD;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+.search-no-results {
+  padding: 16px;
+  text-align: center;
+  color: #4A4F58;
+  font-size: 0.8rem;
+}
+
 .chat-sessions {
   flex: 1;
   overflow-y: auto;
@@ -2149,6 +2207,13 @@ body {
         </button>
       </div>
       <div class="sidebar-sessions-title">Chats</div>
+      <div class="sidebar-search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="chatSearchInput" class="sidebar-search-input" placeholder="Chats durchsuchen..." oninput="debouncedChatSuche(this.value)">
+        <button id="chatSearchClear" class="sidebar-search-clear" onclick="clearChatSearch()" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
       <div class="chat-sessions" id="chatSessions">
         <p class="sidebar-empty">Noch keine Chats</p>
       </div>
@@ -3439,6 +3504,87 @@ body {
       } catch (err) {
         console.error('Fehler beim Laden der Sessions:', err);
       }
+    }
+
+    // ── Chat-Suche ──
+    let chatSearchTimer = null;
+    let chatSearchActive = false;
+
+    function debouncedChatSuche(query) {
+      const clearBtn = document.getElementById('chatSearchClear');
+      clearBtn.style.display = query.length > 0 ? 'flex' : 'none';
+
+      if (chatSearchTimer) clearTimeout(chatSearchTimer);
+
+      if (query.trim().length < 2) {
+        if (chatSearchActive) {
+          chatSearchActive = false;
+          ladeChatSessions();
+        }
+        return;
+      }
+
+      chatSearchTimer = setTimeout(() => chatSuche(query.trim()), 300);
+    }
+
+    async function chatSuche(query) {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      if (!user) return;
+
+      chatSearchActive = true;
+      const container = document.getElementById('chatSessions');
+
+      try {
+        const res = await fetch('/chat/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: user.id, query })
+        });
+        const results = await res.json();
+
+        if (!results.length) {
+          container.innerHTML = '<div class="search-no-results">Keine Ergebnisse für „' + escapeHtml(query) + '"</div>';
+          return;
+        }
+
+        container.innerHTML = results.map(r => {
+          const highlightedTitle = highlightMatch(escapeHtml(r.title), query);
+          const matchSnippet = r.matchType !== 'title' && r.matchText
+            ? `<div class="search-result-match">${highlightMatch(escapeHtml(r.matchText.substring(0, 80)), query)}</div>`
+            : '';
+
+          return `
+            <div class="session-item-row ${r.session_id === currentSessionId ? 'active' : ''}" data-session="${r.session_id}">
+              <div class="session-item-label" onclick="ladeSession('${r.session_id}'); clearChatSearch();">${highlightedTitle}</div>
+            </div>
+            ${matchSnippet}
+          `;
+        }).join('');
+
+      } catch (err) {
+        container.innerHTML = '<div class="search-no-results">Suchfehler</div>';
+      }
+    }
+
+    function clearChatSearch() {
+      const input = document.getElementById('chatSearchInput');
+      input.value = '';
+      document.getElementById('chatSearchClear').style.display = 'none';
+      chatSearchActive = false;
+      ladeChatSessions();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function highlightMatch(text, query) {
+      if (!query) return text;
+      const regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      return text.replace(regex, '<mark>$1</mark>');
     }
 
     function aktualisiereAktiveSession() {

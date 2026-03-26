@@ -681,6 +681,77 @@ Ein klarer Satz was die wichtigste Erkenntnis aus dem Vergleich ist.`
   }
 });
 
+// ── Chat-Suche ───────────────────────────────────────────────────────────────
+app.post('/chat/search', verifyUser, async (req, res) => {
+  const { user_id, query } = req.body;
+  if (!query || query.trim().length < 2) {
+    return res.json([]);
+  }
+  const searchTerm = `%${query.trim()}%`;
+
+  try {
+    // Suche in Chat-Nachrichten
+    const { data: chatResults } = await supabase
+      .from('chats')
+      .select('session_id, message, role, created_at')
+      .eq('user_id', user_id)
+      .ilike('message', searchTerm)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    // Suche in Chat-Titeln
+    const { data: titleResults } = await supabase
+      .from('chat_titles')
+      .select('session_id, title')
+      .eq('user_id', user_id)
+      .ilike('title', searchTerm);
+
+    // Alle Titel laden für die Anzeige
+    const { data: allTitles } = await supabase
+      .from('chat_titles')
+      .select('session_id, title')
+      .eq('user_id', user_id);
+
+    const titleMap = {};
+    (allTitles || []).forEach(t => { titleMap[t.session_id] = t.title; });
+
+    // Ergebnisse zusammenführen (dedupliziert nach session_id)
+    const sessionMap = {};
+
+    // Titel-Treffer zuerst
+    (titleResults || []).forEach(t => {
+      if (!sessionMap[t.session_id]) {
+        sessionMap[t.session_id] = {
+          session_id: t.session_id,
+          title: t.title,
+          matchType: 'title',
+          matchText: t.title
+        };
+      }
+    });
+
+    // Chat-Treffer
+    (chatResults || []).forEach(c => {
+      if (!sessionMap[c.session_id]) {
+        // Auto-Titel generieren falls kein Custom-Titel
+        const autoTitle = titleMap[c.session_id] || c.message.substring(0, 60) + (c.message.length > 60 ? '...' : '');
+        const snippet = c.message.length > 100 ? '...' + c.message.substring(0, 100) + '...' : c.message;
+        sessionMap[c.session_id] = {
+          session_id: c.session_id,
+          title: autoTitle,
+          matchType: c.role,
+          matchText: snippet,
+          created_at: c.created_at
+        };
+      }
+    });
+
+    res.json(Object.values(sessionMap).slice(0, 20));
+  } catch (err) {
+    res.status(500).json({ error: 'Suchfehler: ' + err.message });
+  }
+});
+
 // ── Chat umbenennen ───────────────────────────────────────────────────────────
 app.post('/chat/rename', verifyUser, async (req, res) => {
   const { user_id, session_id, title } = req.body;
