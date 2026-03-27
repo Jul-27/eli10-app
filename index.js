@@ -202,18 +202,29 @@ async function analysiereRisiken(text) {
       temperature: 0.2,
       max_tokens: 800,
       messages: [
-        { role: 'system', content: `Du bist ein Dokumenten-Analyst. Analysiere den folgenden Text und identifiziere wichtige Klauseln oder Bedingungen. Bewerte jede mit einem Risiko-Level:
-- "rot" = potenziell nachteilig, unfair, oder gefährlich für den Leser (z.B. einseitige Kündigungsrechte, Haftungsausschlüsse, versteckte Kosten, automatische Verlängerungen)
-- "gelb" = beachtenswert, könnte problematisch sein (z.B. Fristen, Bedingungen, Einschränkungen)
-- "grün" = unbedenklich, fair, oder vorteilhaft (z.B. Standardklauseln, Verbraucherschutz)
+        { role: 'system', content: `Du bist ein Dokumenten-Analyst. Analysiere den Text und identifiziere NUR die wirklich wichtigen Klauseln oder Bedingungen, die den Leser direkt betreffen. Ignoriere Standardklauseln und Selbstverständlichkeiten.
 
-Antworte NUR mit einem JSON-Array. Jedes Element hat: {"klausel": "Kurzbeschreibung der Klausel (max 80 Zeichen)", "risiko": "rot"|"gelb"|"grün", "grund": "Warum diese Bewertung (max 100 Zeichen)"}. Maximal 8 Klauseln. Keine anderen Texte.` },
+Bewerte jede mit einem Risiko-Level:
+- "rot" = gefährlich oder klar nachteilig für den Leser (z.B. Haftungsausschlüsse, versteckte Kosten, einseitige Kündigungsrechte, automatische Verlängerungen, Gewährleistungsausschlüsse)
+- "gelb" = beachtenswert, könnte problematisch werden (z.B. knappe Fristen, besondere Bedingungen, Einschränkungen)
+- "gruen" = positiv oder fair für den Leser (z.B. Widerrufsrecht, Garantien, Verbraucherschutz)
+
+WICHTIG: Nenne NUR Klauseln die für den Leser wirklich handlungsrelevant sind. Keine trivialen Punkte wie "Eigentum geht über" oder "Vertrag wird aufgelöst". Maximal 6 Klauseln.
+
+Antworte NUR mit einem JSON-Array. Jedes Element hat: {"klausel": "Kurzbeschreibung (max 80 Zeichen)", "risiko": "rot"|"gelb"|"gruen", "grund": "Warum diese Bewertung (max 100 Zeichen)"}. Keine anderen Texte.` },
         { role: 'user', content: `Analysiere diesen Text auf Risiken:\n${text.substring(0, 8000)}` }
       ]
     });
     const raw = completion.choices[0].message.content.trim();
     const match = raw.match(/\[[\s\S]*\]/);
-    return match ? JSON.parse(match[0]) : [];
+    if (!match) return [];
+    const risiken = JSON.parse(match[0]);
+    // Sortierung: rot zuerst, dann gelb, dann gruen
+    const order = { rot: 0, gelb: 1, gruen: 2, grün: 2 };
+    risiken.sort((a, b) => (order[a.risiko] ?? 2) - (order[b.risiko] ?? 2));
+    // Normalize grün → gruen für Frontend-Konsistenz
+    risiken.forEach(r => { if (r.risiko === 'grün') r.risiko = 'gruen'; });
+    return risiken;
   } catch(e) { return []; }
 }
 
@@ -223,16 +234,23 @@ async function generiereZusammenfassung(text) {
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       temperature: 0.2,
-      max_tokens: 600,
+      max_tokens: 700,
       messages: [
-        { role: 'system', content: `Erstelle eine strukturierte Zusammenfassung des Dokuments. Antworte NUR mit einem JSON-Objekt mit diesen Feldern:
-- "typ": Art des Dokuments (z.B. "Mietvertrag", "Versicherungspolice", "Arztbefund")
+        { role: 'system', content: `Erstelle eine strukturierte Zusammenfassung des Dokuments. Passe die Felder an den Dokumenttyp an!
+
+Antworte NUR mit einem JSON-Objekt mit diesen Feldern:
+- "typ": Art des Dokuments (z.B. "Mietvertrag", "Rechnung", "Arztbefund", "Finanzierungsangebot")
 - "parteien": Array der beteiligten Parteien (z.B. ["Vermieter: Max Müller", "Mieter: Anna Schmidt"])
 - "kernpunkte": Array der 3-5 wichtigsten Punkte (kurze Strings, max 80 Zeichen je)
-- "kosten": String mit Kosten/Preisen oder "Keine Angabe"
-- "laufzeit": String mit Laufzeit/Gültigkeit oder "Keine Angabe"
-- "kuendigungsfrist": String mit Kündigungsfrist oder "Keine Angabe"
-Keine anderen Texte, nur das JSON-Objekt.` },
+- "felder": Array von {"label": "Feldname", "wert": "Wert"} — wähle 3-4 Felder die zum Dokumenttyp passen:
+  * Bei Verträgen: Kosten, Laufzeit, Kündigungsfrist, Beginn
+  * Bei Rechnungen: Betrag, Zahlungsfrist, Rechnungsdatum, Rechnungsnummer
+  * Bei Angeboten: Preis, Gültigkeit, Konditionen, Rabatt
+  * Bei Befunden: Diagnose, Therapie, Nächster Termin
+  * Bei Bescheiden: Ergebnis, Frist für Widerspruch, Zuständige Behörde
+  * Bei sonstigen: wähle passende Felder. Lasse irrelevante Felder WEG.
+
+NUR das JSON-Objekt, keine anderen Texte.` },
         { role: 'user', content: `Fasse dieses Dokument zusammen:\n${text.substring(0, 8000)}` }
       ]
     });

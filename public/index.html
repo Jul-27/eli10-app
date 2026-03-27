@@ -3489,14 +3489,36 @@ body {
         parteienHtml = z.parteien.map(p => escapeHtml(p)).join(', ');
       }
 
+      // Dynamische Felder (neu) oder Fallback auf alte Struktur
+      let felderHtml = '';
+      if (z.felder && z.felder.length) {
+        felderHtml = z.felder.map(f => `
+          <div class="zusammenfassung-feld">
+            <div class="zusammenfassung-label">${escapeHtml(f.label)}</div>
+            <div class="zusammenfassung-wert">${escapeHtml(f.wert)}</div>
+          </div>
+        `).join('');
+      } else {
+        // Fallback für alte API-Responses ohne felder-Array
+        const fallbackFelder = [
+          { label: 'Kosten', wert: z.kosten },
+          { label: 'Laufzeit', wert: z.laufzeit },
+          { label: 'Kündigungsfrist', wert: z.kuendigungsfrist }
+        ].filter(f => f.wert && f.wert !== 'Keine Angabe');
+        felderHtml = fallbackFelder.map(f => `
+          <div class="zusammenfassung-feld">
+            <div class="zusammenfassung-label">${escapeHtml(f.label)}</div>
+            <div class="zusammenfassung-wert">${escapeHtml(f.wert)}</div>
+          </div>
+        `).join('');
+      }
+
       block.innerHTML = `
         <div class="analyse-block-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Zusammenfassung</div>
         <div class="zusammenfassung-grid">
           <div class="zusammenfassung-feld"><div class="zusammenfassung-label">Dokumenttyp</div><div class="zusammenfassung-wert">${escapeHtml(z.typ || '—')}</div></div>
           <div class="zusammenfassung-feld"><div class="zusammenfassung-label">Parteien</div><div class="zusammenfassung-wert">${parteienHtml || '—'}</div></div>
-          <div class="zusammenfassung-feld"><div class="zusammenfassung-label">Kosten</div><div class="zusammenfassung-wert">${escapeHtml(z.kosten || '—')}</div></div>
-          <div class="zusammenfassung-feld"><div class="zusammenfassung-label">Laufzeit</div><div class="zusammenfassung-wert">${escapeHtml(z.laufzeit || '—')}</div></div>
-          <div class="zusammenfassung-feld"><div class="zusammenfassung-label">Kündigungsfrist</div><div class="zusammenfassung-wert">${escapeHtml(z.kuendigungsfrist || '—')}</div></div>
+          ${felderHtml}
           <div class="zusammenfassung-feld full"><div class="zusammenfassung-label">Kernpunkte</div><div class="zusammenfassung-wert">${kernpunkteHtml || '—'}</div></div>
         </div>
       `;
@@ -3668,7 +3690,7 @@ body {
         doc.text('Dein KI-Assistent für komplexe Dokumente und Fragen', 14, 16.5);
         doc.text(new Date().toLocaleDateString('de-DE'), 196, 12, { align: 'right' });
 
-        // Inhalt — Markdown zu Plain Text
+        // Inhalt — Markdown zu Plain Text (nur result-text, ohne Analyse-Blöcke)
         const plainText = resultText.innerText || resultText.textContent;
         doc.setTextColor(30, 30, 30);
         doc.setFontSize(10);
@@ -3679,23 +3701,71 @@ body {
         const pageH = 285;
 
         for (const line of lines) {
-          if (y > pageH) {
-            doc.addPage();
-            y = 20;
-          }
-          // Überschriften fett
-          if (line.match(/^[📋🔍⚠️✅💡⚖️]/)) {
+          if (y > pageH) { doc.addPage(); y = 20; }
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          doc.setTextColor(30, 30, 30);
+          doc.text(line, 14, y);
+          y += 5.5;
+        }
+
+        // Analyse-Blöcke als sauberen Text exportieren
+        const analyseBlocks = bubble.querySelectorAll('.analyse-block');
+        analyseBlocks.forEach(block => {
+          // Titel extrahieren (ohne SVG-Icon-Text)
+          const titleEl = block.querySelector('.analyse-block-title');
+          if (titleEl) {
+            const titleText = titleEl.textContent.replace(/[^\w\säöüÄÖÜß\-\.,:;()\/]/g, '').trim();
+            if (y > pageH - 15) { doc.addPage(); y = 20; }
+            y += 4;
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(11);
             doc.setTextColor(59, 130, 246);
-            y += 3;
-          } else {
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            doc.setTextColor(30, 30, 30);
+            doc.text(titleText, 14, y);
+            y += 6;
           }
-          doc.text(line, 14, y);
-          y += 5.5;
+
+          // Block-Inhalt als Text (ohne SVGs)
+          const clone = block.cloneNode(true);
+          clone.querySelectorAll('svg, .analyse-block-title').forEach(el => el.remove());
+          const blockText = clone.innerText || clone.textContent;
+          if (blockText.trim()) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(60, 60, 60);
+            const blockLines = doc.splitTextToSize(blockText.trim(), 182);
+            for (const line of blockLines) {
+              if (y > pageH) { doc.addPage(); y = 20; }
+              doc.text(line, 14, y);
+              y += 4.5;
+            }
+          }
+        });
+
+        // Fristen-Block ebenfalls sauber exportieren
+        const fristenBlock = bubble.querySelector('.fristen-block');
+        if (fristenBlock) {
+          if (y > pageH - 15) { doc.addPage(); y = 20; }
+          y += 4;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(11);
+          doc.setTextColor(59, 130, 246);
+          doc.text('Erkannte Fristen', 14, y);
+          y += 6;
+          const clone = fristenBlock.cloneNode(true);
+          clone.querySelectorAll('svg, .fristen-title, button').forEach(el => el.remove());
+          const fText = clone.innerText || clone.textContent;
+          if (fText.trim()) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(60, 60, 60);
+            const fLines = doc.splitTextToSize(fText.trim(), 182);
+            for (const line of fLines) {
+              if (y > pageH) { doc.addPage(); y = 20; }
+              doc.text(line, 14, y);
+              y += 4.5;
+            }
+          }
         }
 
         // Footer
