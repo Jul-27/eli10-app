@@ -3690,12 +3690,13 @@ body {
         doc.text('Dein KI-Assistent für komplexe Dokumente und Fragen', 14, 16.5);
         doc.text(new Date().toLocaleDateString('de-DE'), 196, 12, { align: 'right' });
 
-        // Inhalt — Markdown zu Plain Text (nur result-text, ohne Analyse-Blöcke)
-        const plainText = resultText.innerText || resultText.textContent;
+        // Inhalt — NUR den reinen Erklärungstext exportieren
+        const pdfClone = resultText.cloneNode(true);
         doc.setTextColor(30, 30, 30);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
 
+        const plainText = pdfClone.innerText || pdfClone.textContent;
         const lines = doc.splitTextToSize(plainText, 182);
         let y = 28;
         const pageH = 285;
@@ -3707,65 +3708,6 @@ body {
           doc.setTextColor(30, 30, 30);
           doc.text(line, 14, y);
           y += 5.5;
-        }
-
-        // Analyse-Blöcke als sauberen Text exportieren
-        const analyseBlocks = bubble.querySelectorAll('.analyse-block');
-        analyseBlocks.forEach(block => {
-          // Titel extrahieren (ohne SVG-Icon-Text)
-          const titleEl = block.querySelector('.analyse-block-title');
-          if (titleEl) {
-            const titleText = titleEl.textContent.replace(/[^\w\säöüÄÖÜß\-\.,:;()\/]/g, '').trim();
-            if (y > pageH - 15) { doc.addPage(); y = 20; }
-            y += 4;
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.setTextColor(59, 130, 246);
-            doc.text(titleText, 14, y);
-            y += 6;
-          }
-
-          // Block-Inhalt als Text (ohne SVGs)
-          const clone = block.cloneNode(true);
-          clone.querySelectorAll('svg, .analyse-block-title').forEach(el => el.remove());
-          const blockText = clone.innerText || clone.textContent;
-          if (blockText.trim()) {
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(60, 60, 60);
-            const blockLines = doc.splitTextToSize(blockText.trim(), 182);
-            for (const line of blockLines) {
-              if (y > pageH) { doc.addPage(); y = 20; }
-              doc.text(line, 14, y);
-              y += 4.5;
-            }
-          }
-        });
-
-        // Fristen-Block ebenfalls sauber exportieren
-        const fristenBlock = bubble.querySelector('.fristen-block');
-        if (fristenBlock) {
-          if (y > pageH - 15) { doc.addPage(); y = 20; }
-          y += 4;
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(11);
-          doc.setTextColor(59, 130, 246);
-          doc.text('Erkannte Fristen', 14, y);
-          y += 6;
-          const clone = fristenBlock.cloneNode(true);
-          clone.querySelectorAll('svg, .fristen-title, button').forEach(el => el.remove());
-          const fText = clone.innerText || clone.textContent;
-          if (fText.trim()) {
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(60, 60, 60);
-            const fLines = doc.splitTextToSize(fText.trim(), 182);
-            for (const line of fLines) {
-              if (y > pageH) { doc.addPage(); y = 20; }
-              doc.text(line, 14, y);
-              y += 4.5;
-            }
-          }
         }
 
         // Footer
@@ -3943,15 +3885,46 @@ body {
       bubble.className = `chat-bubble ${role}`;
       if (id) bubble.id = id;
       if (role === 'assistant') {
+        // Analyse-Daten aus gespeicherter Nachricht extrahieren
+        let displayText = text;
+        let analyseData = {};
+        const analyseMatch = text.match(/<!--ANALYSE:([\s\S]*?):ANALYSE-->/);
+        if (analyseMatch) {
+          displayText = text.replace(/<!--ANALYSE:[\s\S]*?:ANALYSE-->/, '').trim();
+          try { analyseData = JSON.parse(analyseMatch[1]); } catch(e) {}
+        }
+
         const div = document.createElement('div');
         div.className = 'result-text';
-        div.innerHTML = marked.parse(text);
+        div.innerHTML = marked.parse(displayText);
         bubble.appendChild(div);
+
+        // Analyse-Blöcke wiederherstellen
+        if (analyseData.risiken || analyseData.zusammenfassung || analyseData.handlungen || analyseData.glossar || analyseData.checkliste) {
+          zeigeAnalyseBlocks(analyseData, bubble);
+        }
+        // Fristen wiederherstellen
+        if (analyseData.fristen && analyseData.fristen.length) {
+          zeigeFristenBlock(analyseData.fristen, bubble);
+        }
       } else {
         bubble.textContent = text;
       }
       messages.appendChild(bubble);
       lucide.createIcons();
+    }
+
+    // Analyse-Daten in Nachricht einbetten für Persistenz
+    function buildMessageWithAnalyse(text, data) {
+      const analysePayload = {};
+      if (data.risiken && data.risiken.length) analysePayload.risiken = data.risiken;
+      if (data.zusammenfassung) analysePayload.zusammenfassung = data.zusammenfassung;
+      if (data.handlungen && data.handlungen.length) analysePayload.handlungen = data.handlungen;
+      if (data.glossar && data.glossar.length) analysePayload.glossar = data.glossar;
+      if (data.checkliste && data.checkliste.length) analysePayload.checkliste = data.checkliste;
+      if (data.fristen && data.fristen.length) analysePayload.fristen = data.fristen;
+      if (Object.keys(analysePayload).length === 0) return text;
+      return text + "\n\n<!--ANALYSE:" + JSON.stringify(analysePayload) + ":ANALYSE-->";
     }
 
     // Typewriter + Chips — gemeinsame Hilfsfunktion für alle Antworten
@@ -4055,7 +4028,7 @@ body {
         if (!currentSessionId) currentSessionId = generateSessionId();
         await supabaseClient.from('chats').insert([
           { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${file.name}` },
-          { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
+          { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: buildMessageWithAnalyse(data.explanation, data) }
         ]);
         await zeigeAntwortMitTypewriter(data.explanation, data.followUps, data.fristen || [], data);
         if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
@@ -4098,7 +4071,7 @@ body {
         if (!currentSessionId) currentSessionId = generateSessionId();
         await supabaseClient.from('chats').insert([
           { user_id: user.id, session_id: currentSessionId, role: 'user', message: '📸 Foto analysiert' },
-          { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.explanation }
+          { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: buildMessageWithAnalyse(data.explanation, data) }
         ]);
         await zeigeAntwortMitTypewriter(data.explanation, data.followUps, data.fristen || [], data);
         if (isNewSession) { await ladeChatSessions(); aktualisiereAktiveSession(); }
@@ -4230,7 +4203,7 @@ body {
         if (!currentSessionId) currentSessionId = generateSessionId();
         await supabaseClient.from('chats').insert([
           { user_id: user.id, session_id: currentSessionId, role: 'user', message: `📄 ${vergleichDatei1.name} vs. 📄 ${vergleichDatei2.name}` },
-          { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: data.comparison }
+          { user_id: user.id, session_id: currentSessionId, role: 'assistant', message: buildMessageWithAnalyse(data.comparison, data) }
         ]);
         await zeigeAntwortMitTypewriter(data.comparison, data.followUps, data.fristen || [], data);
         ladeChatSessions();

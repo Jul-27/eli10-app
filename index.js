@@ -126,28 +126,31 @@ PFLICHTREGELN — halte dich IMMER daran:
 - Hebe wichtige Zahlen, Beträge, Fristen und Deadlines mit **fett** hervor
 - Schreibe kurze, klare Sätze — maximal 2 Zeilen pro Punkt
 
+FORMATIERUNG — verwende KEINE Aufzählungszeichen (-) oder Bullet Points (*). Verwende stattdessen nummerierte Absätze oder Fließtext.
+
 Strukturiere deine Antwort IMMER exakt so mit Markdown:
 
-## 📋 Worum geht es?
+## Worum geht es?
 Erkläre zuerst in 2-3 Sätzen was diese Art von Dokument grundsätzlich ist und wozu es dient.
 Dann erkläre den konkreten Inhalt dieses spezifischen Dokuments.
 
-## 🔍 Die wichtigsten Punkte
-- Erkläre jeden Punkt einzeln
-- Fachbegriffe sofort in Klammern erklären, z.B.: Zinssatz (= der Preis den du für geliehenes Geld zahlst)
-- Wichtige Zahlen und Beträge **fett** markieren
+## Die wichtigsten Punkte
+Erkläre jeden Punkt als nummerierten Absatz:
+1. **Erster Punkt:** Erklärung mit Fachbegriff in Klammern
+2. **Zweiter Punkt:** Erklärung mit wichtigen Zahlen **fett**
+3. usw.
 
-## ⚠️ Risiken & Fristen
+## Risiken und Fristen
 Nur wenn vorhanden — sonst weglassen:
-- Fristen und Deadlines **fett** markieren mit konkretem Datum oder Zeitraum
-- Konsequenzen klar erklären: was passiert wenn man nichts tut oder zu spät reagiert?
+1. **Frist/Risiko:** Erklärung mit konkretem Datum oder Zeitraum **fett**
+2. **Konsequenz:** Was passiert wenn man nichts tut oder zu spät reagiert?
 
-## ✅ Was muss ich tun?
+## Was muss ich tun?
 1. Konkreter Handlungsschritt
 2. Konkreter Handlungsschritt
 3. usw.
 
-## 💡 Zusammenfassung
+## Zusammenfassung
 Ein einziger, klarer Satz der alles zusammenfasst.`;
 
 // ── Fristen aus Text extrahieren ─────────────────────────────────────────────
@@ -274,7 +277,11 @@ async function generiereHandlungsempfehlungen(text) {
     });
     const raw = completion.choices[0].message.content.trim();
     const match = raw.match(/\[[\s\S]*\]/);
-    return match ? JSON.parse(match[0]) : [];
+    if (!match) return [];
+    const handlungen = JSON.parse(match[0]);
+    const order = { hoch: 0, mittel: 1, niedrig: 2 };
+    handlungen.sort((a, b) => (order[a.prioritaet] ?? 2) - (order[b.prioritaet] ?? 2));
+    return handlungen;
   } catch(e) { return []; }
 }
 
@@ -558,10 +565,11 @@ PFLICHTREGELN:
 - Schreibe kurze, klare Sätze
 
 Wenn es eine erste Erklärung ist, strukturiere sie so:
-## 📋 Was ist das?
-## 🔍 Die wichtigsten Punkte
-## 💡 Zusammenfassung
+## Was ist das?
+## Die wichtigsten Punkte
+## Zusammenfassung
 
+Verwende KEINE Aufzählungszeichen (-) oder Bullet Points (*). Verwende stattdessen nummerierte Absätze oder Fließtext.
 Bei Rückfragen antworte natürlich und direkt ohne starre Struktur.`
         },
         ...messages
@@ -777,17 +785,17 @@ app.post('/compare-documents', upload.fields([{ name: 'doc1' }, { name: 'doc2' }
 ${depthInstructions[depth]}
 
 Strukturiere den Vergleich so:
-## 📋 Worum geht es bei den Dokumenten?
+## Worum geht es bei den Dokumenten?
 Kurze Beschreibung was beide Dokumente sind.
 
-## 🔍 Die wichtigsten Unterschiede
+## Die wichtigsten Unterschiede
 Erkläre die konkreten Unterschiede zwischen den Dokumenten — Preise, Konditionen, Fristen, Inhalte.
-Nutze eine klare Gegenüberstellung.
+Nutze eine klare Gegenüberstellung mit nummerierten Punkten (keine Aufzählungszeichen).
 
-## ⚖️ Was ist besser?
+## Was ist besser?
 Gib eine ehrliche Einschätzung welches Dokument vorteilhafter ist und warum.
 
-## 💡 Zusammenfassung
+## Zusammenfassung
 Ein klarer Satz was die wichtigste Erkenntnis aus dem Vergleich ist.`
         },
         {
