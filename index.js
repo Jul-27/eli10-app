@@ -806,12 +806,33 @@ Ein klarer Satz was die wichtigste Erkenntnis aus dem Vergleich ist.`
     });
 
     const comparison = completion.choices[0].message.content;
+
+    // Diff-Analyse: konkrete Unterschiede als strukturiertes JSON
+    let diff = [];
+    try {
+      const diffCompletion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.2,
+        max_tokens: 600,
+        messages: [
+          { role: 'system', content: `Erstelle eine strukturierte Gegenüberstellung der beiden Dokumente. Antworte NUR mit einem JSON-Array. Jedes Element hat:
+{"kategorie": "z.B. Preis, Laufzeit, Konditionen, Leistung", "dok1": "Wert/Klausel in Dokument 1", "dok2": "Wert/Klausel in Dokument 2", "vorteil": 1|2|0}
+vorteil = 1 wenn Dokument 1 besser, 2 wenn Dokument 2 besser, 0 wenn gleichwertig.
+Maximal 8 Vergleichspunkte, nur relevante Unterschiede. Keine anderen Texte.` },
+          { role: 'user', content: `Vergleiche:\n\n--- DOKUMENT 1 ---\n${text1.substring(0, 4000)}\n\n--- DOKUMENT 2 ---\n${text2.substring(0, 4000)}` }
+        ]
+      });
+      const raw = diffCompletion.choices[0].message.content.trim();
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (match) diff = JSON.parse(match[0]);
+    } catch(e) { /* diff optional */ }
+
     const [followUps, fristen] = await Promise.all([
       generiereFollowUps(comparison),
       extrahiereFristen(text1 + ' ' + text2)
     ]);
 
-    res.json({ comparison, followUps, fristen });
+    res.json({ comparison, followUps, fristen, diff, doc1Name: file1.originalname, doc2Name: file2.originalname });
 
   } catch (err) {
     console.error('Vergleich Fehler:', err.message);
@@ -1159,6 +1180,101 @@ app.get('/shared/:id', async (req, res) => {
   } catch (err) {
     res.status(500).send('Fehler beim Laden der Erklärung');
   }
+});
+
+// ── Dokumenten-Ordner ────────────────────────────────────────────────────────
+// Ordner auflisten
+app.get('/folders/:user_id', verifyUser, async (req, res) => {
+  try {
+    const { data } = await supabase
+      .from('folders')
+      .select('id, name, created_at')
+      .eq('user_id', req.params.user_id)
+      .order('created_at', { ascending: false });
+    res.json(data || []);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Ordner erstellen
+app.post('/folders', verifyUser, async (req, res) => {
+  const { user_id, name } = req.body;
+  try {
+    const { data, error } = await supabase
+      .from('folders')
+      .insert({ user_id, name })
+      .select('id, name, created_at')
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Ordner umbenennen
+app.put('/folders/:id', verifyUser, async (req, res) => {
+  const { name, user_id } = req.body;
+  try {
+    await supabase.from('folders').update({ name }).eq('id', req.params.id).eq('user_id', user_id);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Ordner löschen
+app.delete('/folders/:id', verifyUser, async (req, res) => {
+  const { user_id } = req.body;
+  try {
+    await supabase.from('folders').delete().eq('id', req.params.id).eq('user_id', user_id);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Chat einem Ordner zuweisen
+app.post('/folders/assign', verifyUser, async (req, res) => {
+  const { user_id, session_id, folder_id } = req.body;
+  try {
+    await supabase.from('chat_titles').upsert(
+      { user_id, session_id, folder_id },
+      { onConflict: 'session_id' }
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Chats in einem Ordner laden (mit Kontext)
+app.get('/folders/:folder_id/chats/:user_id', verifyUser, async (req, res) => {
+  try {
+    const { data: titles } = await supabase
+      .from('chat_titles')
+      .select('session_id, title')
+      .eq('user_id', req.params.user_id)
+      .eq('folder_id', req.params.folder_id);
+
+    if (!titles || !titles.length) return res.json([]);
+
+    const sessionIds = titles.map(t => t.session_id);
+    const titleMap = {};
+    titles.forEach(t => { titleMap[t.session_id] = t.title; });
+
+    const { data: chats } = await supabase
+      .from('chats')
+      .select('session_id, message, created_at')
+      .eq('user_id', req.params.user_id)
+      .in('session_id', sessionIds)
+      .eq('role', 'user')
+      .order('created_at', { ascending: false });
+
+    const sessions = {};
+    (chats || []).forEach(row => {
+      if (!sessions[row.session_id]) {
+        sessions[row.session_id] = {
+          session_id: row.session_id,
+          title: titleMap[row.session_id] || row.message.substring(0, 60),
+          created_at: row.created_at
+        };
+      }
+    });
+
+    res.json(Object.values(sessions));
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.listen(3000, () => {
