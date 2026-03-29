@@ -1281,19 +1281,19 @@ app.get('/folders/:folder_id/chats/:user_id', verifyUser, async (req, res) => {
 async function sendReminderEmail(email, title, due_date, description) {
   const datumFormatiert = new Date(due_date + 'T12:00:00').toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
   await axios.post('https://api.resend.com/emails', {
-    from: 'Dokuvo <erinnerungen@dokuvo.app>',
+    from: 'Dokuvo <noreply@eli10.app>',
     to: email,
-    subject: `Frist-Erinnerung: ${title}`,
+    subject: `Erinnerung: ${title}`,
     html: `
-      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0A0A0A;color:#E8EAED;padding:32px 28px;border-radius:12px;">
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a1a;padding:32px 28px;">
         <h2 style="color:#3B82F6;margin-top:0;">Frist-Erinnerung</h2>
         <p>Wir erinnern dich an eine bevorstehende Frist:</p>
-        <div style="background:#1C1C1E;border-left:3px solid #3B82F6;border-radius:8px;padding:16px 18px;margin:20px 0;">
-          <div style="font-weight:600;font-size:1rem;color:#F1F5F9;">${title}</div>
-          ${description ? `<div style="color:#9CA3AF;font-size:0.9rem;margin-top:6px;">${description}</div>` : ''}
-          <div style="color:#F59E0B;font-size:0.85rem;margin-top:10px;">Fälligkeitsdatum: <strong>${datumFormatiert}</strong></div>
+        <div style="background:#f4f4f5;border-left:3px solid #3B82F6;border-radius:8px;padding:16px 18px;margin:20px 0;">
+          <div style="font-weight:600;font-size:1rem;">${title}</div>
+          ${description ? `<div style="color:#6b7280;font-size:0.9rem;margin-top:6px;">${description}</div>` : ''}
+          <div style="color:#d97706;font-size:0.85rem;margin-top:10px;">Fälligkeitsdatum: <strong>${datumFormatiert}</strong></div>
         </div>
-        <p style="color:#6B7280;font-size:0.85rem;">Diese Erinnerung wurde in Dokuvo gesetzt.</p>
+        <p style="color:#6b7280;font-size:0.85rem;">Diese Erinnerung wurde in Dokuvo gesetzt.</p>
       </div>
     `
   }, {
@@ -1348,9 +1348,10 @@ app.delete('/reminders/:id', verifyUser, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Cron-Endpoint: fällige Erinnerungen versenden (täglich aufrufen)
+// Cron-Endpoint: fällige Erinnerungen versenden — täglich 07:00 UTC via Vercel Cron
 app.post('/reminders/notify', async (req, res) => {
-  if (req.headers['x-cron-secret'] !== process.env.CRON_SECRET) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const today = new Date().toISOString().split('T')[0];
@@ -1358,7 +1359,7 @@ app.post('/reminders/notify', async (req, res) => {
     const { data: due } = await supabase
       .from('reminders')
       .select('*')
-      .eq('due_date', today)
+      .lte('due_date', today)
       .eq('notified', false);
     for (const r of (due || [])) {
       try {
@@ -1366,7 +1367,7 @@ app.post('/reminders/notify', async (req, res) => {
         await supabase.from('reminders').update({ notified: true }).eq('id', r.id);
       } catch(e) { console.error('E-Mail Fehler für Reminder', r.id, e.message); }
     }
-    res.json({ sent: (due || []).length });
+    res.json({ notified: (due || []).length });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
