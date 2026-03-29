@@ -2152,7 +2152,7 @@ body {
   .chat-textarea { font-size: 16px; } /* Verhindert iOS zoom */
 
   /* Tabs auf Mobile ohne Extra-Padding */
-  #tab-history, #tab-premium, #tab-profile, #tab-about {
+  #tab-history, #tab-premium, #tab-profile, #tab-about, #tab-templates {
     height: calc(100vh - 52px - 56px);
     overflow-y: auto;
     padding: 20px 16px 24px;
@@ -2162,11 +2162,13 @@ body {
   #tab-history #historyList,
   #tab-premium > *,
   #tab-profile > *,
-  #tab-about > * {
+  #tab-about > *,
+  #tab-templates > * {
     max-width: 100%;
     margin-left: 0;
     margin-right: 0;
   }
+  .templates-grid { grid-template-columns: 1fr; }
 
   /* Chat Messages auf Mobile */
   .chat-messages { padding: 12px 12px; }
@@ -2178,8 +2180,55 @@ body {
   .fristen-block { padding: 10px 12px; }
 }
 
+/* ── VORLAGEN ── */
+.templates-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+.template-card {
+  background: #1C1C1E;
+  border: 1.5px solid #2C2C2E;
+  border-radius: 14px;
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.18s, background 0.18s;
+  cursor: default;
+}
+.template-card:hover {
+  border-color: #3B82F6;
+  background: #1E2535;
+}
+.template-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #F1F5F9;
+}
+.template-card-desc {
+  font-size: 0.82rem;
+  color: #6B7280;
+  flex: 1;
+}
+.template-card-btn {
+  align-self: flex-start;
+  margin-top: 8px;
+  background: #3B82F6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.template-card-btn:hover { background: #2563EB; }
+
 /* ── TAB INHALTE DESKTOP OPTIMIERUNG ── */
-#tab-history, #tab-premium, #tab-profile, #tab-about {
+#tab-history, #tab-premium, #tab-profile, #tab-about, #tab-templates {
   height: 100%;
   overflow-y: auto;
   padding: 48px 60px;
@@ -2188,15 +2237,18 @@ body {
 #tab-history::-webkit-scrollbar,
 #tab-premium::-webkit-scrollbar,
 #tab-profile::-webkit-scrollbar,
-#tab-about::-webkit-scrollbar { width: 4px; }
+#tab-about::-webkit-scrollbar,
+#tab-templates::-webkit-scrollbar { width: 4px; }
 #tab-history::-webkit-scrollbar-thumb,
 #tab-premium::-webkit-scrollbar-thumb,
 #tab-profile::-webkit-scrollbar-thumb,
-#tab-about::-webkit-scrollbar-thumb { background: #2C2C2E; border-radius: 4px; }
+#tab-about::-webkit-scrollbar-thumb,
+#tab-templates::-webkit-scrollbar-thumb { background: #2C2C2E; border-radius: 4px; }
 #tab-history::-webkit-scrollbar-track,
 #tab-premium::-webkit-scrollbar-track,
 #tab-profile::-webkit-scrollbar-track,
-#tab-about::-webkit-scrollbar-track { background: transparent; }
+#tab-about::-webkit-scrollbar-track,
+#tab-templates::-webkit-scrollbar-track { background: transparent; }
 
 /* Inhalte zentriert mit sinnvoller Maximalbreite */
 #tab-history .section-title,
@@ -2204,7 +2256,8 @@ body {
 #tab-history #historyList,
 #tab-premium > *,
 #tab-profile > *,
-#tab-about > * {
+#tab-about > *,
+#tab-templates > * {
   max-width: 680px;
   margin-left: auto;
   margin-right: auto;
@@ -2215,7 +2268,8 @@ body {
 #tab-history .section-title,
 #tab-premium .section-title,
 #tab-profile .section-title,
-#tab-about .section-title { margin-bottom: 4px; }
+#tab-about .section-title,
+#tab-templates .section-title { margin-bottom: 4px; }
 
 /* Mobile: alles zurücksetzen — siehe oben */
 
@@ -2471,10 +2525,13 @@ body {
       </div>
       <div class="sidebar-nav">
         <button class="nav-item active" id="nav-home" onclick="switchTab('home')">
-          <i data-lucide="wand-2" style="width:16px;height:16px;"></i> Erklären
+          <i data-lucide="wand-2" style="width:16px;height:16px;"></i> <span data-i18n="explain">Erklären</span>
+        </button>
+        <button class="nav-item" id="nav-templates" onclick="switchTab('templates')">
+          <i data-lucide="file-text" style="width:16px;height:16px;"></i> <span data-i18n="templates">Vorlagen</span>
         </button>
         <button class="nav-item" id="nav-premium" onclick="switchTab('premium')">
-          <i data-lucide="zap" style="width:16px;height:16px;"></i> Premium
+          <i data-lucide="zap" style="width:16px;height:16px;"></i> <span data-i18n="premium">Premium</span>
         </button>
         <button class="nav-item" id="nav-about" onclick="switchTab('about')">
           <i data-lucide="info" style="width:16px;height:16px;"></i> Über Dokuvo
@@ -2575,6 +2632,13 @@ body {
             <p class="input-hint">Dokuvo ersetzt keine professionelle Beratung</p>
           </div>
         </div>
+      </div>
+
+      <!-- VORLAGEN TAB -->
+      <div class="tab-panel" id="tab-templates">
+        <p class="section-title" data-i18n="templatesTitle">Vorlagen</p>
+        <p class="section-subtitle" data-i18n="templatesSubtitle">Wähle eine Vorlage und passe sie an deine Situation an.</p>
+        <div class="templates-grid" id="templatesGrid"></div>
       </div>
 
       <!-- PREMIUM TAB -->
@@ -2762,6 +2826,10 @@ body {
         // Sidebar
         newChat: 'Neuer Chat',
         explain: 'Erklären',
+        templates: 'Vorlagen',
+        templatesTitle: 'Vorlagen',
+        templatesSubtitle: 'Wähle eine Vorlage und passe sie an deine Situation an.',
+        templatesUse: 'Verwenden',
         premium: 'Premium',
         aboutDokuvo: 'Über Dokuvo',
         chats: 'Chats',
@@ -2852,6 +2920,10 @@ body {
         passwordMinLength: 'Password must be at least 6 characters.',
         newChat: 'New Chat',
         explain: 'Explain',
+        templates: 'Templates',
+        templatesTitle: 'Templates',
+        templatesSubtitle: 'Choose a template and adapt it to your situation.',
+        templatesUse: 'Use',
         premium: 'Premium',
         aboutDokuvo: 'About Dokuvo',
         chats: 'Chats',
@@ -2954,8 +3026,15 @@ body {
       const newChatBtn = document.querySelector('.new-chat-btn');
       if (newChatBtn) newChatBtn.innerHTML = '<i data-lucide="plus" style="width:15px;height:15px;"></i> ' + t('newChat');
       document.getElementById('nav-home').innerHTML = '<i data-lucide="wand-2" style="width:16px;height:16px;"></i> ' + t('explain');
+      document.getElementById('nav-templates').innerHTML = '<i data-lucide="file-text" style="width:16px;height:16px;"></i> ' + t('templates');
       document.getElementById('nav-premium').innerHTML = '<i data-lucide="zap" style="width:16px;height:16px;"></i> ' + t('premium');
       document.getElementById('nav-about').innerHTML = '<i data-lucide="info" style="width:16px;height:16px;"></i> ' + t('aboutDokuvo');
+      // Vorlagen-Tab neu rendern bei Sprachwechsel
+      const templatesTitle = document.querySelector('#tab-templates .section-title');
+      if (templatesTitle) templatesTitle.textContent = t('templatesTitle');
+      const templatesSub = document.querySelector('#tab-templates .section-subtitle');
+      if (templatesSub) templatesSub.textContent = t('templatesSubtitle');
+      renderTemplates();
       document.querySelector('.sidebar-sessions-title').textContent = t('chats');
 
       // Home
@@ -3209,6 +3288,245 @@ body {
       localStorage.setItem('dokuvo_onboarding_done', 'true');
     }
 
+    // ── Vorlagen-Bibliothek ──
+    const TEMPLATES = [
+      {
+        key: 'widerspruch',
+        title: { de: 'Widerspruch gegen Bescheid', en: 'Objection to Administrative Decision' },
+        desc:  { de: 'Mustertext für Einspruch bei Behörden', en: 'Template for formal objections to official decisions' },
+        text:  {
+          de: `Widerspruch gegen den Bescheid vom [DATUM], Aktenzeichen: [AKTENZEICHEN]
+
+Sehr geehrte Damen und Herren,
+
+hiermit lege ich fristgemäß Widerspruch gegen den oben genannten Bescheid ein.
+
+Begründung:
+[Hier Ihre Begründung einfügen – z. B. sachlicher Fehler, fehlende Berücksichtigung von Unterlagen, unzutreffende Rechtsgrundlage]
+
+Ich bitte Sie, den Bescheid zu überprüfen und mir Ihren Widerspruchsbescheid schriftlich mitzuteilen.
+
+Mit freundlichen Grüßen
+[Ihr Name]
+[Adresse]
+[Datum]`,
+          en: `Objection to the decision dated [DATE], Reference: [REFERENCE NUMBER]
+
+Dear Sir or Madam,
+
+I hereby formally object to the above-mentioned decision within the statutory period.
+
+Reason:
+[Insert your reason here – e.g. factual error, missing documents not considered, incorrect legal basis]
+
+I kindly ask you to review the decision and inform me of your response in writing.
+
+Yours sincerely,
+[Your Name]
+[Address]
+[Date]`
+        }
+      },
+      {
+        key: 'kuendigung',
+        title: { de: 'Kündigung Vertrag', en: 'Contract Termination' },
+        desc:  { de: 'Mustertext für ordentliche Vertragskündigung', en: 'Template for ordinary contract termination' },
+        text:  {
+          de: `Kündigung des Vertrages Nr. [VERTRAGSNUMMER] / Kundennummer: [KUNDENNUMMER]
+
+Sehr geehrte Damen und Herren,
+
+hiermit kündige ich den oben genannten Vertrag ordentlich und fristgerecht zum nächstmöglichen Termin.
+
+Bitte bestätigen Sie mir den Erhalt dieser Kündigung sowie das genaue Vertragsende schriftlich.
+
+Mit freundlichen Grüßen
+[Ihr Name]
+[Adresse]
+[Datum]`,
+          en: `Termination of Contract No. [CONTRACT NUMBER] / Customer ID: [CUSTOMER ID]
+
+Dear Sir or Madam,
+
+I hereby give notice to terminate the above-mentioned contract at the earliest possible date in accordance with the applicable notice period.
+
+Please confirm receipt of this notice and the exact termination date in writing.
+
+Yours sincerely,
+[Your Name]
+[Address]
+[Date]`
+        }
+      },
+      {
+        key: 'vermieter',
+        title: { de: 'Anfrage an Vermieter', en: 'Request to Landlord' },
+        desc:  { de: 'Mustertext für Mietrecht-Anfragen', en: 'Template for tenancy-related requests' },
+        text:  {
+          de: `Anfrage bezüglich: [THEMA, z. B. Mängel in der Wohnung / Betriebskostenabrechnung]
+
+Sehr geehrte/r [Name des Vermieters],
+
+bezüglich der Mietwohnung [Adresse, Wohnung] möchte ich Sie auf Folgendes aufmerksam machen:
+
+[Sachverhalt schildern – z. B. Art des Mangels, seit wann vorhanden, bisherige Kontaktversuche]
+
+Ich bitte Sie, sich bis zum [DATUM] bei mir zu melden und das Problem zu beheben. Anderenfalls behalte ich mir weitere rechtliche Schritte vor.
+
+Mit freundlichen Grüßen
+[Ihr Name]
+[Adresse]
+[Datum]`,
+          en: `Request regarding: [TOPIC, e.g. defects in the apartment / utility bill]
+
+Dear [Landlord's Name],
+
+regarding the rental property at [Address, Unit], I would like to bring the following to your attention:
+
+[Describe the issue – e.g. nature of the defect, how long it has existed, previous contact attempts]
+
+I kindly ask you to respond by [DATE] and resolve the issue. Otherwise, I reserve the right to take further legal action.
+
+Yours sincerely,
+[Your Name]
+[Address]
+[Date]`
+        }
+      },
+      {
+        key: 'reklamation',
+        title: { de: 'Reklamation / Beschwerde', en: 'Complaint / Product Issue' },
+        desc:  { de: 'Mustertext für Produktbeschwerden und Reklamationen', en: 'Template for product complaints and returns' },
+        text:  {
+          de: `Reklamation / Bestellung Nr. [BESTELLNUMMER] vom [DATUM]
+
+Sehr geehrte Damen und Herren,
+
+am [DATUM] habe ich bei Ihnen [Produkt/Dienstleistung] erworben. Leider entspricht diese/r nicht der zugesicherten Qualität, da:
+
+[Mangel genau beschreiben]
+
+Ich bitte Sie, das Problem bis zum [DATUM] zu beheben. Als Lösung erwarte ich [Erstattung / Ersatzlieferung / Reparatur].
+
+Sollte bis zu diesem Datum keine zufriedenstellende Lösung erfolgen, werde ich rechtliche Schritte einleiten.
+
+Mit freundlichen Grüßen
+[Ihr Name]
+[Adresse]
+[Datum]`,
+          en: `Complaint / Order No. [ORDER NUMBER] dated [DATE]
+
+Dear Sir or Madam,
+
+on [DATE] I purchased [product/service] from you. Unfortunately it does not meet the promised quality because:
+
+[Describe the defect precisely]
+
+I ask you to resolve this issue by [DATE]. As a remedy I expect [refund / replacement / repair].
+
+If no satisfactory solution is provided by that date, I will pursue legal action.
+
+Yours sincerely,
+[Your Name]
+[Address]
+[Date]`
+        }
+      },
+      {
+        key: 'fristsetzung',
+        title: { de: 'Fristsetzung', en: 'Setting a Deadline' },
+        desc:  { de: 'Mustertext für Fristsetzungsschreiben', en: 'Template for formal deadline notices' },
+        text:  {
+          de: `Fristsetzung zur Erfüllung: [THEMA]
+
+Sehr geehrte Damen und Herren,
+
+ich beziehe mich auf [Vertrag / Bestellung / vorherige Korrespondenz] vom [DATUM].
+
+Trotz meiner bisherigen Kontaktversuche ist [Leistung / Zahlung / Lösung] bisher ausgeblieben. Ich setze Ihnen hiermit eine letzte Frist bis zum [DATUM].
+
+Sollte die Angelegenheit bis zu diesem Termin nicht erledigt sein, werde ich [rechtliche Schritte einleiten / ein Inkassobüro beauftragen / Klage erheben].
+
+Mit freundlichen Grüßen
+[Ihr Name]
+[Adresse]
+[Datum]`,
+          en: `Deadline Notice: [TOPIC]
+
+Dear Sir or Madam,
+
+I refer to [contract / order / previous correspondence] dated [DATE].
+
+Despite my previous attempts to contact you, [service / payment / resolution] has not been provided. I hereby set a final deadline of [DATE].
+
+If this matter is not resolved by that date, I will [initiate legal proceedings / engage a collections agency / file a claim].
+
+Yours sincerely,
+[Your Name]
+[Address]
+[Date]`
+        }
+      },
+      {
+        key: 'widerruf',
+        title: { de: 'Widerruf', en: 'Cancellation (Right of Withdrawal)' },
+        desc:  { de: 'Mustertext für Widerruf innerhalb 14 Tage', en: 'Template for 14-day right of withdrawal' },
+        text:  {
+          de: `Widerruf meiner Bestellung / meines Vertrages Nr. [NUMMER] vom [DATUM]
+
+Sehr geehrte Damen und Herren,
+
+hiermit widerrufe ich fristgerecht meinen am [DATUM] geschlossenen Vertrag über [Produkt/Dienstleistung].
+
+Ich bitte um Rückerstattung des Kaufpreises in Höhe von [BETRAG] € auf mein Konto [IBAN, falls bekannt] innerhalb der gesetzlichen Frist von 14 Tagen.
+
+Mit freundlichen Grüßen
+[Ihr Name]
+[Adresse]
+[Datum]`,
+          en: `Cancellation of my order / contract No. [NUMBER] dated [DATE]
+
+Dear Sir or Madam,
+
+I hereby cancel within the statutory period the contract concluded on [DATE] for [product/service].
+
+Please refund the purchase price of [AMOUNT] to my account [IBAN if known] within the statutory 14-day period.
+
+Yours sincerely,
+[Your Name]
+[Address]
+[Date]`
+        }
+      }
+    ];
+
+    function renderTemplates() {
+      const grid = document.getElementById('templatesGrid');
+      if (!grid) return;
+      const lang = currentLang || 'de';
+      grid.innerHTML = TEMPLATES.map(tpl => `
+        <div class="template-card">
+          <div class="template-card-title">${tpl.title[lang] || tpl.title.de}</div>
+          <div class="template-card-desc">${tpl.desc[lang] || tpl.desc.de}</div>
+          <button class="template-card-btn" onclick="useTemplate('${tpl.key}')">${t('templatesUse')}</button>
+        </div>
+      `).join('');
+    }
+
+    function useTemplate(key) {
+      const lang = currentLang || 'de';
+      const tpl = TEMPLATES.find(t => t.key === key);
+      if (!tpl) return;
+      switchTab('home');
+      const input = document.getElementById('chatInput');
+      if (input) {
+        input.value = tpl.text[lang] || tpl.text.de;
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+        input.focus();
+      }
+    }
+
     function switchTab(tabName) {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
@@ -3224,6 +3542,7 @@ body {
       const mobileNav = document.getElementById(`mobile-nav-${tabName}`);
       if (mobileNav) mobileNav.classList.add('active');
       if (tabName === 'profile') ladeProfil();
+      if (tabName === 'templates') renderTemplates();
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
