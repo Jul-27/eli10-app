@@ -29,7 +29,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // ── Auth-Middleware: prüft ob user_id gültig ist ────────────────────────────
 async function verifyUser(req, res, next) {
-  const user_id = req.body.user_id || req.params.user_id;
+  const user_id = req.body.user_id || req.params.user_id || req.query.user_id || req.headers['x-user-id'];
   if (!user_id) return res.status(401).json({ error: 'Nicht autorisiert' });
   try {
     const { data, error } = await supabase.auth.admin.getUserById(user_id);
@@ -1394,6 +1394,99 @@ app.post('/reminders/notify', async (req, res) => {
       } catch(e) { console.error('E-Mail Fehler für Reminder', r.id, e.message); }
     }
     res.json({ notified: (due || []).length });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Team-Workspace ───────────────────────────────────────────────────────────
+
+// Team erstellen
+app.post('/teams', verifyUser, async (req, res) => {
+  const { user_id, name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Teamname fehlt' });
+  try {
+    const { data: team, error } = await supabase
+      .from('teams')
+      .insert({ name, owner_id: user_id })
+      .select()
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+
+    await supabase.from('team_members').insert({ team_id: team.id, user_id, role: 'owner' });
+    res.json(team);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Teams des Users laden
+app.get('/teams/:user_id', verifyUser, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('team_members')
+      .select('role, teams(id, name, owner_id, created_at)')
+      .eq('user_id', req.params.user_id);
+    if (error) return res.status(500).json({ error: error.message });
+    const teams = (data || []).map(d => ({ ...d.teams, role: d.role }));
+    res.json(teams);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Mitglied per E-Mail einladen
+app.post('/teams/:id/invite', verifyUser, async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'E-Mail fehlt' });
+  try {
+    // User per E-Mail finden
+    const { data: users } = await supabase.auth.admin.listUsers();
+    const found = users?.users?.find(u => u.email === email);
+    if (!found) return res.status(404).json({ error: 'Kein Nutzer mit dieser E-Mail gefunden' });
+
+    // Prüfen ob schon Mitglied
+    const { data: existing } = await supabase.from('team_members')
+      .select('id').eq('team_id', req.params.id).eq('user_id', found.id).single();
+    if (existing) return res.status(409).json({ error: 'Nutzer ist bereits Mitglied' });
+
+    await supabase.from('team_members').insert({ team_id: req.params.id, user_id: found.id, role: 'member' });
+    res.json({ success: true, email });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Chat-Session mit Team teilen
+app.post('/teams/:id/share', verifyUser, async (req, res) => {
+  const { user_id, session_id, note } = req.body;
+  if (!session_id) return res.status(400).json({ error: 'session_id fehlt' });
+  try {
+    // Prüfen ob Mitglied
+    const { data: member } = await supabase.from('team_members')
+      .select('id').eq('team_id', req.params.id).eq('user_id', user_id).single();
+    if (!member) return res.status(403).json({ error: 'Kein Mitglied dieses Teams' });
+
+    const { data, error } = await supabase.from('team_shares')
+      .insert({ team_id: req.params.id, session_id, shared_by: user_id, note: note || null })
+      .select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Geteilte Sessions im Team laden
+app.get('/teams/:id/shared', verifyUser, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('team_shares')
+      .select('id, session_id, note, shared_by, created_at')
+      .eq('team_id', req.params.id)
+      .order('created_at', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Titel aus chat_titles laden
+    const sessionIds = (data || []).map(d => d.session_id);
+    const { data: titles } = sessionIds.length
+      ? await supabase.from('chat_titles').select('session_id, title').in('session_id', sessionIds)
+      : { data: [] };
+    const titleMap = {};
+    (titles || []).forEach(t => { titleMap[t.session_id] = t.title; });
+
+    const result = (data || []).map(d => ({ ...d, title: titleMap[d.session_id] || d.session_id }));
+    res.json(result);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

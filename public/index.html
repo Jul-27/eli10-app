@@ -1242,6 +1242,21 @@ body {
 }
 
 .session-delete-btn:hover { color: #F87171; background: rgba(248,113,113,0.1); }
+.session-share-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: #48484A;
+  cursor: pointer;
+  padding: 6px 6px;
+  border-radius: 6px;
+  opacity: 0;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+}
+.session-item-row:hover .session-share-btn { opacity: 1; }
+.session-share-btn:hover { color: #3B82F6; background: rgba(59,130,246,0.1); }
 
 .sidebar-empty {
   font-size: 0.8rem;
@@ -2208,7 +2223,7 @@ body {
   .chat-textarea { font-size: 16px; } /* Verhindert iOS zoom */
 
   /* Tabs auf Mobile ohne Extra-Padding */
-  #tab-history, #tab-premium, #tab-profile, #tab-about, #tab-templates {
+  #tab-history, #tab-premium, #tab-profile, #tab-about, #tab-templates, #tab-team {
     height: calc(100vh - 52px - 56px);
     overflow-y: auto;
     padding: 20px 16px 24px;
@@ -2219,7 +2234,8 @@ body {
   #tab-premium > *,
   #tab-profile > *,
   #tab-about > *,
-  #tab-templates > * {
+  #tab-templates > *,
+  #tab-team > * {
     max-width: 100%;
     margin-left: 0;
     margin-right: 0;
@@ -2284,7 +2300,7 @@ body {
 .template-card-btn:hover { background: #2563EB; }
 
 /* ── TAB INHALTE DESKTOP OPTIMIERUNG ── */
-#tab-history, #tab-premium, #tab-profile, #tab-about, #tab-templates {
+#tab-history, #tab-premium, #tab-profile, #tab-about, #tab-templates, #tab-team {
   height: 100%;
   overflow-y: auto;
   padding: 48px 60px;
@@ -2294,17 +2310,20 @@ body {
 #tab-premium::-webkit-scrollbar,
 #tab-profile::-webkit-scrollbar,
 #tab-about::-webkit-scrollbar,
-#tab-templates::-webkit-scrollbar { width: 4px; }
+#tab-templates::-webkit-scrollbar,
+#tab-team::-webkit-scrollbar { width: 4px; }
 #tab-history::-webkit-scrollbar-thumb,
 #tab-premium::-webkit-scrollbar-thumb,
 #tab-profile::-webkit-scrollbar-thumb,
 #tab-about::-webkit-scrollbar-thumb,
-#tab-templates::-webkit-scrollbar-thumb { background: #2C2C2E; border-radius: 4px; }
+#tab-templates::-webkit-scrollbar-thumb,
+#tab-team::-webkit-scrollbar-thumb { background: #2C2C2E; border-radius: 4px; }
 #tab-history::-webkit-scrollbar-track,
 #tab-premium::-webkit-scrollbar-track,
 #tab-profile::-webkit-scrollbar-track,
 #tab-about::-webkit-scrollbar-track,
-#tab-templates::-webkit-scrollbar-track { background: transparent; }
+#tab-templates::-webkit-scrollbar-track,
+#tab-team::-webkit-scrollbar-track { background: transparent; }
 
 /* Inhalte zentriert mit sinnvoller Maximalbreite */
 #tab-history .section-title,
@@ -2313,7 +2332,8 @@ body {
 #tab-premium > *,
 #tab-profile > *,
 #tab-about > *,
-#tab-templates > * {
+#tab-templates > *,
+#tab-team > * {
   max-width: 680px;
   margin-left: auto;
   margin-right: auto;
@@ -2325,7 +2345,8 @@ body {
 #tab-premium .section-title,
 #tab-profile .section-title,
 #tab-about .section-title,
-#tab-templates .section-title { margin-bottom: 4px; }
+#tab-templates .section-title,
+#tab-team .section-title { margin-bottom: 4px; }
 
 /* Mobile: alles zurücksetzen — siehe oben */
 
@@ -2589,6 +2610,9 @@ body {
         <button class="nav-item" id="nav-premium" onclick="switchTab('premium')">
           <i data-lucide="zap" style="width:16px;height:16px;"></i> <span data-i18n="premium">Premium</span>
         </button>
+        <button class="nav-item" id="nav-team" onclick="switchTab('team')">
+          <i data-lucide="users" style="width:16px;height:16px;"></i> Team
+        </button>
         <button class="nav-item" id="nav-about" onclick="switchTab('about')">
           <i data-lucide="info" style="width:16px;height:16px;"></i> Über Dokuvo
         </button>
@@ -2826,6 +2850,17 @@ body {
           <h3><i data-lucide="alert-triangle" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px;color:#FBBF24;"></i>Wichtiger Hinweis</h3>
           <p>Dokuvo ist kein Ersatz für rechtliche, medizinische oder steuerliche Beratung. Bei wichtigen Entscheidungen konsultiere immer einen qualifizierten Experten.</p>
         </div>
+      </div>
+
+      <!-- TEAM TAB -->
+      <div class="tab-panel" id="tab-team">
+        <h1 class="section-title">Team-Workspace</h1>
+        <p class="section-subtitle" style="margin-bottom:20px;">Arbeite gemeinsam mit deinem Team an Dokumenten.</p>
+        <button onclick="erstelleTeam()" style="display:flex;align-items:center;gap:8px;background:#3B82F6;color:white;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:24px;">
+          <i data-lucide="plus" style="width:14px;height:14px;"></i> Team erstellen
+        </button>
+        <div id="teamListe" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div id="teamDetail" style="display:none;margin-top:24px;"></div>
       </div>
 
     </div><!-- ende chat-main -->
@@ -3556,6 +3591,154 @@ Yours sincerely,
       }
     ];
 
+    // ── Team-Workspace ──────────────────────────────────────────────────────────
+
+    async function ladeTeams() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      if (!user) return;
+      const container = document.getElementById('teamListe');
+      container.innerHTML = '<div style="color:#48484A;font-size:13px;">Lädt...</div>';
+      const res = await fetch(`/teams/${user.id}`, { headers: { 'x-user-id': user.id } });
+      const teams = await res.json();
+      document.getElementById('teamDetail').style.display = 'none';
+      if (!teams.length) {
+        container.innerHTML = '<div style="color:#48484A;font-size:13px;">Noch kein Team. Erstelle dein erstes Team!</div>';
+        return;
+      }
+      container.innerHTML = teams.map(t => `
+        <div onclick="zeigeTeamDetail('${t.id}', '${escapeHtml(t.name)}')" style="background:#1C1C1E;border:1px solid #2C2C2E;border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:border-color 0.15s;" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="this.style.borderColor='#2C2C2E'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <div>
+            <div style="font-size:14px;font-weight:600;color:#F1F5F9;">${escapeHtml(t.name)}</div>
+            <div style="font-size:11px;color:#636366;margin-top:2px;">${t.role === 'owner' ? 'Eigentümer' : 'Mitglied'}</div>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#636366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      `).join('');
+    }
+
+    async function erstelleTeam() {
+      const name = prompt('Teamname:');
+      if (!name || !name.trim()) return;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      if (!user) return;
+      const res = await fetch('/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, name: name.trim() })
+      });
+      const data = await res.json();
+      if (data.error) { alert(data.error); return; }
+      ladeTeams();
+    }
+
+    async function zeigeTeamDetail(teamId, teamName) {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      if (!user) return;
+      const detailEl = document.getElementById('teamDetail');
+      detailEl.style.display = 'block';
+      detailEl.innerHTML = `
+        <div style="background:#1C1C1E;border:1px solid #2C2C2E;border-radius:14px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <button onclick="document.getElementById('teamDetail').style.display='none'" style="background:none;border:none;color:#636366;cursor:pointer;padding:4px;"><svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='15 18 9 12 15 6'/></svg></button>
+            <h3 style="font-size:15px;font-weight:600;color:#F1F5F9;">${escapeHtml(teamName)}</h3>
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+            <button onclick="ladeTeamMitglieder('${teamId}')" style="background:#2C2C2E;color:#AEAEB2;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Mitglieder</button>
+            <button onclick="ladeGeteilteSessionen('${teamId}')" style="background:#2C2C2E;color:#AEAEB2;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Geteilte Dokumente</button>
+            <button onclick="ladeTeamMitgliederEinladen('${teamId}')" style="background:#3B82F6;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Mitglied einladen</button>
+          </div>
+          <div id="teamDetailInhalt" style="color:#48484A;font-size:13px;">Wähle eine Aktion.</div>
+        </div>`;
+    }
+
+    async function ladeTeamMitglieder(teamId) {
+      const inhalt = document.getElementById('teamDetailInhalt');
+      inhalt.innerHTML = '<div style="color:#48484A;font-size:13px;">Lädt...</div>';
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      const { data: members } = await supabaseClient.from('team_members').select('user_id, role').eq('team_id', teamId);
+      if (!members || !members.length) { inhalt.innerHTML = '<div style="color:#48484A;font-size:13px;">Keine Mitglieder.</div>'; return; }
+      inhalt.innerHTML = `<div style="font-size:12px;font-weight:600;color:#636366;margin-bottom:10px;">MITGLIEDER (${members.length})</div>` +
+        members.map(m => `
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2C2C2E;">
+            <div style="width:28px;height:28px;border-radius:50%;background:#2C2C2E;display:flex;align-items:center;justify-content:center;font-size:11px;color:#636366;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div style="font-size:13px;color:#AEAEB2;">${m.user_id}</div>
+            <div style="margin-left:auto;font-size:11px;color:#3B82F6;font-weight:600;">${m.role === 'owner' ? 'Eigentümer' : 'Mitglied'}</div>
+          </div>`).join('');
+    }
+
+    async function ladeTeamMitgliederEinladen(teamId) {
+      const email = prompt('E-Mail des einzuladenden Nutzers:');
+      if (!email || !email.trim()) return;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      const res = await fetch(`/teams/${teamId}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, email: email.trim() })
+      });
+      const data = await res.json();
+      if (data.error) { alert(data.error); return; }
+      alert(`${data.email} wurde eingeladen!`);
+      ladeTeamMitglieder(teamId);
+    }
+
+    async function ladeGeteilteSessionen(teamId) {
+      const inhalt = document.getElementById('teamDetailInhalt');
+      inhalt.innerHTML = '<div style="color:#48484A;font-size:13px;">Lädt...</div>';
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      const res = await fetch(`/teams/${teamId}/shared?user_id=${user.id}`, { headers: { 'x-user-id': user.id } });
+      const shares = await res.json();
+      if (!shares.length) {
+        inhalt.innerHTML = '<div style="color:#48484A;font-size:13px;">Noch keine geteilten Dokumente.</div>';
+        return;
+      }
+      inhalt.innerHTML = `<div style="font-size:12px;font-weight:600;color:#636366;margin-bottom:10px;">GETEILTE DOKUMENTE (${shares.length})</div>` +
+        shares.map(s => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #2C2C2E;cursor:pointer;" onclick="ladeSession('${s.session_id}')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;color:#F1F5F9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(s.title)}</div>
+              ${s.note ? `<div style="font-size:11px;color:#636366;margin-top:2px;">${escapeHtml(s.note)}</div>` : ''}
+            </div>
+          </div>`).join('');
+    }
+
+    async function teileSessionMitTeam(sessionId, event) {
+      event.stopPropagation();
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      if (!user) return;
+      // Teams laden
+      const res = await fetch(`/teams/${user.id}`, { headers: { 'x-user-id': user.id } });
+      const teams = await res.json();
+      if (!teams.length) { alert('Du bist noch in keinem Team. Erstelle zuerst ein Team.'); return; }
+      const teamNamen = teams.map((t, i) => `${i + 1}. ${t.name}`).join('\n');
+      const choice = prompt(`Mit welchem Team teilen?\n\n${teamNamen}\n\nNummer eingeben:`);
+      if (!choice) return;
+      const idx = parseInt(choice) - 1;
+      if (isNaN(idx) || idx < 0 || idx >= teams.length) { alert('Ungültige Auswahl.'); return; }
+      const team = teams[idx];
+      const note = prompt('Optionale Notiz (leer lassen zum Überspringen):') || '';
+      const shareRes = await fetch(`/teams/${team.id}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, session_id: sessionId, note })
+      });
+      const data = await shareRes.json();
+      if (data.error) { alert(data.error); return; }
+      // Visuelles Feedback
+      const btn = event.target.closest('.session-share-btn');
+      if (btn) { btn.style.color = '#34D399'; setTimeout(() => { btn.style.color = ''; }, 1500); }
+    }
+
     function renderTemplates() {
       const grid = document.getElementById('templatesGrid');
       if (!grid) return;
@@ -3599,6 +3782,7 @@ Yours sincerely,
       if (mobileNav) mobileNav.classList.add('active');
       if (tabName === 'profile') ladeProfil();
       if (tabName === 'templates') renderTemplates();
+      if (tabName === 'team') ladeTeams();
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -4807,6 +4991,9 @@ Yours sincerely,
         container.innerHTML = sichtbar.map(s => `
           <div class="session-item-row ${s.session_id === currentSessionId ? 'active' : ''}" data-session="${s.session_id}">
             <div class="session-item-label" onclick="ladeSession('${s.session_id}')" ondblclick="starteRename('${s.session_id}', this, event)">${s.title}</div>
+            <button class="session-share-btn" onclick="teileSessionMitTeam('${s.session_id}', event)" title="Mit Team teilen">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
             <button class="session-delete-btn" onclick="loescheSession('${s.session_id}', event)" title="Chat löschen">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
             </button>
