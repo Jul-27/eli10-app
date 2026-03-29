@@ -320,6 +320,31 @@ async function generiereCheckliste(text) {
     return match ? JSON.parse(match[0]) : [];
   } catch(e) { return []; }
 }
+// ── PDF-Annotationen ────────────────────────────────────────────────────────
+async function extrahiereAnnotationen(text) {
+  try {
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.2,
+      max_tokens: 500,
+      messages: [
+        { role: 'system', content: `Identifiziere maximal 6 wirklich wichtige Textstellen im Dokument. Nur Stellen die der Leser unbedingt kennen muss.
+Antworte NUR mit einem JSON-Array. Jedes Element hat:
+- "stelle": exakter Textausschnitt aus dem Dokument (max 100 Zeichen)
+- "typ": "risiko"|"frist"|"kosten"|"wichtig"
+- "kommentar": warum diese Stelle wichtig ist (max 60 Zeichen)
+Keine anderen Texte. Wenn keine wichtigen Stellen: leeres Array [].` },
+        { role: 'user', content: `Markiere die wichtigsten Stellen in diesem Dokument:\n\n${text.substring(0, 8000)}` }
+      ]
+    });
+    const raw = completion.choices[0].message.content.trim();
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) return [];
+    const annotationen = JSON.parse(match[0]);
+    return annotationen.slice(0, 6);
+  } catch(e) { return []; }
+}
+
 async function extractPdfText(buffer) {
   // pdf-parse Vercel-Workaround: direkt die lib laden, nicht den Wrapper
   const pdfParse = require('pdf-parse/lib/pdf-parse.js');
@@ -378,16 +403,17 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
     });
 
     const explanation = completion.choices[0].message.content;
-    const [followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste] = await Promise.all([
+    const [followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste, annotationen] = await Promise.all([
       generiereFollowUps(explanation),
       extrahiereFristen(truncatedText),
       analysiereRisiken(truncatedText),
       generiereZusammenfassung(truncatedText),
       generiereHandlungsempfehlungen(truncatedText),
       extrahiereGlossar(truncatedText),
-      generiereCheckliste(truncatedText)
+      generiereCheckliste(truncatedText),
+      extrahiereAnnotationen(truncatedText)
     ]);
-    res.json({ explanation, followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste });
+    res.json({ explanation, followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste, annotationen });
 
   } catch (error) {
     console.error('Upload Fehler:', error.message);
