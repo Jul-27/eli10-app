@@ -4280,9 +4280,9 @@ Yours sincerely,
         // Analyse-Daten aus gespeicherter Nachricht extrahieren
         let displayText = text;
         let analyseData = {};
-        const analyseMatch = text.match(/<!--ANALYSE:([\s\S]*?):ANALYSE-->/);
+        const analyseMatch = text.match(new RegExp('<!--ANALYSE:([\\s\\S]*?):ANALYSE-->'));
         if (analyseMatch) {
-          displayText = text.replace(/<!--ANALYSE:[\s\S]*?:ANALYSE-->/, '').trim();
+          displayText = text.replace(new RegExp('<!--ANALYSE:[\\s\\S]*?:ANALYSE-->'), '').trim();
           try { analyseData = JSON.parse(analyseMatch[1]); } catch(e) {}
         }
 
