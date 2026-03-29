@@ -1526,6 +1526,28 @@ body {
 
 .attach-btn:hover { color: #AEAEB2; background: #222; }
 
+.mic-btn {
+  background: none;
+  border: none;
+  color: #48484A;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.mic-btn:hover { color: #AEAEB2; background: #222; }
+.mic-btn.recording {
+  color: #F87171;
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.15); }
+}
+
 .send-btn {
   background: #3B82F6;
   border: none;
@@ -2537,6 +2559,9 @@ body {
                   </button>
                   <button class="attach-btn" onclick="document.getElementById('fotoInput').click()">
                     <i data-lucide="camera" style="width:18px;height:18px;"></i>
+                  </button>
+                  <button class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Spracheingabe">
+                    <i data-lucide="mic" style="width:18px;height:18px;"></i>
                   </button>
                   <textarea id="chatInput" class="chat-textarea" placeholder="Stelle eine Frage oder füge Text ein..." rows="1"
                     onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendChatMessage()}"
@@ -3750,6 +3775,54 @@ body {
 
     function zeigeLimitBanner() {
       document.getElementById('limitBanner').classList.add('visible');
+    }
+
+    let voiceRecognition = null;
+    let isRecording = false;
+
+    function toggleVoiceInput() {
+      const btn = document.getElementById('micBtn');
+      const input = document.getElementById('chatInput');
+
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Spracheingabe wird von diesem Browser nicht unterstützt.');
+        return;
+      }
+
+      if (isRecording) {
+        voiceRecognition.stop();
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      voiceRecognition = new SpeechRecognition();
+      voiceRecognition.lang = document.documentElement.lang === 'en' ? 'en-US' : 'de-DE';
+      voiceRecognition.interimResults = false;
+      voiceRecognition.maxAlternatives = 1;
+
+      voiceRecognition.onstart = () => {
+        isRecording = true;
+        btn.classList.add('recording');
+      };
+
+      voiceRecognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        input.value = (input.value ? input.value + ' ' : '') + transcript;
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+      };
+
+      voiceRecognition.onerror = (event) => {
+        console.error('Spracheingabe Fehler:', event.error);
+      };
+
+      voiceRecognition.onend = () => {
+        isRecording = false;
+        btn.classList.remove('recording');
+        voiceRecognition = null;
+      };
+
+      voiceRecognition.start();
     }
 
     async function sendChatMessage(vorgefertigterText) {
