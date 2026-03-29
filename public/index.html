@@ -1673,6 +1673,62 @@ body {
 }
 .frist-export-btn:hover { border-color: #3B82F6; color: #3B82F6; }
 
+.frist-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; position: relative; }
+
+.frist-remind-btn {
+  background: none;
+  border: 1px solid #2C2C2E;
+  border-radius: 7px;
+  color: #48484A;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.frist-remind-btn:hover { border-color: #F59E0B; color: #F59E0B; }
+.frist-remind-btn.set { border-color: #34D399; color: #34D399; cursor: default; }
+
+.remind-popup {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #1C1C1E;
+  border: 1px solid #3B82F6;
+  border-radius: 10px;
+  padding: 12px 14px;
+  z-index: 100;
+  min-width: 210px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.remind-popup-title {
+  font-size: 12px;
+  color: #AEAEB2;
+  margin-bottom: 8px;
+}
+.remind-popup-options {
+  display: flex;
+  gap: 6px;
+}
+.remind-day-btn {
+  flex: 1;
+  background: #111;
+  border: 1px solid #2C2C2E;
+  border-radius: 7px;
+  color: #E8EAED;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.remind-day-btn:hover { border-color: #3B82F6; background: #1A2035; color: #3B82F6; }
+
 /* ── Analyse-Blöcke (Risiko, Zusammenfassung, Handlungen, Glossar, Checkliste) ── */
 .analyse-block {
   margin-top: 14px;
@@ -3762,6 +3818,9 @@ Yours sincerely,
           <div class="frist-datum ${bald ? 'bald' : ''}">${datumFormatiert}${bald ? ` · noch ${tageBis} Tage` : ''}</div>
         `;
 
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'frist-actions';
+
         const btn = document.createElement('button');
         btn.className = 'frist-export-btn';
         btn.innerHTML = `<i data-lucide="calendar-plus" style="width:12px;height:12px;"></i> In Kalender`;
@@ -3789,8 +3848,75 @@ Yours sincerely,
           lucide.createIcons();
         });
 
+        const remindBtn = document.createElement('button');
+        remindBtn.className = 'frist-remind-btn';
+        remindBtn.innerHTML = `<i data-lucide="bell" style="width:12px;height:12px;"></i> Erinnern`;
+
+        const popup = document.createElement('div');
+        popup.className = 'remind-popup';
+        popup.style.display = 'none';
+        popup.innerHTML = `
+          <div class="remind-popup-title">Wie viele Tage vorher?</div>
+          <div class="remind-popup-options">
+            <button class="remind-day-btn" data-days="1">1 Tag</button>
+            <button class="remind-day-btn" data-days="3">3 Tage</button>
+            <button class="remind-day-btn" data-days="7">7 Tage</button>
+          </div>
+        `;
+
+        remindBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = popup.style.display !== 'none';
+          document.querySelectorAll('.remind-popup').forEach(p => p.style.display = 'none');
+          popup.style.display = isOpen ? 'none' : 'block';
+        });
+
+        popup.querySelectorAll('.remind-day-btn').forEach(dayBtn => {
+          dayBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const tage = parseInt(dayBtn.dataset.days);
+            popup.style.display = 'none';
+            remindBtn.disabled = true;
+            remindBtn.innerHTML = `<i data-lucide="loader" style="width:12px;height:12px;"></i> ...`;
+            lucide.createIcons();
+            try {
+              const { data: { session } } = await supabaseClient.auth.getSession();
+              const user_id = session?.user?.id;
+              const email = session?.user?.email;
+
+              const reminderDate = new Date(f.datum + 'T12:00:00');
+              reminderDate.setDate(reminderDate.getDate() - tage);
+              const due_date = reminderDate.toISOString().split('T')[0];
+
+              const resp = await fetch('/reminders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id, title: f.titel, due_date, description: f.beschreibung, email })
+              });
+
+              if (resp.ok) {
+                remindBtn.className = 'frist-remind-btn set';
+                remindBtn.innerHTML = `<i data-lucide="check" style="width:12px;height:12px;"></i> Erinnerung gesetzt`;
+              } else {
+                remindBtn.innerHTML = `<i data-lucide="bell" style="width:12px;height:12px;"></i> Erinnern`;
+                remindBtn.disabled = false;
+              }
+            } catch(err) {
+              remindBtn.innerHTML = `<i data-lucide="bell" style="width:12px;height:12px;"></i> Erinnern`;
+              remindBtn.disabled = false;
+            }
+            lucide.createIcons();
+          });
+        });
+
+        document.addEventListener('click', () => { popup.style.display = 'none'; });
+
+        actionsDiv.appendChild(btn);
+        actionsDiv.appendChild(remindBtn);
+        actionsDiv.appendChild(popup);
+
         item.appendChild(info);
-        item.appendChild(btn);
+        item.appendChild(actionsDiv);
         block.appendChild(item);
       });
 

@@ -1277,6 +1277,99 @@ app.get('/folders/:folder_id/chats/:user_id', verifyUser, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ── Fristen-Erinnerungen ─────────────────────────────────────────────────────
+async function sendReminderEmail(email, title, due_date, description) {
+  const datumFormatiert = new Date(due_date + 'T12:00:00').toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  await axios.post('https://api.resend.com/emails', {
+    from: 'Dokuvo <erinnerungen@dokuvo.app>',
+    to: email,
+    subject: `Frist-Erinnerung: ${title}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0A0A0A;color:#E8EAED;padding:32px 28px;border-radius:12px;">
+        <h2 style="color:#3B82F6;margin-top:0;">Frist-Erinnerung</h2>
+        <p>Wir erinnern dich an eine bevorstehende Frist:</p>
+        <div style="background:#1C1C1E;border-left:3px solid #3B82F6;border-radius:8px;padding:16px 18px;margin:20px 0;">
+          <div style="font-weight:600;font-size:1rem;color:#F1F5F9;">${title}</div>
+          ${description ? `<div style="color:#9CA3AF;font-size:0.9rem;margin-top:6px;">${description}</div>` : ''}
+          <div style="color:#F59E0B;font-size:0.85rem;margin-top:10px;">Fälligkeitsdatum: <strong>${datumFormatiert}</strong></div>
+        </div>
+        <p style="color:#6B7280;font-size:0.85rem;">Diese Erinnerung wurde in Dokuvo gesetzt.</p>
+      </div>
+    `
+  }, {
+    headers: {
+      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+// Erinnerung erstellen
+app.post('/reminders', verifyUser, async (req, res) => {
+  const { user_id, title, due_date, description, email } = req.body;
+  if (!user_id || !title || !due_date || !email) return res.status(400).json({ error: 'Pflichtfelder fehlen' });
+  try {
+    const { data, error } = await supabase
+      .from('reminders')
+      .insert({ user_id, title, due_date, description, email, notified: false })
+      .select()
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+
+    // E-Mail sofort schicken wenn Datum heute ist
+    const today = new Date().toISOString().split('T')[0];
+    if (due_date === today) {
+      await sendReminderEmail(email, title, due_date, description);
+      await supabase.from('reminders').update({ notified: true }).eq('id', data.id);
+    }
+
+    res.json(data);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Erinnerungen laden
+app.get('/reminders/:user_id', verifyUser, async (req, res) => {
+  try {
+    const { data } = await supabase
+      .from('reminders')
+      .select('*')
+      .eq('user_id', req.params.user_id)
+      .order('due_date', { ascending: true });
+    res.json(data || []);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Erinnerung löschen
+app.delete('/reminders/:id', verifyUser, async (req, res) => {
+  const { user_id } = req.body;
+  try {
+    await supabase.from('reminders').delete().eq('id', req.params.id).eq('user_id', user_id);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Cron-Endpoint: fällige Erinnerungen versenden (täglich aufrufen)
+app.post('/reminders/notify', async (req, res) => {
+  if (req.headers['x-cron-secret'] !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const { data: due } = await supabase
+      .from('reminders')
+      .select('*')
+      .eq('due_date', today)
+      .eq('notified', false);
+    for (const r of (due || [])) {
+      try {
+        await sendReminderEmail(r.email, r.title, r.due_date, r.description);
+        await supabase.from('reminders').update({ notified: true }).eq('id', r.id);
+      } catch(e) { console.error('E-Mail Fehler für Reminder', r.id, e.message); }
+    }
+    res.json({ sent: (due || []).length });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.listen(3000, () => {
   console.log('Dokuvo läuft auf Port 3000');
 });
