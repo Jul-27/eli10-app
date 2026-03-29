@@ -1763,6 +1763,33 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+/* Statistiken */
+.analyse-block.statistiken { border-left: 3px solid #6366F1; }
+.statistiken-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+@media (max-width: 480px) { .statistiken-grid { grid-template-columns: repeat(2, 1fr); } }
+.statistik-karte {
+  background: #161B22;
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.statistik-wert {
+  font-size: 18px;
+  font-weight: 700;
+  color: #6366F1;
+  line-height: 1.2;
+}
+.statistik-label {
+  font-size: 10px;
+  color: #48484A;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 /* Risiko-Ampel */
 .analyse-block.risiko { border-left: 3px solid #F59E0B; }
 .risiko-item {
@@ -4179,6 +4206,22 @@ Yours sincerely,
       container.appendChild(block);
     }
 
+    // ── Dokument-Statistiken ──
+    function zeigeStatistikenBlock(statistiken, container) {
+      if (!statistiken) return;
+      const block = document.createElement('div');
+      block.className = 'analyse-block statistiken';
+      const lesezeitText = statistiken.lesezeit === 1 ? '1 Min.' : `${statistiken.lesezeit} Min.`;
+      block.innerHTML = `<div class="analyse-block-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Dokument-Statistiken</div>
+        <div class="statistiken-grid">
+          <div class="statistik-karte"><div class="statistik-wert">${statistiken.wortanzahl.toLocaleString('de')}</div><div class="statistik-label">Wörter</div></div>
+          <div class="statistik-karte"><div class="statistik-wert">${lesezeitText}</div><div class="statistik-label">Lesezeit</div></div>
+          <div class="statistik-karte"><div class="statistik-wert">${statistiken.satzanzahl.toLocaleString('de')}</div><div class="statistik-label">Sätze</div></div>
+          <div class="statistik-karte"><div class="statistik-wert">${statistiken.durchschnittSatzlaenge}</div><div class="statistik-label">Ø Satzlänge</div></div>
+        </div>`;
+      container.appendChild(block);
+    }
+
     // ── Handlungsempfehlungen ──
     function zeigeHandlungenBlock(handlungen, container) {
       if (!handlungen || handlungen.length === 0) return;
@@ -4254,6 +4297,7 @@ Yours sincerely,
     function zeigeAnalyseBlocks(data, container) {
       zeigeRisikoBlock(data.risiken, container);
       zeigeZusammenfassungBlock(data.zusammenfassung, container);
+      zeigeStatistikenBlock(data.statistiken, container);
       zeigeHandlungenBlock(data.handlungen, container);
       zeigeGlossarBlock(data.glossar, container);
       zeigeChecklisteBlock(data.checkliste, container);
@@ -4626,7 +4670,7 @@ Yours sincerely,
         bubble.appendChild(div);
 
         // Analyse-Blöcke wiederherstellen
-        if (analyseData.risiken || analyseData.zusammenfassung || analyseData.handlungen || analyseData.glossar || analyseData.checkliste || analyseData.annotationen) {
+        if (analyseData.risiken || analyseData.zusammenfassung || analyseData.statistiken || analyseData.handlungen || analyseData.glossar || analyseData.checkliste || analyseData.annotationen) {
           zeigeAnalyseBlocks(analyseData, bubble);
         }
         // Fristen wiederherstellen
@@ -4650,6 +4694,7 @@ Yours sincerely,
       if (data.checkliste && data.checkliste.length) analysePayload.checkliste = data.checkliste;
       if (data.fristen && data.fristen.length) analysePayload.fristen = data.fristen;
       if (data.annotationen && data.annotationen.length) analysePayload.annotationen = data.annotationen;
+      if (data.statistiken) analysePayload.statistiken = data.statistiken;
       if (Object.keys(analysePayload).length === 0) return text;
       return text + "\n\n<!--ANALYSE:" + JSON.stringify(analysePayload) + ":ANALYSE-->";
     }

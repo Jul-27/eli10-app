@@ -320,6 +320,18 @@ async function generiereCheckliste(text) {
     return match ? JSON.parse(match[0]) : [];
   } catch(e) { return []; }
 }
+// ── Dokument-Statistiken (reine Textanalyse) ─────────────────────────────────
+function berechneStatistiken(text) {
+  const woerter = text.trim().split(/\s+/).filter(w => w.length > 0);
+  const wortanzahl = woerter.length;
+  const zeichenanzahl = text.replace(/\s/g, '').length;
+  const lesezeit = Math.ceil(wortanzahl / 200);
+  const saetze = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const satzanzahl = saetze.length;
+  const durchschnittSatzlaenge = satzanzahl > 0 ? Math.round(wortanzahl / satzanzahl) : 0;
+  return { wortanzahl, zeichenanzahl, lesezeit, satzanzahl, durchschnittSatzlaenge };
+}
+
 // ── PDF-Annotationen ────────────────────────────────────────────────────────
 async function extrahiereAnnotationen(text) {
   try {
@@ -403,6 +415,7 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
     });
 
     const explanation = completion.choices[0].message.content;
+    const statistiken = berechneStatistiken(cleanText);
     const [followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste, annotationen] = await Promise.all([
       generiereFollowUps(explanation),
       extrahiereFristen(truncatedText),
@@ -413,7 +426,7 @@ app.post('/upload-document', upload.single('document'), async (req, res) => {
       generiereCheckliste(truncatedText),
       extrahiereAnnotationen(truncatedText)
     ]);
-    res.json({ explanation, followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste, annotationen });
+    res.json({ explanation, followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste, annotationen, statistiken });
 
   } catch (error) {
     console.error('Upload Fehler:', error.message);
@@ -505,6 +518,7 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
     });
 
     const explanation = completion.choices[0].message.content;
+    const statistiken = berechneStatistiken(explanation);
     const [followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste] = await Promise.all([
       generiereFollowUps(explanation),
       extrahiereFristen(explanation),
@@ -514,7 +528,7 @@ app.post('/analyze-image', upload.single('image'), async (req, res) => {
       extrahiereGlossar(explanation),
       generiereCheckliste(explanation)
     ]);
-    res.json({ explanation, followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste });
+    res.json({ explanation, followUps, fristen, risiken, zusammenfassung, handlungen, glossar, checkliste, statistiken });
 
   } catch (error) {
     console.error('Vision Fehler:', error.message);
